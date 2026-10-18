@@ -75,7 +75,7 @@ export default function HomeScreen() {
 
       {/* Héros */}
       <View style={styles.hero}>
-        {hero?.poster ? <Image source={{ uri: hero.poster }} style={StyleSheet.absoluteFillObject} resizeMode="cover" /> : null}
+        {hero?.poster ? <Image source={{ uri: hero.poster }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
         <View style={styles.heroShadeA} />
         <View style={styles.heroShadeB} />
         <View style={styles.heroContent}>
@@ -215,8 +215,8 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, color: colors.foreground, paddingVertical: 12, fontSize: 15 },
   hero: { height: 560, justifyContent: 'flex-end', overflow: 'hidden', backgroundColor: colors.card },
-  heroShadeA: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(14,15,19,0.6)' },
-  heroShadeB: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(14,15,19,0.35)' },
+  heroShadeA: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,15,19,0.6)' },
+  heroShadeB: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,15,19,0.35)' },
   heroContent: { padding: 22, gap: 12 },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   eyebrow: { color: colors.primary, fontSize: 13, fontWeight: '700' },
