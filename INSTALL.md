@@ -1,54 +1,57 @@
-# Erëmīa : installation et premier lancement
+# Erëmīa / Snaply — installation et premier lancement
 
-## 1. Créer le projet Expo (une seule fois)
+## 1. Préparer le projet
 
-    npx create-expo-app@latest eremia --template blank-typescript
-    cd eremia
+Clonez le dépôt puis entrez dans son dossier :
 
-## 2. Installer les dépendances
+```sh
+git clone https://github.com/Eremia17/Snaply.git
+cd Snaply
+npm install
+npx expo install --fix
+```
 
-    npx expo install expo-router react-native-safe-area-context react-native-screens expo-linking expo-constants expo-status-bar expo-image-picker expo-file-system expo-sharing expo-document-picker @react-native-async-storage/async-storage @supabase/supabase-js react-native-url-polyfill @expo/vector-icons
-    npm pkg set main=expo-router/entry
+Le dépôt contient déjà les dossiers `app/`, `src/`, ainsi que `app.json` et `tsconfig.json`. Il ne faut pas recréer un projet Expo par-dessus.
 
-## 3. Copier les fichiers de ce dossier
+## 2. Configurer Supabase
 
-Dans le projet `eremia`, remplacez ou ajoutez :
+Copiez `.env.example` vers `.env` et renseignez les valeurs de votre projet Supabase :
 
-- le dossier `app/`
-- le dossier `src/`
-- le dossier `assets/`
-- `app.json`
-- `tsconfig.json`
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_votre_cle
+```
 
-Supprimez `App.tsx` s'il existe (expo-router utilise le dossier `app/`).
+Utilisez uniquement la clé publique prévue pour le client. Ne mettez jamais une clé `service_role`, une clé secrète ou une clé externe dans l'application. Ne partagez pas le fichier `.env` et ne le poussez pas vers GitHub.
 
-## 4. Configurer Supabase
+Sans configuration Supabase, l'interface de base peut démarrer, mais la connexion, le catalogue distant et les fonctions communautaires ne sont pas opérationnels.
 
-Copiez `.env.example` en `.env` et remplacez les valeurs :
+## 3. Vérifier les dépendances
 
-    EXPO_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
-    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```sh
+npx expo install --check
+npm run typecheck
+```
 
-Ne mettez jamais dans ce fichier une clé secrète ou une clé d'API externe.
+## 4. Lancer l'application
 
-## 5. Lancer l'application
+```sh
+npx expo start -c
+```
 
-    npx expo start -c
+Ouvrez Expo Go sur Android et connectez-vous au compte Expo si l'application le demande. Le téléphone et l'environnement qui exécute Expo doivent pouvoir communiquer sur le réseau.
 
-Scannez le QR code avec Expo Go sur votre téléphone.
+## 5. Contrôle de bundle
 
-## Ce qui fonctionne tout de suite
+```sh
+npx expo export --platform android
+```
 
-- Connexion et inscription (compte Supabase existant)
-- Ma liste, favoris et historique (enregistrés sur le téléphone)
-- Listes personnelles, avis, commentaires, likes
-- Profil, photo, profil public, membres
-- Export, import et suppression des données
-- Pages d'aide, de confidentialité et conditions
+Cette commande vérifie que Metro peut produire le bundle Android. Elle ne remplace pas les tests sur téléphone ni la validation des API.
 
-## Ce qui utilise des exemples en attendant les API
+## Éléments à ajouter ultérieurement
 
-- Catalogue, accueil, tendances, recherche, calendrier, classiques, fiches (fichier `src/lib/catalog.ts`)
-- Sports en direct (fichier `app/sports.tsx`)
-
-Ces données seront remplacées par TMDB, MangaDex et l'API sportive lors de l'étape des API.
+- Les vraies sources de données du catalogue, de la recherche et des détails.
+- Les clés et la configuration Supabase propres au projet.
+- Les icônes et images de marque d'origine si elles sont disponibles.
+- Les tests fonctionnels dans Expo Go, puis la préparation de l'APK.
