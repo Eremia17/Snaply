@@ -66,7 +66,7 @@ function fromAni(m: any) {
   };
 }
 
-// Extras des animés japonais depuis AniList : bande-annonce, personnages et titres liés.
+// Extras des animés japonais : AniList pour les personnages/relations, TMDB en complément si le titre correspond exactement.
 async function animeExtras(id: string) {
   const data = await anilist(
     `query ($id: Int) {
@@ -101,22 +101,78 @@ async function animeExtras(id: string) {
     { id: Number(id) },
   );
   const m = data.Media;
-  if (!m) return { trailer: null, cast: [], providers: [], constellation: { name: "Titres liés", items: [] }, reviews: [] };
-  const trailer = m.trailer?.site === "youtube" ? m.trailer.id : null;
+  if (!m) return { trailer: null, cast: [], providers: [], constellation: { name: "Animés liés", items: [] }, reviews: [] };
+
+  let tmdbData: any = null;
+  try {
+    const titles = [m.title?.english, m.title?.romaji].filter(Boolean).map((v: string) => String(v).trim());
+    const searchTitle = titles[0] ?? titles[1];
+    if (searchTitle) {
+      const search = await tmdb("/search/tv", { query: searchTitle, include_adult: "false" });
+      const normalize = (v: unknown) => String(v ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const exact = (search.results ?? []).find((x: any) =>
+        [x.name, x.original_name].some((v: unknown) => titles.some((t: string) => normalize(v) === normalize(t)))
+      );
+      if (exact?.id) {
+        tmdbData = await tmdb(`/tv/${exact.id}`, {
+          append_to_response: "videos,credits,recommendations,watch/providers,reviews",
+          include_video_language: "fr,en,null",
+        });
+      }
+    }
+  } catch {
+    // AniList reste utilisable si TMDB ne trouve pas de correspondance ou est indisponible.
+  }
+
+  const yt: any[] = (tmdbData?.videos?.results ?? []).filter((v: any) => v.site === "YouTube");
+  const tmdbTrailer =
+    yt.find((v: any) => v.type === "Trailer" && v.iso_639_1 === "fr") ??
+    yt.find((v: any) => v.iso_639_1 === "fr") ??
+    yt.find((v: any) => v.type === "Trailer") ??
+    yt[0];
+  const trailer = m.trailer?.site === "youtube" ? m.trailer.id : tmdbTrailer?.key ?? null;
+
+  const characters = (m.characters?.edges ?? []).map((e: any) => ({
+    name: e.node?.name?.full ?? "Personnage",
+    character: "",
+    photo: e.node?.image?.large ?? null,
+  }));
+  const cast = characters.length ? characters : (tmdbData?.credits?.cast ?? []).slice(0, 12).map((c: any) => ({
+    name: c.name,
+    character: c.character ?? "",
+    photo: c.profile_path ? IMG + c.profile_path : null,
+  }));
+
   const related = (m.relations?.edges ?? [])
     .filter((e: any) => e.node?.type === "ANIME" && String(e.node.id) !== String(id))
     .slice(0, 12)
     .map((e: any) => fromAni(e.node));
+  const recommendations = (tmdbData?.recommendations?.results ?? []).slice(0, 12).map((x: any) => ({
+    kind: "manga",
+    id: String(x.id),
+    title: x.name ?? x.original_name ?? "",
+    poster: x.poster_path ? IMG + x.poster_path : null,
+    year: String(x.first_air_date ?? "").slice(0, 4) || null,
+    genres: [],
+    rating: Math.round((x.vote_average ?? 0) * 10) / 10,
+    synopsis: x.overview ?? "",
+  }));
+  const constellationItems = related.length ? related : recommendations;
+
   return {
     trailer,
-    cast: (m.characters?.edges ?? []).map((e: any) => ({
-      name: e.node?.name?.full ?? "Personnage",
-      character: "",
-      photo: e.node?.image?.large ?? null,
+    cast,
+    providers: (tmdbData?.["watch/providers"]?.results?.FR?.flatrate ?? []).map((p: any) => ({
+      name: p.provider_name,
+      logo: p.logo_path ? IMG + p.logo_path : null,
     })),
-    providers: [],
-    constellation: { name: "Animés liés", items: related },
-    reviews: [],
+    constellation: { name: related.length ? "Animés liés" : "Titres similaires", items: constellationItems },
+    reviews: (tmdbData?.reviews?.results ?? []).slice(0, 5).map((r: any) => ({
+      author: r.author ?? "Anonyme",
+      rating: r.author_details?.rating ?? null,
+      date: String(r.created_at ?? "").slice(0, 10),
+      content: String(r.content ?? "").slice(0, 500),
+    })),
   };
 }
 
