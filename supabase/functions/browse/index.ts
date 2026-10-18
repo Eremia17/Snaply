@@ -77,7 +77,12 @@ async function extras(kind: string, id: string) {
     genreNames(type),
   ]);
   const yt: any[] = (d.videos?.results ?? []).filter((v: any) => v.site === "YouTube");
-  const trailerVideo = yt.find((v: any) => v.type === "Trailer") ?? yt[0];
+  // Priorité aux bandes-annonces en français (VF), puis aux versions originales en repli.
+  const trailerVideo =
+    yt.find((v: any) => v.type === "Trailer" && v.iso_639_1 === "fr") ??
+    yt.find((v: any) => v.iso_639_1 === "fr") ??
+    yt.find((v: any) => v.type === "Trailer") ??
+    yt[0];
 
   let constellation: { name: string; items: any[] } = { name: "Titres liés", items: [] };
   if (d.belongs_to_collection) {
