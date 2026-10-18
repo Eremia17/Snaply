@@ -1,0 +1,28 @@
+name: Deploy Supabase browse function
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/functions/browse/**"
+      - ".github/workflows/deploy-supabase-browse.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy-browse:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check deployment secrets
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN" || (echo "Missing GitHub Actions secret: SUPABASE_ACCESS_TOKEN" && exit 1)
+          test -n "$SUPABASE_PROJECT_ID" || (echo "Missing GitHub Actions secret: SUPABASE_PROJECT_ID" && exit 1)
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Deploy browse Edge Function
+        run: supabase functions deploy browse --use-api --project-ref "$SUPABASE_PROJECT_ID"
