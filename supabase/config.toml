@@ -1,0 +1,4 @@
+project_id = "eremia"
+
+[functions.browse]
+verify_jwt = false
