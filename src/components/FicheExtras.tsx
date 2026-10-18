@@ -75,13 +75,38 @@ function Constellation({ name, items, poster, onPick }: { name: string; items: D
 export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; poster?: string | null }) {
   const router = useRouter();
   const [data, setData] = useState<Extras | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showTrailer, setShowTrailer] = useState(false);
 
   useEffect(() => {
-    fetchExtras(kind, id).then(setData);
+    let active = true;
+    setLoading(true);
+    setData(null);
+    fetchExtras(kind, id).then((result) => {
+      if (active) setData(result);
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
   }, [kind, id]);
 
-  if (!data) return null;
+  if (loading) return null;
+  if (!data) {
+    return (
+      <View style={styles.wrap}>
+        <Text style={styles.label}>INFORMATIONS COMPLÉMENTAIRES</Text>
+        <Text style={styles.emptyMessage}>Impossible de charger ces informations. La fonction serveur doit être déployée et accessible.</Text>
+      </View>
+    );
+  }
+  if (!data.trailer && !data.providers.length && !data.cast.length && !data.reviews.length && !data.constellation.items.length) {
+    return (
+      <View style={styles.wrap}>
+        <Text style={styles.label}>INFORMATIONS COMPLÉMENTAIRES</Text>
+        <Text style={styles.emptyMessage}>Aucune information complémentaire trouvée pour ce titre pour le moment.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.wrap}>
@@ -226,6 +251,7 @@ const styles = StyleSheet.create({
   trailerOverlayText: { color: '#fff', fontWeight: '800', textShadowColor: '#000', textShadowRadius: 4 },
   trailerText: { color: '#fff', fontWeight: '700' },
   trailerPlayer: { width: '100%', gap: 8 },
+  emptyMessage: { color: colors.mutedForeground, lineHeight: 20 },
   trailerWebView: { width: '100%', height: 220, backgroundColor: '#000', borderRadius: 12, overflow: 'hidden' },
   closeTrailer: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
   label: { color: colors.mutedForeground, letterSpacing: 2, fontSize: 12, marginTop: 6 },
