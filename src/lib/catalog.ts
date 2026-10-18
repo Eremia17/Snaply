@@ -143,9 +143,9 @@ export async function fetchSports(): Promise<SportMatch[]> {
 
 export type Chapter = { id: string; chapter: string; title: string; lang: string };
 
-export async function fetchChapters(mangaId: string): Promise<Chapter[]> {
+export async function fetchChapters(mangaId: string, title = ''): Promise<Chapter[]> {
   if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'chapters', id: mangaId } });
+  const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'chapters', id: mangaId, title } });
   if (error || !data) return [];
   return (data.items ?? []) as Chapter[];
 }
