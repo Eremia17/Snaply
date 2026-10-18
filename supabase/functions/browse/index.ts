@@ -66,11 +66,63 @@ function fromAni(m: any) {
   };
 }
 
-// Bande-annonce, personnages, disponibilité, critiques et constellation (saga ou titres liés), depuis TMDB
+// Extras des animés japonais depuis AniList : bande-annonce, personnages et titres liés.
+async function animeExtras(id: string) {
+  const data = await anilist(
+    `query ($id: Int) {
+      Media(id: $id, type: ANIME) {
+        id
+        title { romaji english }
+        coverImage { large }
+        startDate { year }
+        genres
+        averageScore
+        description(asHtml: false)
+        trailer { id site }
+        characters(perPage: 12, sort: [ROLE, RELEVANCE]) {
+          edges { node { name { full } image { large } } }
+        }
+        relations {
+          edges {
+            relationType(version: 2)
+            node {
+              id type
+              title { romaji english }
+              coverImage { large }
+              startDate { year }
+              genres
+              averageScore
+              description(asHtml: false)
+            }
+          }
+        }
+      }
+    }`,
+    { id: Number(id) },
+  );
+  const m = data.Media;
+  if (!m) return { trailer: null, cast: [], providers: [], constellation: { name: "Titres liés", items: [] }, reviews: [] };
+  const trailer = m.trailer?.site === "youtube" ? m.trailer.id : null;
+  const related = (m.relations?.edges ?? [])
+    .filter((e: any) => e.node?.type === "ANIME" && String(e.node.id) !== String(id))
+    .slice(0, 12)
+    .map((e: any) => fromAni(e.node));
+  return {
+    trailer,
+    cast: (m.characters?.edges ?? []).map((e: any) => ({
+      name: e.node?.name?.full ?? "Personnage",
+      character: "",
+      photo: e.node?.image?.large ?? null,
+    })),
+    providers: [],
+    constellation: { name: "Animés liés", items: related },
+    reviews: [],
+  };
+}
+
+// Bande-annonce, personnages, disponibilité, critiques et constellation depuis la source adaptée
 async function extras(kind: string, id: string) {
-  if (kind === "manga") {
-    return { trailer: null, cast: [], providers: [], constellation: { name: "", items: [] }, reviews: [] };
-  }
+  if (kind === "manga") return animeExtras(id);
   const type = kind === "film" ? "movie" : "tv";
   const [d, names] = await Promise.all([
     tmdb(`/${type}/${id}`, { append_to_response: "videos,credits,recommendations,watch/providers,reviews", include_video_language: "fr,en,null" }),
@@ -147,10 +199,23 @@ async function mdGet(path: string): Promise<any> {
   return r.json();
 }
 
-// Chapitres disponibles (français en priorité, sinon anglais)
-async function chapters(mangaId: string) {
+// Résout d'abord le titre AniList en véritable identifiant MangaDex, puis charge les chapitres.
+async function chapters(mangaId: string, title: string) {
+  let resolvedId = mangaId;
+  if (!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(mangaId)) {
+    if (!title.trim()) return { items: [] };
+    const search = await mdGet(`/manga?title=${encodeURIComponent(title)}&limit=10&order[relevance]=desc&contentRating[]=safe&contentRating[]=suggestive`);
+    const results = search.data ?? [];
+    const normalized = title.trim().toLowerCase();
+    const exact = results.find((m: any) =>
+      Object.values(m.attributes?.title ?? {}).some((v: any) => String(v).trim().toLowerCase() === normalized)
+    );
+    const match = exact ?? results[0];
+    if (!match?.id) return { items: [] };
+    resolvedId = match.id;
+  }
   const d = await mdGet(
-    `/manga/${mangaId}/feed?translatedLanguage[]=fr&translatedLanguage[]=en&order[chapter]=desc&limit=100&contentRating[]=safe&contentRating[]=suggestive`,
+    `/manga/${resolvedId}/feed?translatedLanguage[]=fr&translatedLanguage[]=en&order[chapter]=desc&limit=100&contentRating[]=safe&contentRating[]=suggestive`,
   );
   const seen = new Map<string, any>();
   for (const c of d.data ?? []) {
@@ -236,7 +301,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const kind = String(body.kind ?? "film");
-    if (body.action === "chapters") return json(await chapters(String(body.id ?? "")));
+    if (body.action === "chapters") return json(await chapters(String(body.id ?? ""), String(body.title ?? "")));
     if (body.action === "pages") return json(await pages(String(body.chapterId ?? "")));
     if (body.action === "sports") return json(await sports());
     if (body.action === "extras") return json(await extras(kind, String(body.id ?? "")));
