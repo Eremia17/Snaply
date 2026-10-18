@@ -21,7 +21,6 @@
       "expo-router"
     ],
     "splash": {
-      "resizeMode": "contain",
       "backgroundColor": "#17181E"
     }
   }
