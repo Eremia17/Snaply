@@ -116,10 +116,10 @@ export type Extras = {
 
 const EMPTY_EXTRAS: Extras = { trailer: null, cast: [], providers: [], constellation: { name: '', items: [] }, reviews: [] };
 
-export async function fetchExtras(kind: Kind, id: string): Promise<Extras> {
-  if (!isSupabaseConfigured) return EMPTY_EXTRAS;
+export async function fetchExtras(kind: Kind, id: string): Promise<Extras | null> {
+  if (!isSupabaseConfigured) return null;
   const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'extras', kind, id } });
-  if (error || !data) return EMPTY_EXTRAS;
+  if (error || !data || data.error) return null;
   return data as Extras;
 }
 
