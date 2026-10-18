@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { PosterCard } from '@/components/PosterCard';
@@ -74,6 +75,7 @@ function Constellation({ name, items, poster, onPick }: { name: string; items: D
 export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; poster?: string | null }) {
   const router = useRouter();
   const [data, setData] = useState<Extras | null>(null);
+  const [showTrailer, setShowTrailer] = useState(false);
 
   useEffect(() => {
     fetchExtras(kind, id).then(setData);
@@ -84,10 +86,32 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
   return (
     <View style={styles.wrap}>
       {data.trailer ? (
-        <Pressable style={styles.trailer} onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${data.trailer}`)}>
-          <Ionicons name="play" size={18} color="#fff" />
-          <Text style={styles.trailerText}>Bande-annonce</Text>
-        </Pressable>
+        <>
+          <Text style={styles.label}>BANDE-ANNONCE</Text>
+          {showTrailer ? (
+            <View style={styles.trailerPlayer}>
+              <WebView
+                source={{ uri: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(data.trailer)}?playsinline=1&autoplay=1&rel=0` }}
+                style={styles.trailerWebView}
+                javaScriptEnabled
+                domStorageEnabled
+                allowsFullscreenVideo
+                mediaPlaybackRequiresUserAction={false}
+                allowsInlineMediaPlayback
+                originWhitelist={['https://*']}
+              />
+              <Pressable style={styles.closeTrailer} onPress={() => setShowTrailer(false)}>
+                <Ionicons name="close" size={18} color="#fff" />
+                <Text style={styles.trailerText}>Fermer la vidéo</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable style={styles.trailer} onPress={() => setShowTrailer(true)}>
+              <Ionicons name="play" size={18} color="#fff" />
+              <Text style={styles.trailerText}>Lire la bande-annonce ici</Text>
+            </Pressable>
+          )}
+        </>
       ) : null}
 
       {data.providers.length ? (
@@ -191,6 +215,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 11,
   },
   trailerText: { color: '#fff', fontWeight: '700' },
+  trailerPlayer: { width: '100%', gap: 8 },
+  trailerWebView: { width: '100%', height: 220, backgroundColor: '#000', borderRadius: 12, overflow: 'hidden' },
+  closeTrailer: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
   label: { color: colors.mutedForeground, letterSpacing: 2, fontSize: 12, marginTop: 6 },
   providers: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   provider: {
