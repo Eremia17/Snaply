@@ -1,0 +1,250 @@
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useStore } from '@/lib/store';
+import { addToList, fetchLists, type UserList } from '@/lib/lists';
+import { KIND_LABEL, fetchDetail, getDetail, useCatalog, type Detail } from '@/lib/catalog';
+import type { Item, Kind } from '@/lib/types';
+import { colors } from '@/lib/theme';
+import { FicheExtras } from '@/components/FicheExtras';
+
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+export default function TitreScreen() {
+  const p = useLocalSearchParams<{ kind: Kind; id: string; title: string; poster?: string; year?: string }>();
+  const router = useRouter();
+  const item: Item = {
+    kind: p.kind,
+    id: String(p.id),
+    title: String(p.title ?? ''),
+    poster: p.poster || null,
+    year: p.year || null,
+  };
+  useCatalog();
+  const { isFavorite, toggleFavorite, pushHistory } = useStore();
+  const fav = isFavorite(item);
+  const [remote, setRemote] = useState<Detail | null>(null);
+  const detail = getDetail(item.kind, item.id) ?? remote;
+  const [myRating, setMyRating] = useState(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [lists, setLists] = useState<UserList[] | null>(null);
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    pushHistory(item);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.kind, p.id]);
+
+  useEffect(() => {
+    if (!getDetail(item.kind, item.id)) fetchDetail(item.kind, item.id).then(setRemote);
+    AsyncStorage.getItem('mv:ratings').then((v) => {
+      const all = v ? JSON.parse(v) : {};
+      setMyRating(all[`${item.kind}:${item.id}`] ?? 0);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.kind, item.id]);
+
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    AsyncStorage.getItem('mv:seen').then((v) => {
+      const all = v ? JSON.parse(v) : {};
+      setSeen(!!all[`${item.kind}:${item.id}`]);
+    });
+  }, [item.kind, item.id]);
+
+  const toggleSeen = async () => {
+    const v = await AsyncStorage.getItem('mv:seen');
+    const all = v ? JSON.parse(v) : {};
+    const key = `${item.kind}:${item.id}`;
+    all[key] = !all[key];
+    setSeen(!!all[key]);
+    await AsyncStorage.setItem('mv:seen', JSON.stringify(all));
+  };
+
+  const rate = async (n: number) => {
+    setMyRating(n);
+    const v = await AsyncStorage.getItem('mv:ratings');
+    const all = v ? JSON.parse(v) : {};
+    all[`${item.kind}:${item.id}`] = n;
+    await AsyncStorage.setItem('mv:ratings', JSON.stringify(all));
+  };
+
+  const openPicker = async () => {
+    setPickerOpen(true);
+    setLists(null);
+    try {
+      setLists(await fetchLists());
+    } catch (e: any) {
+      Alert.alert('Connexion requise', 'Les listes personnelles demandent un compte (Paramètres).');
+      setPickerOpen(false);
+    }
+  };
+
+  const pickList = async (list: UserList) => {
+    setAdding(true);
+    try {
+      await addToList(list.id, item);
+      setPickerOpen(false);
+      Alert.alert('Ajouté', `« ${item.title} » a été ajouté à « ${list.title} ».`);
+    } catch (e: any) {
+      Alert.alert('Erreur', e.message);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const share = () =>
+    Share.share({
+      message: `${item.title}${detail?.rating ? ` — ★ ${detail.rating.toFixed(1)}/10` : ''} sur Erëmīa`,
+    });
+
+  const meta = [detail?.year ?? item.year, detail?.runtime].filter(Boolean).join(' · ');
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: '',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.foreground,
+          headerShadowVisible: false,
+        }}
+      />
+      <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+        <View style={styles.posterWrap}>
+          {item.poster ? (
+            <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
+          ) : (
+            <View style={[styles.poster, styles.posterEmpty]}>
+              <Text style={styles.posterEmptyText}>{item.title}</Text>
+            </View>
+          )}
+        </View>
+
+        <Text style={styles.kind}>{KIND_LABEL[item.kind]}</Text>
+        <Text style={styles.title}>{item.title}</Text>
+
+        <View style={styles.metaRow}>
+          {detail && detail.rating > 0 ? (
+            <View style={styles.ratingPill}>
+              <Ionicons name="star" size={16} color="#000" />
+              <Text style={styles.ratingText}>{detail.rating.toFixed(1)}</Text>
+              <Text style={styles.ratingSub}>/10</Text>
+            </View>
+          ) : null}
+          {meta ? <Text style={styles.meta}>{meta}</Text> : null}
+        </View>
+
+        {detail && detail.genres.length ? (
+          <View style={styles.genres}>
+            {detail.genres.map((g) => (
+              <View key={g} style={styles.genre}>
+                <Text style={styles.genreText}>{g}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {detail?.synopsis ? <Text style={styles.synopsis}>{detail.synopsis}</Text> : null}
+
+        <View style={styles.buttons}>
+          <Btn label={fav ? 'Retirer de ma liste' : 'Ma liste'} icon={fav ? 'heart' : 'heart-outline'} onPress={() => toggleFavorite(item)} primary />
+          <Btn label="Partager" icon="share-social-outline" onPress={share} />
+          <Btn label={seen ? 'Vu' : 'Marquer comme vu'} icon={seen ? 'checkmark-circle' : 'checkmark-outline'} onPress={toggleSeen} />
+          <Btn label="Ajouter à…" icon="list-outline" onPress={openPicker} />
+          <Btn
+            label="Publier un avis"
+            icon="chatbubbles-outline"
+            onPress={() =>
+              router.push({ pathname: '/communaute/nouveau', params: { kind: item.kind, id: item.id, title: item.title, poster: item.poster ?? '' } })
+            }
+          />
+          {item.kind === 'manga' ? (
+            <Btn label="Lire les scans" icon="book-outline" primary onPress={() => router.push({ pathname: '/chapitres/[id]', params: { id: item.id, title: item.title } })} />
+          ) : null}
+          <Btn label="Comparer" icon="git-compare-outline" onPress={() => router.push('/comparer')} />
+        </View>
+
+        <Text style={styles.sectionLabel}>MA NOTE · {myRating}/10</Text>
+        <View style={styles.stars}>
+          {Array.from({ length: 10 }).map((_, i) => (
+            <Pressable key={i} onPress={() => rate(i + 1)} hitSlop={4}>
+              <Ionicons name={i < myRating ? 'star' : 'star-outline'} size={24} color={colors.primary} />
+            </Pressable>
+          ))}
+        </View>
+
+        <FicheExtras kind={item.kind} id={item.id} poster={item.poster} />
+
+        {!detail ? <Text style={styles.note}>Chargement des informations…</Text> : null}
+      </ScrollView>
+
+      <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setPickerOpen(false)} />
+        <View style={styles.sheet}>
+          <Text style={styles.sheetTitle}>Choisir une liste</Text>
+          {lists === null ? (
+            <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
+          ) : lists.length === 0 ? (
+            <Text style={styles.sheetEmpty}>Vous n’avez pas encore de liste. Créez-en une dans « Plus » › « Mes listes ».</Text>
+          ) : (
+            lists.map((l) => (
+              <Pressable key={l.id} style={styles.sheetRow} onPress={() => pickList(l)} disabled={adding}>
+                <Text style={styles.sheetRowText}>{l.title}</Text>
+                <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+              </Pressable>
+            ))
+          )}
+        </View>
+      </Modal>
+    </>
+  );
+}
+
+function Btn({ label, icon, onPress, primary }: { label: string; icon: IconName; onPress: () => void; primary?: boolean }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.btn, primary && styles.btnPrimary]}>
+      <Ionicons name={icon} size={18} color={primary ? '#fff' : colors.foreground} />
+      <Text style={[styles.btnText, primary && { color: '#fff' }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  content: { padding: 20, paddingBottom: 48 },
+  posterWrap: { alignItems: 'center', marginBottom: 20 },
+  poster: { width: 210, aspectRatio: 2 / 3, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  posterEmpty: { alignItems: 'center', justifyContent: 'center', padding: 12 },
+  posterEmptyText: { color: colors.mutedForeground, textAlign: 'center', fontWeight: '600' },
+  kind: { color: colors.primary, letterSpacing: 3, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
+  title: { color: colors.foreground, fontSize: 30, fontWeight: '900', marginTop: 6, lineHeight: 34 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginTop: 14 },
+  ratingPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  ratingText: { color: '#000', fontWeight: '900', fontSize: 18 },
+  ratingSub: { color: '#000', fontWeight: '600' },
+  meta: { color: colors.mutedForeground },
+  genres: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
+  genre: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
+  genreText: { color: colors.foreground, fontSize: 13 },
+  synopsis: { color: colors.foreground, lineHeight: 23, marginTop: 16, fontSize: 15 },
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 20 },
+  btn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: colors.border,
+    borderRadius: 999, paddingHorizontal: 16, paddingVertical: 11,
+  },
+  btnPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
+  btnText: { color: colors.foreground, fontWeight: '600' },
+  sectionLabel: { color: colors.mutedForeground, letterSpacing: 2, fontSize: 12, marginTop: 26 },
+  stars: { flexDirection: 'row', gap: 6, marginTop: 10 },
+  note: { color: colors.mutedForeground, marginTop: 20 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
+  sheet: { backgroundColor: colors.card, padding: 20, paddingBottom: 36, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
+  sheetTitle: { color: colors.foreground, fontSize: 18, fontWeight: '800', marginBottom: 12 },
+  sheetEmpty: { color: colors.mutedForeground, lineHeight: 20, paddingVertical: 12 },
+  sheetRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderTopWidth: 1, borderTopColor: colors.border },
+  sheetRowText: { color: colors.foreground, fontSize: 15 },
+});
