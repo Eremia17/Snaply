@@ -22,5 +22,7 @@ jobs:
         run: npx expo install --fix
       - name: Check Expo dependency compatibility
         run: npx expo install --check
+      - name: TypeScript check
+        run: npm run typecheck
       - name: Export Android bundle
         run: npx expo export --platform android
