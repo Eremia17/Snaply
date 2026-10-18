@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { supabase } from './supabase';
+import { isSupabaseConfigured, supabase } from './supabase';
 import type { Item, Kind } from './types';
 
 export type Detail = Item & {
@@ -42,6 +42,7 @@ function emit() {
 
 // Charge la liste principale depuis la fonction serveur. Renvoie un message d'erreur, ou null.
 export async function loadCatalog(): Promise<string | null> {
+  if (!isSupabaseConfigured) { DATA = []; emit(); return null; }
   const { data, error } = await supabase.functions.invoke('catalog', { body: { action: 'list' } });
   if (error) return error.message;
   DATA = (data?.items ?? []) as Detail[];
@@ -50,12 +51,14 @@ export async function loadCatalog(): Promise<string | null> {
 }
 
 export async function fetchDetail(kind: Kind, id: string): Promise<Detail | null> {
+  if (!isSupabaseConfigured) return null;
   const { data, error } = await supabase.functions.invoke('catalog', { body: { action: 'detail', kind, id } });
   if (error || !data) return null;
   return data as Detail;
 }
 
 export async function searchRemote(q: string, kinds: Kind[] = []): Promise<Detail[]> {
+  if (!isSupabaseConfigured) return [];
   const { data, error } = await supabase.functions.invoke('catalog', { body: { action: 'search', q, kinds } });
   if (error || !data) return [];
   return (data.items ?? []) as Detail[];
@@ -97,6 +100,7 @@ export function classics(): Detail[] {
 
 // Une page de titres pour une catégorie (défilement infini)
 export async function browseKind(kind: Kind, page: number): Promise<{ items: Detail[]; hasMore: boolean }> {
+  if (!isSupabaseConfigured) return { items: [], hasMore: false };
   const { data, error } = await supabase.functions.invoke('browse', { body: { kind, page } });
   if (error || !data) return { items: [], hasMore: false };
   return { items: (data.items ?? []) as Detail[], hasMore: !!data.hasMore };
@@ -113,6 +117,7 @@ export type Extras = {
 const EMPTY_EXTRAS: Extras = { trailer: null, cast: [], providers: [], constellation: { name: '', items: [] }, reviews: [] };
 
 export async function fetchExtras(kind: Kind, id: string): Promise<Extras> {
+  if (!isSupabaseConfigured) return EMPTY_EXTRAS;
   const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'extras', kind, id } });
   if (error || !data) return EMPTY_EXTRAS;
   return data as Extras;
@@ -130,6 +135,7 @@ export type SportMatch = {
 };
 
 export async function fetchSports(): Promise<SportMatch[]> {
+  if (!isSupabaseConfigured) return [];
   const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'sports' } });
   if (error || !data) return [];
   return (data.items ?? []) as SportMatch[];
@@ -138,12 +144,14 @@ export async function fetchSports(): Promise<SportMatch[]> {
 export type Chapter = { id: string; chapter: string; title: string; lang: string };
 
 export async function fetchChapters(mangaId: string): Promise<Chapter[]> {
+  if (!isSupabaseConfigured) return [];
   const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'chapters', id: mangaId } });
   if (error || !data) return [];
   return (data.items ?? []) as Chapter[];
 }
 
 export async function fetchPages(chapterId: string): Promise<string[]> {
+  if (!isSupabaseConfigured) return [];
   const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'pages', chapterId } });
   if (error || !data) return [];
   return (data.pages ?? []) as string[];
