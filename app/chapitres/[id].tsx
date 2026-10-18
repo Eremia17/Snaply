@@ -11,7 +11,7 @@ export default function ChapitresScreen() {
   const [items, setItems] = useState<Chapter[] | null>(null);
 
   useEffect(() => {
-    fetchChapters(String(id)).then(setItems);
+    fetchChapters(String(id), String(title ?? '')).then(setItems);
   }, [id]);
 
   return (
