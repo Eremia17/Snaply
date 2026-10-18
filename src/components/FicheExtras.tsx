@@ -106,9 +106,18 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
               </Pressable>
             </View>
           ) : (
-            <Pressable style={styles.trailer} onPress={() => setShowTrailer(true)}>
-              <Ionicons name="play" size={18} color="#fff" />
-              <Text style={styles.trailerText}>Lire la bande-annonce ici</Text>
+            <Pressable style={styles.trailerPreview} onPress={() => setShowTrailer(true)} accessibilityRole="button" accessibilityLabel="Lire la bande-annonce dans Erëmīa">
+              <Image
+                source={{ uri: `https://i.ytimg.com/vi/${encodeURIComponent(data.trailer)}/hqdefault.jpg` }}
+                style={styles.trailerPoster}
+                resizeMode="cover"
+              />
+              <View style={styles.trailerOverlay}>
+                <View style={styles.trailerPlayCircle}>
+                  <Ionicons name="play" size={28} color="#fff" />
+                </View>
+                <Text style={styles.trailerOverlayText}>Lire dans Erëmīa</Text>
+              </View>
             </Pressable>
           )}
         </>
@@ -210,10 +219,11 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 
 const styles = StyleSheet.create({
   wrap: { marginTop: 24, gap: 14 },
-  trailer: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start',
-    backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 11,
-  },
+  trailerPreview: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden', backgroundColor: '#111', position: 'relative' },
+  trailerPoster: { width: '100%', height: '100%' },
+  trailerOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: 'rgba(0,0,0,0.22)' },
+  trailerPlayCircle: { width: 58, height: 42, borderRadius: 12, backgroundColor: '#e62117', alignItems: 'center', justifyContent: 'center' },
+  trailerOverlayText: { color: '#fff', fontWeight: '800', textShadowColor: '#000', textShadowRadius: 4 },
   trailerText: { color: '#fff', fontWeight: '700' },
   trailerPlayer: { width: '100%', gap: 8 },
   trailerWebView: { width: '100%', height: 220, backgroundColor: '#000', borderRadius: 12, overflow: 'hidden' },
