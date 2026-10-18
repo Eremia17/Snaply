@@ -20,7 +20,7 @@ const SECTIONS: Section[] = [
   { title: 'Explorer', items: [
     { label: 'Accueil', icon: 'home-outline', to: '/' },
     { label: 'Films', icon: 'film-outline', to: '/catalogue/film' },
-    { label: 'Animés manga', icon: 'clapperboard-outline' as IconName, to: '/catalogue/manga' },
+    { label: 'Animés manga', icon: 'film-outline', to: '/catalogue/manga' },
     { label: 'Animés occidentaux', icon: 'tv-outline', to: '/catalogue/occidental' },
     { label: 'Séries', icon: 'play-circle-outline', to: '/catalogue/serie' },
     { label: 'Sports en direct', icon: 'trophy-outline', to: '/sports' },
