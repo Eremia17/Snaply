@@ -114,8 +114,6 @@ export type Extras = {
   reviews: { author: string; rating: number | null; date: string; content: string }[];
 };
 
-const EMPTY_EXTRAS: Extras = { trailer: null, cast: [], providers: [], constellation: { name: '', items: [] }, reviews: [] };
-
 export async function fetchExtras(kind: Kind, id: string): Promise<Extras | null> {
   if (!isSupabaseConfigured) return null;
   const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'extras', kind, id } });
