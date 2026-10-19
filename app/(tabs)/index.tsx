@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
 import { classics, featured, fetchSports, trending, upcomingList, useCatalog, type SportMatch } from '@/lib/catalog';
-import { openTitle } from '@/lib/navigation';
 import { useStore } from '@/lib/store';
 import { fetchPosts, type Post } from '@/lib/community';
 import { supabase } from '@/lib/supabase';
