@@ -8,6 +8,7 @@ import { PosterCard } from '@/components/PosterCard';
 import { openTitle } from '@/lib/navigation';
 import type { Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
+import { usePrefs } from '@/lib/prefs';
 import { MarkdownText } from '@/components/MarkdownText';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
@@ -97,6 +98,7 @@ export function FicheExtras({ kind, id, poster, title }: { kind: Kind; id: strin
   const router = useRouter();
   const [data, setData] = useState<Extras | null>(null);
   const [loading, setLoading] = useState(true);
+  const [prefs] = usePrefs();
   const [showTrailer, setShowTrailer] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -188,7 +190,7 @@ export function FicheExtras({ kind, id, poster, title }: { kind: Kind; id: strin
             <View style={styles.trailerPlayer}>
               <View style={styles.webViewFrame}>
                 <WebView
-                  source={{ uri: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(data.trailer)}?playsinline=1&autoplay=1&rel=0` }}
+                  source={{ uri: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(data.trailer)}?playsinline=1&autoplay=1&rel=0&cc_load_policy=${prefs.soustitres ? 1 : 0}` }}
                   style={styles.trailerWebView}
                   javaScriptEnabled
                   domStorageEnabled
