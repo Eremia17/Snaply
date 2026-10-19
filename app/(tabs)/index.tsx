@@ -75,7 +75,7 @@ export default function HomeScreen() {
 
       {/* Héros */}
       <View style={styles.hero}>
-        {hero?.poster ? <Image source={{ uri: hero.poster }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+        {(hero?.backdrop || hero?.poster) ? <Image source={{ uri: hero.backdrop || hero.poster || undefined }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
         <View style={styles.heroShadeA} />
         <View style={styles.heroShadeB} />
         <View style={styles.heroContent}>
