@@ -102,7 +102,7 @@ export function classics(): Detail[] {
 export async function browseKind(
   kind: Kind,
   page: number,
-  filters: { genre?: string; year?: string; minRating?: number } = {},
+  filters: { genre?: string; year?: string; minRating?: number; family?: boolean } = {},
 ): Promise<{ items: Detail[]; hasMore: boolean }> {
   if (!isSupabaseConfigured) return { items: [], hasMore: false };
   const { data, error } = await supabase.functions.invoke('browse', { body: { kind, page, ...filters } });
