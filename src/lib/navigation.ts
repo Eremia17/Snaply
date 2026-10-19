@@ -5,6 +5,6 @@ import type { Item } from './types';
 export function openTitle(router: ReturnType<typeof useRouter>, item: Item) {
   router.push({
     pathname: '/titre/[kind]/[id]',
-    params: { kind: item.kind, id: item.id, title: item.title, poster: item.poster ?? '', year: item.year ?? '' },
+    params: { kind: item.kind, id: item.id, title: item.title, poster: item.poster ?? '', backdrop: item.backdrop ?? '', year: item.year ?? '' },
   });
 }
