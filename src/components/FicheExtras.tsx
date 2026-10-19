@@ -11,17 +11,17 @@ import { colors } from '@/lib/theme';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 const W = Math.min(Dimensions.get('window').width - 36, 360);
-const H = Math.max(270, W * 0.88);
-const SAT = 38;
+const H = Math.max(224, W * 0.68);
+const SAT = 34;
 const C_DIRECTOR = '#F59E0B';
 const C_SAGA = '#A78BFA';
 const C_SIMILAR = '#F472B6';
 
 // Coordonnées irrégulières pour une vraie carte céleste plutôt qu'un soleil à rayons.
 const STAR_POINTS = [
-  [0.16, 0.24], [0.34, 0.12], [0.53, 0.20], [0.78, 0.13],
-  [0.87, 0.34], [0.69, 0.47], [0.84, 0.69], [0.59, 0.82],
-  [0.37, 0.72], [0.15, 0.82], [0.10, 0.52], [0.39, 0.43],
+  [0.13, 0.25], [0.34, 0.13], [0.58, 0.22], [0.83, 0.16],
+  [0.88, 0.43], [0.70, 0.60], [0.82, 0.79], [0.56, 0.86],
+  [0.34, 0.75], [0.12, 0.80], [0.08, 0.52], [0.39, 0.45],
 ];
 const CONSTELLATION_EDGES: [number, number][] = [
   [0,1], [1,2], [2,3], [3,4], [4,5], [5,6], [6,7],
@@ -67,11 +67,11 @@ function Constellation({ name, items, poster, onPick }: { name: string; items: D
           const dx = q.x - p.x, dy = q.y - p.y;
           const len = Math.hypot(dx, dy);
           const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-          return <View key={`edge-${i}`} style={{ position: 'absolute', left: (p.x + q.x) / 2 - len / 2, top: (p.y + q.y) / 2 - 0.5, width: len, height: 1, backgroundColor: '#9DBEFF', opacity: 0.55, transform: [{ rotate: `${angle}deg` }] }} />;
+          return <View key={`edge-${i}`} style={{ position: 'absolute', left: (p.x + q.x) / 2 - len / 2, top: (p.y + q.y) / 2 - 0.5, width: len, height: 1, backgroundColor: '#9DBEFF', opacity: 0.38, transform: [{ rotate: `${angle}deg` }] }} />;
         })}
         {points.map((p, i) => {
           const color = i % 3 === 0 ? C_DIRECTOR : i % 3 === 1 ? C_SAGA : C_SIMILAR;
-          return <View key={`star-${i}`} pointerEvents="none" style={{ position: 'absolute', left: p.x - 3, top: p.y - 3, width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: color, shadowColor: color, shadowOpacity: 1, shadowRadius: 8, elevation: 5 }} />;
+          return <View key={`star-${i}`} pointerEvents="none" style={{ position: 'absolute', left: p.x - 2, top: p.y - 2, width: 4, height: 4, borderRadius: 2, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: color, shadowColor: color, shadowOpacity: 1, shadowRadius: 8, elevation: 5 }} />;
         })}
         {shown.map((it, i) => {
           const p = points[i];
@@ -82,10 +82,10 @@ function Constellation({ name, items, poster, onPick }: { name: string; items: D
             </Pressable>
           );
         })}
-        <Animated.View style={[styles.center, { left: W / 2 - 31, top: H / 2 - 44, transform: [{ scale: corePulse }] }]}>
+        <Animated.View style={[styles.center, { left: W / 2 - 25, top: H / 2 - 25, transform: [{ scale: corePulse }] }]}>
           {poster ? <Image source={{ uri: poster }} style={styles.centerImg} resizeMode="cover" /> : <View style={[styles.centerImg, { backgroundColor: colors.muted }]} />}
         </Animated.View>
-        <View pointerEvents="none" style={[styles.coreGlow, { left: W / 2 - 40, top: H / 2 - 53 }]} />
+        <View pointerEvents="none" style={[styles.coreGlow, { left: W / 2 - 31, top: H / 2 - 31 }]} />
       </View>
       <Text style={styles.cosmosHint}>✦  Touchez une affiche pour explorer cet univers  ✦</Text>
     </View>
@@ -385,11 +385,11 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   legendText: { color: colors.mutedForeground, fontSize: 12 },
-  cosmos: { width: '100%', backgroundColor: '#060912', borderRadius: 20, borderWidth: 1, borderColor: '#253B63', padding: 6, alignItems: 'center', overflow: 'hidden' },
-  center: { position: 'absolute', width: 62, height: 88, borderRadius: 8, borderWidth: 2, borderColor: '#FFFFFF', overflow: 'hidden', backgroundColor: '#101827', shadowColor: '#8AC8FF', shadowOpacity: 1, shadowRadius: 13, elevation: 9, zIndex: 5 },
-  centerImg: { width: 58, height: 84 },
-  coreGlow: { position: 'absolute', width: 80, height: 106, borderRadius: 24, borderWidth: 1, borderColor: '#8AC8FF', opacity: 0.28 },
-  sat: { position: 'absolute', width: SAT, height: 52, borderRadius: 6, borderWidth: 1.5, overflow: 'hidden', backgroundColor: colors.card, shadowColor: '#A8D8FF', shadowOpacity: 0.65, shadowRadius: 7, elevation: 4, zIndex: 3 },
-  satImg: { width: SAT - 3, height: 49, borderRadius: 4 },
-  cosmosHint: { color: colors.mutedForeground, fontSize: 12, marginTop: 8, marginBottom: 2 },
+  cosmos: { width: '100%', backgroundColor: '#060912', borderRadius: 16, borderWidth: 1, borderColor: '#253B63', padding: 3, alignItems: 'center', overflow: 'hidden' },
+  center: { position: 'absolute', width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: '#FFFFFF', overflow: 'hidden', backgroundColor: '#101827', shadowColor: '#8AC8FF', shadowOpacity: 1, shadowRadius: 13, elevation: 9, zIndex: 5 },
+  centerImg: { width: 46, height: 46, borderRadius: 23 },
+  coreGlow: { position: 'absolute', width: 64, height: 64, borderRadius: 32, borderWidth: 1, borderColor: '#8AC8FF', opacity: 0.28 },
+  sat: { position: 'absolute', width: SAT, height: SAT, borderRadius: SAT / 2, borderWidth: 1.5, overflow: 'hidden', backgroundColor: colors.card, shadowColor: '#A8D8FF', shadowOpacity: 0.65, shadowRadius: 7, elevation: 4, zIndex: 3 },
+  satImg: { width: SAT - 3, height: SAT - 3, borderRadius: (SAT - 3) / 2 },
+  cosmosHint: { color: colors.mutedForeground, fontSize: 11, marginTop: 5, marginBottom: 0 },
 });
