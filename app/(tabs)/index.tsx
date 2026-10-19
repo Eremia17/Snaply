@@ -3,7 +3,7 @@ import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, Vi
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
-import { featured, trending, useCatalog } from '@/lib/catalog';
+import { featured, fetchSports, trending, useCatalog, type SportMatch } from '@/lib/catalog';
 import { openTitle } from '@/lib/navigation';
 import { useStore } from '@/lib/store';
 import { fetchPosts, type Post } from '@/lib/community';
@@ -29,11 +29,13 @@ export default function HomeScreen() {
   const { favorites, history } = useStore();
   const hero = featured();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [sports, setSports] = useState<SportMatch[]>([]);
   const [visits, setVisits] = useState<number | null>(null);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
     fetchPosts().then((p) => setPosts(p.slice(0, 5))).catch(() => setPosts([]));
+    fetchSports().then((items) => setSports(items.slice(0, 4))).catch(() => setSports([]));
     supabase.from('site_stats').select('visits').eq('id', 1).maybeSingle().then(({ data }) => {
       if (data) setVisits(Number((data as { visits: number }).visits));
     });
@@ -149,6 +151,33 @@ export default function HomeScreen() {
         </Section>
       </View>
 
+      {/* Sports en direct — aperçu de la section LiveNow du site */}
+      <View style={styles.section}>
+        <View style={styles.sportsHeading}>
+          <View style={styles.sportsTitleRow}>
+            <Ionicons name="trophy-outline" size={24} color={colors.primary} />
+            <Text style={styles.h2Big}>Sports en direct</Text>
+          </View>
+          <Text style={styles.body}>Retrouvez les rencontres et les prochains matchs.</Text>
+        </View>
+        {sports.length ? sports.map((match, index) => (
+          <View key={`${match.league}-${match.home}-${match.away}-${index}`} style={styles.matchCard}>
+            <Text style={styles.matchLeague}>{match.league}</Text>
+            <View style={styles.matchTeams}>
+              <Text style={styles.matchTeam} numberOfLines={1}>{match.home}</Text>
+              <Text style={styles.matchScore}>{match.homeScore != null && match.awayScore != null ? `${match.homeScore} – ${match.awayScore}` : 'VS'}</Text>
+              <Text style={styles.matchTeam} numberOfLines={1}>{match.away}</Text>
+            </View>
+            <Text style={styles.matchMeta}>{match.status} · {match.date} {match.time}</Text>
+          </View>
+        )) : (
+          <Text style={styles.empty}>Les rencontres seront affichées ici lorsqu’elles seront disponibles.</Text>
+        )}
+        <Pressable style={styles.outlineBtn} onPress={() => router.push('/sports')}>
+          <Text style={styles.secondaryText}>Voir tous les matchs  →</Text>
+        </Pressable>
+      </View>
+
       {/* Avis et discussions */}
       <View style={styles.section}>
         <Ionicons name="chatbubbles-outline" size={30} color={colors.primary} />
@@ -244,6 +273,14 @@ const styles = StyleSheet.create({
   postAuthor: { color: colors.mutedForeground, fontSize: 12, fontWeight: '600' },
   postTitle: { color: colors.foreground, fontWeight: '800', fontSize: 15 },
   postBody: { color: colors.foreground, lineHeight: 20 },
+  sportsHeading: { gap: 8, marginBottom: 4 },
+  sportsTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  matchCard: { backgroundColor: colors.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: colors.border, gap: 8 },
+  matchLeague: { color: colors.primary, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
+  matchTeams: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  matchTeam: { flex: 1, color: colors.foreground, fontSize: 14, fontWeight: '700' },
+  matchScore: { color: colors.foreground, fontSize: 15, fontWeight: '900' },
+  matchMeta: { color: colors.mutedForeground, fontSize: 12 },
   outlineBtn: { alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingVertical: 13, marginTop: 8 },
   visits: { color: colors.mutedForeground, textAlign: 'center', marginTop: 18, fontSize: 13 },
   visitsNum: { color: colors.foreground, fontWeight: '800' },
