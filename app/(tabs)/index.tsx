@@ -143,6 +143,29 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* Cartes cinéma : surprise et sélection du soir */}
+      <View style={styles.featureStack}>
+        <Pressable accessibilityRole="button" style={styles.surpriseCard} onPress={() => router.push('/catalogue/film')}>
+          <View style={styles.surpriseGlow} />
+          <View style={styles.featureCopy}>
+            <Text style={styles.featureEyebrow}>LA SÉLECTION ERËMĪA</Text>
+            <Text style={styles.featureTitle}>Surprends-moi ✨</Text>
+            <Text style={styles.featureBody}>Laisse le hasard choisir ta prochaine histoire.</Text>
+            <View style={styles.featureButton}><Text style={styles.featureButtonText}>LANCER LA SURPRISE</Text><Ionicons name="shuffle" size={17} color="#fff" /></View>
+          </View>
+          <View style={styles.dice}><Ionicons name="shuffle" size={42} color="#fff" /></View>
+        </Pressable>
+        <Pressable accessibilityRole="button" style={styles.tonightCard} onPress={() => router.push('/ce-soir')}>
+          <View style={styles.tonightArt}><Ionicons name="film" size={46} color="#F7C66A" /><Ionicons name="sparkles" size={19} color="#fff" /></View>
+          <View style={styles.tonightCopy}>
+            <Text style={styles.featureEyebrow}>TA PROCHAINE SOIRÉE</Text>
+            <Text style={styles.tonightTitle}>Que regarder ce soir ?</Text>
+            <Text style={styles.featureBody}>Des idées selon ton humeur et ton univers.</Text>
+            <Text style={styles.tonightLink}>DÉCOUVRIR  →</Text>
+          </View>
+        </Pressable>
+      </View>
+
       {/* Tendances et listes personnelles */}
       <View style={{ padding: 16, gap: 28 }}>
         <Section title="Tendances">
@@ -242,7 +265,22 @@ function Row({ data }: { data: Item[] }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
+  root: { flex: 1, backgroundColor: '#08090D' },
+  featureStack: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8, gap: 14 },
+  surpriseCard: { minHeight: 188, borderRadius: 22, borderWidth: 1, borderColor: '#57212D', backgroundColor: '#170D15', overflow: 'hidden', flexDirection: 'row', alignItems: 'center', padding: 18, gap: 8 },
+  surpriseGlow: { position: 'absolute', width: 210, height: 210, borderRadius: 105, right: 5, top: -10, backgroundColor: '#49101D', opacity: 0.6 },
+  featureCopy: { flex: 1, gap: 7, zIndex: 1 },
+  featureEyebrow: { color: '#FF5969', fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
+  featureTitle: { color: '#FFF8F8', fontSize: 24, lineHeight: 29, fontWeight: '900' },
+  featureBody: { color: '#D6CDD2', fontSize: 13, lineHeight: 19 },
+  featureButton: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 999, borderWidth: 1, borderColor: '#F04455', backgroundColor: '#A9162B', paddingHorizontal: 13, paddingVertical: 9, marginTop: 5 },
+  featureButtonText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
+  dice: { width: 72, height: 72, borderRadius: 18, borderWidth: 1, borderColor: '#FF6674', backgroundColor: '#8D142A', alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-8deg' }], shadowColor: '#FF263F', shadowOpacity: 0.6, shadowRadius: 18, elevation: 10 },
+  tonightCard: { minHeight: 150, borderRadius: 20, borderWidth: 1, borderColor: '#34303B', backgroundColor: '#15141C', overflow: 'hidden', flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
+  tonightArt: { width: 94, height: 112, borderRadius: 16, backgroundColor: '#29202A', alignItems: 'center', justifyContent: 'center', gap: 5 },
+  tonightCopy: { flex: 1, gap: 6 },
+  tonightTitle: { color: '#FFF', fontSize: 20, lineHeight: 24, fontWeight: '900' },
+  tonightLink: { alignSelf: 'flex-start', color: '#FFF', fontSize: 11, fontWeight: '900', backgroundColor: '#B9192F', borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8, marginTop: 4 },
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 48, paddingBottom: 8 },
   iconBtn: { backgroundColor: colors.muted, borderRadius: 999, padding: 9 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
