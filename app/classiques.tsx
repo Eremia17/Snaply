@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   playerSubtitle: { color: colors.mutedForeground, fontSize: 12, lineHeight: 17 },
   closeButton: { padding: 8, borderRadius: 999, backgroundColor: colors.card },
   webview: { flex: 1, backgroundColor: '#000' },
-  webLoading: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  webLoading: { ...StyleSheet.absoluteFill, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', gap: 12 },
   playerFooter: { padding: 14, gap: 10 },
   archiveButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: 999, backgroundColor: colors.primary },
   archiveButtonText: { color: '#fff', fontWeight: '800' },
