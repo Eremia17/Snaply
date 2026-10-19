@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -121,6 +121,18 @@ export default function TitreScreen() {
 
   const meta = [detail?.year ?? item.year, detail?.runtime].filter(Boolean).join(' · ');
 
+  const playbackUrl = item.kind === 'film'
+    ? `https://vidsrc.to/embed/movie/${encodeURIComponent(item.id)}`
+    : `https://vidsrc.to/embed/tv/${encodeURIComponent(item.id)}/${season}/${episode}`;
+
+  const openPlaybackSource = async () => {
+    try {
+      await Linking.openURL(playbackUrl);
+    } catch {
+      Alert.alert('Ouverture impossible', 'Le téléphone ne peut pas ouvrir cette source vidéo pour le moment.');
+    }
+  };
+
   return (
     <>
       <Stack.Screen
@@ -138,8 +150,8 @@ export default function TitreScreen() {
           <View style={styles.backdropShade} />
         </View>
         <View style={styles.posterWrap}>
-          {item.poster ? (
-            <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
+          {(detail?.poster || item.poster) ? (
+            <Image source={{ uri: detail?.poster || item.poster || undefined }} style={styles.poster} resizeMode="cover" />
           ) : (
             <View style={[styles.poster, styles.posterEmpty]}>
               <Text style={styles.posterEmptyText}>{item.title}</Text>
@@ -148,7 +160,7 @@ export default function TitreScreen() {
         </View>
 
         <Text style={styles.kind}>{KIND_LABEL[item.kind]}</Text>
-        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.title}>{detail?.title || item.title}</Text>
 
         <View style={styles.metaRow}>
           {detail && detail.rating > 0 ? (
@@ -232,17 +244,21 @@ export default function TitreScreen() {
                 </View>
               </View>
             ) : null}
-            <Pressable style={styles.playerToggle} onPress={() => setPlayerOpen((v) => !v)}>
-              <Ionicons name={playerOpen ? 'close-circle-outline' : 'play-circle-outline'} size={20} color="#fff" />
-              <Text style={styles.playerToggleText}>{playerOpen ? 'Fermer le lecteur' : 'Lancer le lecteur vidéo'}</Text>
-            </Pressable>
+            <View style={styles.playerActions}>
+              <Pressable style={[styles.playerToggle, styles.playerActionButton]} onPress={() => setPlayerOpen((v) => !v)}>
+                <Ionicons name={playerOpen ? 'close-circle-outline' : 'play-circle-outline'} size={20} color="#fff" />
+                <Text style={styles.playerToggleText}>{playerOpen ? 'Fermer le lecteur' : 'Lire ici'}</Text>
+              </Pressable>
+              <Pressable style={[styles.playerToggle, styles.playerExternalButton]} onPress={openPlaybackSource}>
+                <Ionicons name="open-outline" size={18} color={colors.foreground} />
+                <Text style={styles.playerExternalText}>Ouvrir la source</Text>
+              </Pressable>
+            </View>
             {playerOpen ? (
               <View style={styles.playerFrame}>
                 <WebView
                   key={`${item.kind}-${item.id}-${season}-${episode}-${language}`}
-                  source={{ uri: item.kind === 'film'
-                    ? `https://vidsrc.to/embed/movie/${encodeURIComponent(item.id)}`
-                    : `https://vidsrc.to/embed/tv/${encodeURIComponent(item.id)}/${season}/${episode}` }}
+                  source={{ uri: playbackUrl }}
                   style={styles.playerWebView}
                   javaScriptEnabled
                   domStorageEnabled
@@ -336,8 +352,12 @@ const styles = StyleSheet.create({
   stepLabel: { color: colors.mutedForeground, fontSize: 12 },
   stepButton: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 999, backgroundColor: colors.muted },
   stepValue: { color: colors.foreground, minWidth: 16, textAlign: 'center', fontWeight: '800' },
+  playerActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  playerActionButton: { flex: 1, minWidth: 140 },
+  playerExternalButton: { flex: 1, minWidth: 140, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   playerToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 13, paddingHorizontal: 16 },
   playerToggleText: { color: '#fff', fontWeight: '800' },
+  playerExternalText: { color: colors.foreground, fontWeight: '800' },
   playerFrame: { width: '100%', height: 240, overflow: 'hidden', borderRadius: 14, backgroundColor: '#000', borderWidth: 1, borderColor: colors.border },
   playerWebView: { flex: 1, backgroundColor: '#000' },
   playerLoading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#111' },
