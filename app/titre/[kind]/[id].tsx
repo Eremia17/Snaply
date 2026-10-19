@@ -45,6 +45,10 @@ export default function TitreScreen() {
 
   useEffect(() => {
     let active = true;
+    setPlayerOpen(false);
+    setSeason(1);
+    setEpisode(1);
+    setLanguage('fr');
     const cached = getDetail(item.kind, item.id);
     setRemote(cached ?? null);
     if (!cached) {
@@ -67,10 +71,16 @@ export default function TitreScreen() {
 
   const [seen, setSeen] = useState(false);
   useEffect(() => {
+    let active = true;
+    setSeen(false);
     AsyncStorage.getItem('mv:seen').then((v) => {
+      if (!active) return;
       const all = v ? JSON.parse(v) : {};
       setSeen(!!all[`${item.kind}:${item.id}`]);
+    }).catch(() => {
+      if (active) setSeen(false);
     });
+    return () => { active = false; };
   }, [item.kind, item.id]);
 
   const toggleSeen = async () => {
