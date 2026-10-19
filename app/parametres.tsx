@@ -39,7 +39,7 @@ export default function ParametresScreen() {
 
         <Section icon="moon-outline" title="Apparence">
           <Segment options={['Sombre', 'Clair', 'Auto'] as const} value={prefs.apparence} onChange={(v) => setPref('apparence', v)} />
-          <Text style={styles.hint}>Fermez et rouvrez l’application pour appliquer le nouveau thème.</Text>
+          <Text style={styles.hint}>Le thème est appliqué immédiatement aux éléments qui prennent en charge la palette.</Text>
         </Section>
 
         <Section icon="speedometer-outline" title="Performance & contrôle">
@@ -49,7 +49,7 @@ export default function ParametresScreen() {
 
         <Section icon="color-palette-outline" title="Couleur du thème">
           <Segment options={['Rouge', 'Bleu', 'Violet', 'Vert', 'Orange'] as const} value={prefs.theme} onChange={(v) => setPref('theme', v)} />
-          <Text style={styles.hint}>Fermez et rouvrez l’application pour appliquer la nouvelle couleur.</Text>
+          <Text style={styles.hint}>La couleur d’accent est appliquée immédiatement aux éléments compatibles.</Text>
         </Section>
 
         <Section icon="accessibility-outline" title="Accessibilité">
@@ -151,16 +151,16 @@ const styles = StyleSheet.create({
   statTitle: { color: colors.foreground, fontSize: 16, fontWeight: '700', marginTop: 6 },
   statSub: { color: colors.mutedForeground },
   sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionTitle: { color: colors.mutedForeground, letterSpacing: 2, fontSize: 12, fontWeight: '600' },
-  segment: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: 14, padding: 4, borderWidth: 1, borderColor: colors.border },
-  segItem: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 10 },
-  segItemOn: { backgroundColor: colors.muted },
+  sectionTitle: { color: colors.primary, letterSpacing: 1.5, fontSize: 11, fontWeight: '900', fontFamily: 'sans-serif-medium', includeFontPadding: false },
+  segment: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: 14, padding: 4, borderWidth: 1, borderColor: colors.border, gap: 3 },
+  segItem: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5, paddingVertical: 9, borderRadius: 10 },
+  segItemOn: { backgroundColor: colors.primary },
   segText: { color: colors.mutedForeground, fontWeight: '600' },
-  segTextOn: { color: colors.foreground },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  segTextOn: { color: '#FFFFFF', fontWeight: '800' },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   toggleLabel: { color: colors.foreground, fontSize: 15 },
   hint: { color: colors.mutedForeground, fontSize: 12, marginTop: 2, lineHeight: 17 },
-  linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
+  linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 14, borderRadius: 13, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   label: { color: colors.mutedForeground, fontSize: 13 },
   value: { color: colors.foreground, fontSize: 16, fontWeight: '600' },
   field: { backgroundColor: colors.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.border },
