@@ -10,6 +10,7 @@ import { KIND_LABEL, fetchDetail, fetchSeriesSeasons, getDetail, useCatalog, typ
 import type { Item, Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
 import { FicheExtras } from '@/components/FicheExtras';
+import { FicheAssistant } from '@/components/FicheAssistant';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -322,7 +323,8 @@ export default function TitreScreen() {
           </View>
         ) : null}
 
-        <FicheExtras kind={item.kind} id={item.id} poster={item.poster} />
+        <FicheExtras kind={item.kind} id={item.id} poster={item.poster} title={item.title} />
+        <FicheAssistant title={item.title} kind={item.kind} year={detail?.year ?? item.year} synopsis={detail?.synopsis ?? ''} />
 
         {!detail ? <Text style={styles.note}>Chargement des informations…</Text> : null}
       </ScrollView>

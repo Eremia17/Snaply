@@ -44,7 +44,7 @@ Cette clé doit rester côté serveur : ne la mettez pas dans `EXPO_PUBLIC_...`,
 
 ## 4. Vérifier le déploiement des fonctions Supabase
 
-Le dépôt contient les fonctions Edge `catalog` et `browse`. Le workflow GitHub `.github/workflows/deploy-supabase-browse.yml` peut les déployer automatiquement lorsqu'un fichier de ces fonctions ou `supabase/config.toml` change.
+Le dépôt contient les fonctions Edge `catalog`, `browse` et `gemini`. Le workflow GitHub `.github/workflows/deploy-supabase-browse.yml` peut les déployer automatiquement lorsqu'un fichier de ces fonctions ou `supabase/config.toml` change.
 
 Pour activer ce déploiement automatique, ouvrez le dépôt GitHub :
 `Settings → Secrets and variables → Actions → New repository secret`
@@ -52,9 +52,20 @@ et ajoutez ces deux secrets avec les noms exacts :
 - `SUPABASE_ACCESS_TOKEN` : votre token d'accès personnel Supabase ;
 - `SUPABASE_PROJECT_ID` : la référence du projet Supabase (Project Ref).
 
-Ces secrets restent dans les paramètres privés du dépôt ; ne les ajoutez jamais au code, à un fichier de configuration commité ou à un message de chat. Le workflow vérifie leur présence avant de déployer `catalog` et `browse`. Après le déploiement, vérifiez l'exécution dans l'onglet **Actions** de GitHub.
+Ces secrets restent dans les paramètres privés du dépôt ; ne les ajoutez jamais au code, à un fichier de configuration commité ou à un message de chat. Le workflow vérifie leur présence avant de déployer `catalog`, `browse` et `gemini`. Après le déploiement, vérifiez l'exécution dans l'onglet **Actions** de GitHub.
 
 Si vous ne souhaitez pas utiliser ce workflow, les fonctions peuvent aussi être déployées avec Supabase CLI depuis un environnement compatible, après connexion et liaison au bon projet.
+
+## 4 bis. Configurer l'assistant IA et le résumé des critiques
+
+L'assistant de fiche et le résumé automatique des critiques utilisent la fonction Supabase `gemini`.
+
+1. Dans Google AI Studio, créez une clé API Gemini.
+2. Dans Supabase, ouvrez la gestion des secrets des Edge Functions.
+3. Ajoutez le secret nommé exactement `GEMINI_API_KEY` et collez la clé comme valeur.
+4. Vérifiez que le déploiement de la fonction `gemini` s'est terminé avec succès dans GitHub Actions.
+
+La clé Gemini doit rester dans les secrets serveur Supabase. Ne la mettez jamais dans `.env`, dans un fichier de l'application, dans un secret `EXPO_PUBLIC_...` ou dans un commit. Sans ce secret, le catalogue et les autres écrans restent utilisables, mais l'assistant et le résumé IA ne seront pas disponibles.
 
 ## 5. Autres sources de données
 
