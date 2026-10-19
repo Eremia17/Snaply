@@ -165,8 +165,6 @@ async function animeExtras(id: string) {
     rating: Math.round((x.vote_average ?? 0) * 10) / 10,
     synopsis: x.overview ?? "",
   }));
-  const constellationItems = related.length ? related : recommendations;
-
   return {
     trailer,
     cast,
@@ -342,7 +340,7 @@ async function list(kind: string, page: number, filters: BrowseFilters = {}) {
   if (filters.minRating) params['vote_average.gte'] = String(filters.minRating);
   if (kind === 'film') {
     const g = FILM_GENRES[filters.genre ?? ''];
-    if (filters.sort === 'recent') params.primary_release_date.lte = new Date().toISOString().slice(0, 10);
+    if (filters.sort === 'recent') params['primary_release_date.lte'] = new Date().toISOString().slice(0, 10);
     if (filters.year) params.primary_release_year = filters.year;
     if (filters.short) params['with_runtime.lte'] = '104';
     if (g?.genre) params.with_genres = String(g.genre);
