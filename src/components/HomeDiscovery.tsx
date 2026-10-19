@@ -49,11 +49,22 @@ export function HomeDiscovery({ cardWidth, economyMode }: { cardWidth: number; e
     if (economyMode || prefs.economiseur || !isSupabaseConfigured) {
       const cached: Record<string, Detail[]> = {};
       for (const feed of FEEDS) {
-        const all = listByKind(feed.kind);
+        const all = listByKind(feed.kind).slice().sort((a, b) => String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating);
         const genre = feed.filters?.genre;
         cached[feed.key] = all.filter((item) => {
           if (!item.poster) return false;
-          if (genre && !item.genres?.some((g) => g.toLowerCase().includes(String(genre).toLowerCase().split(' ')[0]))) return false;
+          if (genre) {
+            const normalized = String(genre).toLowerCase();
+            const aliases: Record<string, string[]> = {
+              'horreur': ['horror', 'horreur'], 'science-fiction': ['science-fiction', 'sci-fi', 'fantastique'],
+              'romance': ['romance', 'romantique'], 'action & aventure': ['action', 'aventure'],
+              'shonen': ['shonen', 'shounen'], 'isekai / réincarnation': ['isekai', 'réincarnation'],
+              'tranche de vie': ['tranche de vie', 'slice of life'], 'super-héros': ['super-héros', 'superhero'],
+              'documentaire': ['documentaire', 'documentary'], 'comédie': ['comédie', 'comedy'],
+            };
+            const terms = aliases[normalized] ?? [normalized.split(' ')[0]];
+            if (!item.genres?.some((g) => terms.some((term) => g.toLowerCase().includes(term)))) return false;
+          }
           if (feed.filters?.originalLanguage === 'mg') return /malagasy|malgache/i.test(item.title + ' ' + (item.synopsis ?? ''));
           if (feed.filters?.originalLanguage === 'fr') return true;
           if (feed.filters?.family) return !item.genres?.some((g) => /horror|horreur|crime|thriller/i.test(g));
@@ -71,7 +82,11 @@ export function HomeDiscovery({ cardWidth, economyMode }: { cardWidth: number; e
         const result = await Promise.all(batch.map(async (feed) => {
           try {
             const response = await browseKind(feed.kind, 1, feed.filters);
-            const items = response.items.filter((item) => !!item.poster);
+            const unique = new Map<string, Detail>();
+            for (const item of response.items) {
+              if (item.poster && !unique.has(`${item.kind}:${item.id}`)) unique.set(`${item.kind}:${item.id}`, item);
+            }
+            const items = [...unique.values()].sort((a, b) => String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating);
             return [feed.key, items.slice(0, 12)] as const;
           } catch {
             return [feed.key, [] as Detail[]] as const;
@@ -83,7 +98,11 @@ export function HomeDiscovery({ cardWidth, economyMode }: { cardWidth: number; e
           for (const [key, items] of result) {
             // Une panne sur une source n’efface pas le contenu déjà en cache.
             if (items.length) next[key] = items;
-            else if (!next[key]) next[key] = listByKind(FEEDS.find((feed) => feed.key === key)!.kind).filter((item) => !!item.poster).slice(0, 8);
+            else if (!next[key]) {
+              const feed = FEEDS.find((entry) => entry.key === key)!;
+              const local = listByKind(feed.kind).filter((item) => !!item.poster);
+              next[key] = local.slice().sort((a, b) => String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating).slice(0, 12);
+            }
           }
           return next;
         });
