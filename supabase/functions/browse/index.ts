@@ -458,6 +458,19 @@ async function sports() {
   return { items };
 }
 
+async function seriesSeasons(id: string) {
+  if (!/^\d+$/.test(id)) throw new Error("Identifiant de série invalide.");
+  const data = await tmdb(`/tv/${id}`);
+  const seasons = (data.seasons ?? [])
+    .filter((s: any) => Number(s.season_number) > 0 && Number(s.episode_count) > 0)
+    .map((s: any) => ({
+      number: Number(s.season_number),
+      name: String(s.name ?? `Saison ${s.season_number}`),
+      episodeCount: Number(s.episode_count),
+    }));
+  return { seasons };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
@@ -466,6 +479,7 @@ Deno.serve(async (req) => {
     if (body.action === "chapters") return json(await chapters(String(body.id ?? ""), String(body.title ?? "")));
     if (body.action === "pages") return json(await pages(String(body.chapterId ?? "")));
     if (body.action === "sports") return json(await sports());
+    if (body.action === "seasons") return json(await seriesSeasons(String(body.id ?? "")));
     if (body.action === "extras") return json(await extras(kind, String(body.id ?? "")));
     const page = Math.max(1, Number(body.page ?? 1));
     const filters: BrowseFilters = {
