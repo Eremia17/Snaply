@@ -1,4 +1,9 @@
 project_id = "eremia"
 
+# Ces fonctions ne manipulent que des données publiques de catalogue.
+# L'authentification utilisateur, si nécessaire, doit être vérifiée dans la logique des fonctions sensibles.
 [functions.browse]
+verify_jwt = false
+
+[functions.catalog]
 verify_jwt = false
