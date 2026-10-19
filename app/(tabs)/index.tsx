@@ -48,16 +48,6 @@ export default function HomeScreen() {
   }, [prefs.animations, heroItems.length]);
 
   useEffect(() => {
-    if (prefs.animations) { dicePulse.setValue(1); return; }
-    const pulse = Animated.loop(Animated.sequence([
-      Animated.timing(dicePulse, { toValue: 1.06, duration: 950, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      Animated.timing(dicePulse, { toValue: 1, duration: 950, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-    ]));
-    pulse.start();
-    return () => pulse.stop();
-  }, [dicePulse, prefs.animations]);
-
-  useEffect(() => {
     if (!isSupabaseConfigured || prefs.economiseur) { setMalagasyFilms([]); return; }
     let active = true;
     browseKind('film', 1, { originalLanguage: 'mg', sort: 'rating' })
