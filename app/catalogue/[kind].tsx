@@ -39,6 +39,7 @@ export default function CatalogueScreen() {
   const [sort, setSort] = useState<'popularity' | 'rating' | 'recent'>('popularity');
   const [yearOptionsOpen, setYearOptionsOpen] = useState(false);
   const [ratingOptionsOpen, setRatingOptionsOpen] = useState(false);
+  const [genresOpen, setGenresOpen] = useState(false);
   const requestId = useRef(0);
   const surpriseScale = useRef(new Animated.Value(1)).current;
 
@@ -74,6 +75,7 @@ export default function CatalogueScreen() {
     setSort('popularity');
     setYearOptionsOpen(false);
     setRatingOptionsOpen(false);
+    setGenresOpen(false);
   }, [kind]);
 
   useEffect(() => {
@@ -123,21 +125,30 @@ export default function CatalogueScreen() {
         </ScrollView>
       </View>
 
-      <View style={styles.filterSection}>
-        <Text style={styles.filterHeading}>EXPLORER PAR GENRE</Text>
-        <View style={styles.genreWrap}>
-          <Chip label="Tous les genres" on={genre === null} onPress={() => setGenre(null)} />
-          {genres.map((g) => <Chip key={g} label={g} on={genre === g} onPress={() => setGenre(g)} />)}
+      <View style={styles.compactFilterPanel}>
+        <View style={styles.compactFilterTop}>
+          <Pressable
+            style={[styles.filterToggle, (genresOpen || genre !== null) && styles.filterSelectOn]}
+            onPress={() => setGenresOpen((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel="Afficher ou masquer les genres"
+          >
+            <Ionicons name="options-outline" size={15} color={colors.foreground} />
+            <Text numberOfLines={1} style={styles.filterSelectText}>{genre ?? 'Genres'}</Text>
+            <Ionicons name={genresOpen ? 'chevron-up' : 'chevron-down'} size={13} color={colors.mutedForeground} />
+          </Pressable>
+          <View style={styles.sortInline}>
+            <Chip label="Pop." on={sort === 'popularity'} onPress={() => setSort('popularity')} />
+            <Chip label="Notes" on={sort === 'rating'} onPress={() => setSort('rating')} />
+            <Chip label="Récents" on={sort === 'recent'} onPress={() => setSort('recent')} />
+          </View>
         </View>
-      </View>
-
-      <View style={styles.filterSection}>
-        <Text style={styles.filterHeading}>TRIER PAR</Text>
-        <View style={styles.sortWrap}>
-          <Chip label="Popularité" on={sort === 'popularity'} onPress={() => setSort('popularity')} />
-          <Chip label="Mieux notés" on={sort === 'rating'} onPress={() => setSort('rating')} />
-          <Chip label="Récents" on={sort === 'recent'} onPress={() => setSort('recent')} />
-        </View>
+        {genresOpen ? (
+          <View style={styles.genreWrap}>
+            <Chip label="Tous les genres" on={genre === null} onPress={() => setGenre(null)} />
+            {genres.map((g) => <Chip key={g} label={g} on={genre === g} onPress={() => setGenre(g)} />)}
+          </View>
+        ) : null}
       </View>
       <View style={styles.filtersBar}>
         <Pressable style={[styles.filterSelect, year !== null && styles.filterSelectOn]} onPress={() => { setYearOptionsOpen((v) => !v); setRatingOptionsOpen(false); }}>
@@ -207,17 +218,18 @@ const styles = StyleSheet.create({
   hscroll: { flexGrow: 0 },
   catalogTabsWrap: { marginTop: 6, marginBottom: 4 },
   catalogTabs: { paddingHorizontal: 16, paddingVertical: 7, gap: 8, alignItems: 'center' },
-  filterSection: { paddingHorizontal: 16, paddingTop: 7, paddingBottom: 5, gap: 7 },
-  filterHeading: { color: '#8D8F9A', fontSize: 9, fontWeight: '900', letterSpacing: 1.7 },
-  genreWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, alignItems: 'center' },
-  sortWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, alignItems: 'center' },
+  compactFilterPanel: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 3, gap: 8 },
+  compactFilterTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  filterToggle: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 34, maxWidth: 124, borderRadius: 999, borderWidth: 1, borderColor: '#353741', backgroundColor: '#191A20', paddingHorizontal: 10, flexShrink: 0 },
+  sortInline: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end', gap: 5 },
+  genreWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, alignItems: 'center', paddingTop: 3 },
   pill: { backgroundColor: '#191A20', borderRadius: 999, paddingHorizontal: 13, paddingVertical: 9, minHeight: 38, justifyContent: 'center', alignItems: 'center', flexShrink: 0, maxWidth: 190 },
   pillOn: { backgroundColor: colors.primary },
   pillText: { color: '#E1E3E8', fontSize: 12, fontWeight: '800', includeFontPadding: false },
   pillTextOn: { color: '#FFFFFF' },
-  chip: { borderRadius: 999, borderWidth: 1, borderColor: '#353741', paddingHorizontal: 11, paddingVertical: 7, minHeight: 31, justifyContent: 'center', alignSelf: 'flex-start' },
+  chip: { borderRadius: 999, borderWidth: 1, borderColor: '#353741', paddingHorizontal: 8, paddingVertical: 6, minHeight: 29, justifyContent: 'center', alignSelf: 'flex-start' },
   chipOn: { borderColor: colors.primary, backgroundColor: '#211318' },
-  chipText: { color: '#D2D4DB', fontSize: 12, fontWeight: '600', includeFontPadding: false },
+  chipText: { color: '#D2D4DB', fontSize: 10, fontWeight: '600', includeFontPadding: false },
   chipTextOn: { color: '#FFFFFF', fontWeight: '800' },
   filtersBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
   filterSelect: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 11 },
