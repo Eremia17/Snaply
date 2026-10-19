@@ -104,9 +104,10 @@ export async function browseKind(
   page: number,
   filters: { genre?: string; year?: string; minRating?: number; family?: boolean } = {},
 ): Promise<{ items: Detail[]; hasMore: boolean }> {
-  if (!isSupabaseConfigured) return { items: [], hasMore: false };
+  if (!isSupabaseConfigured) throw new Error('Supabase n’est pas configuré.');
   const { data, error } = await supabase.functions.invoke('browse', { body: { kind, page, ...filters } });
-  if (error || !data) return { items: [], hasMore: false };
+  if (error) throw new Error(error.message || 'Impossible de charger le catalogue.');
+  if (!data || data.error) throw new Error(data?.error || 'Le service du catalogue ne répond pas.');
   return { items: (data.items ?? []) as Detail[], hasMore: !!data.hasMore };
 }
 
