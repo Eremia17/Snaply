@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   liveSportsTeam: { flex: 1, color: '#FFF', fontSize: 12, fontWeight: '800', textAlign: 'center' },
   liveSportsVs: { color: '#70F0C0', fontSize: 12, fontWeight: '900' },
   liveSportsMeta: { color: '#A9B2C3', fontSize: 9, fontWeight: '800' },
-  heroFallback: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: '#151820' },
+  heroFallback: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: '#151820' },
   heroFallbackText: { color: '#70F0C0', fontSize: 11, fontWeight: '900', letterSpacing: 2 },
   spotlightBanner: { height: 258, marginHorizontal: 12, marginTop: 10, marginBottom: 12, borderRadius: 20, overflow: 'hidden', backgroundColor: '#19151F', justifyContent: 'space-between' },
   spotlightShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(5,5,10,0.40)' },
