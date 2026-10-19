@@ -39,6 +39,8 @@ export default function HomeScreen() {
   const [sports, setSports] = useState<SportMatch[]>([]);
   const [malagasyFilms, setMalagasyFilms] = useState<Detail[]>([]);
   const [spotlights, setSpotlights] = useState<Detail[]>([]);
+  const [freshPicks, setFreshPicks] = useState<Detail[]>([]);
+  const [ratedPicks, setRatedPicks] = useState<Detail[]>([]);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [visits, setVisits] = useState<number | null>(null);
   const [query, setQuery] = useState('');
@@ -61,6 +63,10 @@ export default function HomeScreen() {
     ]).then((results) => {
       if (!active) return;
       const [filmRecent, filmRated, serieRecent, serieRated, mangaRecent, mangaRated, westRecent, westRated] = results;
+      const fresh = [filmRecent, serieRecent, mangaRecent, westRecent].flatMap((result) => result?.items ?? []);
+      const rated = [filmRated, serieRated, mangaRated, westRated].flatMap((result) => result?.items ?? []);
+      setFreshPicks(Array.from(new Map(fresh.filter((item) => !!(item.backdrop || item.poster)).map((item) => [item.kind + ':' + item.id, item])).values()).slice(0, 20));
+      setRatedPicks(Array.from(new Map(rated.filter((item) => !!(item.backdrop || item.poster)).map((item) => [item.kind + ':' + item.id, item])).values()).sort((a, b) => b.rating - a.rating).slice(0, 20));
       const candidates = [
         ...(filmRecent?.items ?? []).slice(0, 3), ...(filmRated?.items ?? []).slice(0, 3),
         ...(mangaRecent?.items ?? []).slice(0, 3), ...(mangaRated?.items ?? []).slice(0, 3),
@@ -179,6 +185,9 @@ export default function HomeScreen() {
           </Pressable>
         );
       })() : null}
+
+      {freshPicks.length > 0 ? <View style={styles.catalogRows}><Section title="Tout juste sorti"><Row data={freshPicks} cardWidth={cardWidth} /></Section></View> : null}
+      {ratedPicks.length > 0 ? <View style={styles.catalogRows}><Section title="Les mieux notés"><Row data={ratedPicks} cardWidth={cardWidth} /></Section></View> : null}
 
       {/* Héros */}
       <View style={styles.hero}>
