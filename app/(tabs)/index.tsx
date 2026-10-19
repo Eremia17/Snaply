@@ -13,7 +13,7 @@ import { colors } from '@/lib/theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const CARD_W = 140;
+const CARD_W = 112;
 
 // Les quatre univers, comme sur le site
 const UNIVERSES: { kind: Kind; title: string; copy: string; icon: IconName }[] = [
@@ -174,7 +174,7 @@ export default function HomeScreen() {
       </Modal>
 
       {/* Tendances et listes personnelles */}
-      <View style={{ padding: 16, gap: 28 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8, gap: 18 }}>
         <Section title="Tendances">
           <Row data={trending()} />
         </Section>
@@ -275,7 +275,9 @@ function Row({ data }: { data: Item[] }) {
       data={data}
       keyExtractor={(i) => `${i.kind}:${i.id}`}
       showsHorizontalScrollIndicator={false}
-      renderItem={({ item }) => <PosterCard item={item} width={CARD_W} />}
+      removeClippedSubviews={false}
+      contentContainerStyle={{ paddingRight: 4 }}
+      renderItem={({ item }) => <PosterCard item={item} width={CARD_W} />
     />
   );
 }
@@ -294,17 +296,17 @@ const styles = StyleSheet.create({
   revealButtonText: { color: '#FFF', fontWeight: '900', fontSize: 12, letterSpacing: 0.5 },
   revealAgain: { padding: 8 },
   revealAgainText: { color: '#F36A7B', fontWeight: '700' },
-  surpriseCard: { minHeight: 188, borderRadius: 22, borderWidth: 1, borderColor: '#57212D', backgroundColor: '#170D15', overflow: 'hidden', flexDirection: 'row', alignItems: 'center', padding: 18, gap: 8 },
+  surpriseCard: { minHeight: 158, borderRadius: 22, borderWidth: 1, borderColor: '#57212D', backgroundColor: '#170D15', overflow: 'hidden', flexDirection: 'row', alignItems: 'center', padding: 18, gap: 8 },
   surpriseGlow: { position: 'absolute', width: 210, height: 210, borderRadius: 105, right: 5, top: -10, backgroundColor: '#49101D', opacity: 0.6 },
   featureCopy: { flex: 1, gap: 7, zIndex: 1 },
   featureEyebrow: { color: '#FF5969', fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
-  featureTitle: { color: '#FFF8F8', fontSize: 24, lineHeight: 29, fontWeight: '900' },
+  featureTitle: { color: '#FFF8F8', fontSize: 21, lineHeight: 25, fontWeight: '900' },
   featureBody: { color: '#D6CDD2', fontSize: 13, lineHeight: 19 },
   featureButton: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 999, borderWidth: 1, borderColor: '#F04455', backgroundColor: '#A9162B', paddingHorizontal: 13, paddingVertical: 9, marginTop: 5 },
   featureButtonText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
   dice: { width: 72, height: 72, borderRadius: 18, borderWidth: 1, borderColor: '#FF6674', backgroundColor: '#8D142A', alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-8deg' }], shadowColor: '#FF263F', shadowOpacity: 0.6, shadowRadius: 18, elevation: 10 },
-  tonightCard: { minHeight: 150, borderRadius: 20, borderWidth: 1, borderColor: '#34303B', backgroundColor: '#15141C', overflow: 'hidden', flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
-  tonightArt: { width: 94, height: 112, borderRadius: 16, backgroundColor: '#29202A', alignItems: 'center', justifyContent: 'center', gap: 5 },
+  tonightCard: { minHeight: 126, borderRadius: 20, borderWidth: 1, borderColor: '#34303B', backgroundColor: '#15141C', overflow: 'hidden', flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
+  tonightArt: { width: 72, height: 88, borderRadius: 16, backgroundColor: '#29202A', alignItems: 'center', justifyContent: 'center', gap: 5 },
   tonightCopy: { flex: 1, gap: 6 },
   tonightTitle: { color: '#FFF', fontSize: 20, lineHeight: 24, fontWeight: '900' },
   tonightLink: { alignSelf: 'flex-start', color: '#FFF', fontSize: 11, fontWeight: '900', backgroundColor: '#B9192F', borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8, marginTop: 4 },
@@ -319,7 +321,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border,
   },
   searchInput: { flex: 1, color: colors.foreground, paddingVertical: 12, fontSize: 15 },
-  hero: { height: 330, justifyContent: 'flex-end', overflow: 'hidden', backgroundColor: colors.card, borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
+  hero: { height: 270, justifyContent: 'flex-end', overflow: 'hidden', backgroundColor: colors.card, borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
   heroShadeA: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,15,19,0.6)' },
   heroShadeB: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,15,19,0.35)' },
   heroContent: { padding: 18, gap: 9 },
