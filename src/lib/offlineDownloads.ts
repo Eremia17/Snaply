@@ -66,7 +66,7 @@ export async function downloadAuthorizedVideo(
 
   await ensureDirectory();
   const id = safeFileName(input.id);
-  const extension = pathname.match(/\\.(mp4|m4v|mov)$/)?.[1] ?? 'mp4';
+  const extension = pathname.match(/\.(mp4|m4v|mov)$/)?.[1] ?? 'mp4';
   const destination = `${OFFLINE_DIR}${id}-${safeFileName(input.title)}.${extension}`;
   const task = FileSystem.createDownloadResumable(
     input.url,
