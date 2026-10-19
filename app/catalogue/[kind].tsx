@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
 import { browseKind, type Detail } from '@/lib/catalog';
 import { openTitle } from '@/lib/navigation';
-import { isFamilySafe, usePrefs } from '@/lib/prefs';
+import { usePrefs } from '@/lib/prefs';
 import type { Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
 
