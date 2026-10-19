@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import { useStore } from '@/lib/store';
 import { addToList, fetchLists, type UserList } from '@/lib/lists';
-import { KIND_LABEL, fetchDetail, fetchSeriesEpisodes, fetchSeriesMetadata, getDetail, useCatalog, type Detail, type SeriesEpisode, type SeriesSeason } from '@/lib/catalog';
+import { KIND_LABEL, fetchDetail, fetchFilmParts, fetchSeriesEpisodes, fetchSeriesMetadata, getDetail, useCatalog, type Detail, type FilmPart, type SeriesEpisode, type SeriesSeason } from '@/lib/catalog';
 import type { Item, Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
 import { FicheExtras } from '@/components/FicheExtras';
@@ -46,6 +46,10 @@ export default function TitreScreen() {
   const [episodesLoading, setEpisodesLoading] = useState(false);
   const [seriesSourceId, setSeriesSourceId] = useState<string | null>(null);
   const [seasonUnavailable, setSeasonUnavailable] = useState(false);
+  const [filmParts, setFilmParts] = useState<FilmPart[]>([]);
+  const [filmCollection, setFilmCollection] = useState<string | null>(null);
+  const [filmPartsLoading, setFilmPartsLoading] = useState(false);
+  const [selectedFilmId, setSelectedFilmId] = useState(item.id);
 
   useEffect(() => {
     pushHistory(item);
@@ -59,6 +63,9 @@ export default function TitreScreen() {
     setEpisodes([]);
     setSeriesSourceId(null);
     setSeasonUnavailable(false);
+    setFilmParts([]);
+    setFilmCollection(null);
+    setSelectedFilmId(item.id);
     setSeason(1);
     setEpisode(1);
     setLanguage('fr');
@@ -79,6 +86,24 @@ export default function TitreScreen() {
     });
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.kind, item.id]);
+
+  useEffect(() => {
+    let active = true;
+    setFilmParts([]);
+    setFilmCollection(null);
+    setSelectedFilmId(item.id);
+    if (item.kind !== 'film') return () => { active = false; };
+    setFilmPartsLoading(true);
+    fetchFilmParts(item.id).then((result) => {
+      if (!active) return;
+      setFilmParts(result.parts);
+      setFilmCollection(result.collection);
+      setSelectedFilmId(result.parts.some((part) => part.id === item.id) ? item.id : result.parts[0]?.id ?? item.id);
+    }).catch(() => {
+      if (active) { setFilmParts([]); setFilmCollection(null); }
+    }).finally(() => { if (active) setFilmPartsLoading(false); });
+    return () => { active = false; };
   }, [item.kind, item.id]);
 
   useEffect(() => {
@@ -193,7 +218,7 @@ export default function TitreScreen() {
 
   const playbackId = seriesSourceId ?? item.id;
   const playbackUrl = item.kind === 'film'
-    ? `https://vidsrc.to/embed/movie/${encodeURIComponent(item.id)}`
+    ? `https://vidsrc.to/embed/movie/${encodeURIComponent(selectedFilmId)}`
     : `https://vidsrc.to/embed/tv/${encodeURIComponent(playbackId)}/${season}/${episode}`;
 
   const openPlaybackSource = async () => {
@@ -298,7 +323,7 @@ export default function TitreScreen() {
           {playerOpen ? (
             <View style={styles.playerFrame}>
               <WebView
-                key={`${item.kind}-${playbackId}-${season}-${episode}-${language}`}
+                key={`${item.kind}-${item.kind === 'film' ? selectedFilmId : playbackId}-${season}-${episode}-${language}`}
                 source={{ uri: playbackUrl }}
                 style={styles.playerWebView}
                 javaScriptEnabled
@@ -333,7 +358,7 @@ export default function TitreScreen() {
               <Pressable accessibilityLabel="Fermer" onPress={() => setDownloadPickerOpen(false)} style={styles.downloadClose}><Ionicons name="close" size={20} color={colors.foreground} /></Pressable>
             </View>
             <ScrollView style={styles.downloadOptionsScroll} contentContainerStyle={styles.downloadOptions} showsVerticalScrollIndicator={false}>
-              <Text style={styles.optionLabel}>LANGUE SOUHAITÉE</Text>
+              <Text style={styles.optionLabel}>LANGUE SOUHAITÉE · VF EN PRIORITÉ</Text>
               <View style={styles.optionChips}>
                 {([
                   ['fr', 'VF · Français'],
@@ -346,7 +371,33 @@ export default function TitreScreen() {
                   </Pressable>
                 ))}
               </View>
-              <Text style={styles.languageNote}>La langue réellement disponible dépend de la source vidéo. Ce choix ne peut pas forcer une piste audio absente.</Text>
+              <Text style={styles.languageNote}>La préférence française est sélectionnée par défaut. La source doit réellement proposer une piste VF : ce choix seul ne peut pas la créer.</Text>
+              {item.kind === 'film' ? (
+                <>
+                  <View style={styles.optionDivider} />
+                  <View style={styles.optionTitleRow}>
+                    <Text style={styles.optionLabel}>{filmCollection ? `FILMS DE LA SAGA · ${filmCollection.toUpperCase()}` : 'AUTRES FILMS DE LA SAGA'}</Text>
+                    {filmPartsLoading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+                  </View>
+                  {filmParts.length > 1 ? (
+                    <View style={styles.filmPartsList}>
+                      {filmParts.map((part, index) => (
+                        <Pressable key={part.id} onPress={() => setSelectedFilmId(part.id)} style={[styles.filmPartRow, selectedFilmId === part.id && styles.filmPartRowOn]}>
+                          {part.poster ? <Image source={{ uri: part.poster }} style={styles.filmPartPoster} resizeMode="cover" /> : <View style={styles.filmPartPosterEmpty}><Ionicons name="film-outline" size={18} color={colors.mutedForeground} /></View>}
+                          <View style={styles.filmPartCopy}>
+                            <Text style={styles.filmPartOrder}>{`PARTIE ${index + 1}`}{part.year ? ` · ${part.year}` : ''}</Text>
+                            <Text style={styles.filmPartTitle} numberOfLines={2}>{part.title}</Text>
+                            {part.current ? <Text style={styles.filmPartCurrent}>Film affiché</Text> : null}
+                          </View>
+                          <Ionicons name={selectedFilmId === part.id ? 'radio-button-on' : 'radio-button-off'} size={20} color={selectedFilmId === part.id ? colors.primary : colors.mutedForeground} />
+                        </Pressable>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.noEpisodes}>{filmPartsLoading ? 'Recherche des autres films de cette saga…' : 'Aucune suite ou partie supplémentaire référencée pour ce film.'}</Text>
+                  )}
+                </>
+              ) : null}
               {item.kind !== 'film' ? (
                 <>
                   <View style={styles.optionDivider} />
@@ -465,6 +516,15 @@ const styles = StyleSheet.create({
   btnText: { color: colors.foreground, fontWeight: '600' },
   sectionLabel: { color: colors.mutedForeground, letterSpacing: 1.5, fontSize: 11, marginTop: 14, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border },
   stars: { flexDirection: 'row', gap: 6, marginTop: 10 },
+  filmPartsList: { gap: 8 },
+  filmPartRow: { flexDirection: 'row', alignItems: 'center', gap: 11, padding: 9, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card },
+  filmPartRowOn: { borderColor: colors.primary, backgroundColor: 'rgba(210,55,92,0.12)' },
+  filmPartPoster: { width: 48, height: 68, borderRadius: 8, backgroundColor: colors.muted },
+  filmPartPosterEmpty: { width: 48, height: 68, borderRadius: 8, backgroundColor: colors.muted, alignItems: 'center', justifyContent: 'center' },
+  filmPartCopy: { flex: 1, gap: 3 },
+  filmPartOrder: { color: colors.primary, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  filmPartTitle: { color: colors.foreground, fontSize: 13, fontWeight: '800' },
+  filmPartCurrent: { color: colors.mutedForeground, fontSize: 10 },
   downloadEntry: { marginTop: 18, marginBottom: 8, gap: 12 },
   downloadButton: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 18, backgroundColor: colors.primary, borderWidth: 1, borderColor: colors.primary },
   downloadButtonCopy: { flex: 1, gap: 3 },
