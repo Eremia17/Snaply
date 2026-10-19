@@ -92,7 +92,7 @@ export default function CatalogueScreen() {
   // Tous les filtres sont appliqués côté serveur pour parcourir le catalogue complet.
   const shown = items;
   const cols = prefs.taille === 'Grand' ? 1 : prefs.taille === 'Normal' ? 2 : 3;
-  const cardW = (Dimensions.get('window').width - 32 - (cols - 1) * 12) / cols;
+  const cardW = (Dimensions.get('window').width - 32 - (cols - 1) * 12 - cols * 8) / cols;
   const surprise = () => {
     if (!shown.length) return;
     const picked = shown[Math.floor(Math.random() * shown.length)];
