@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Dimensions, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, Easing, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
@@ -40,6 +40,7 @@ export default function CatalogueScreen() {
   const [yearOptionsOpen, setYearOptionsOpen] = useState(false);
   const [ratingOptionsOpen, setRatingOptionsOpen] = useState(false);
   const requestId = useRef(0);
+  const surpriseScale = useRef(new Animated.Value(1)).current;
 
   const load = useCallback(async (p: number) => {
     const request = ++requestId.current;
@@ -89,7 +90,12 @@ export default function CatalogueScreen() {
   const cols = prefs.taille === 'Grand' ? 1 : prefs.taille === 'Normal' ? 2 : 3;
   const cardW = (Dimensions.get('window').width - 32 - (cols - 1) * 12) / cols;
   const surprise = () => {
-    if (shown.length) openTitle(router, shown[Math.floor(Math.random() * shown.length)]);
+    if (!shown.length) return;
+    const picked = shown[Math.floor(Math.random() * shown.length)];
+    Animated.sequence([
+      Animated.timing(surpriseScale, { toValue: 0.94, duration: 90, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.spring(surpriseScale, { toValue: 1, speed: 18, bounciness: 12, useNativeDriver: true }),
+    ]).start(() => openTitle(router, picked));
   };
 
   return (
@@ -149,10 +155,10 @@ export default function CatalogueScreen() {
       {ratingOptionsOpen ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionRow}>{NOTES.map((n) => <Chip key={n} label={n === 0 ? 'Toutes les notes' : '★ ' + n + '+ / 10'} on={minNote === n} onPress={() => { setMinNote(n); setRatingOptionsOpen(false); }} />)}</ScrollView> : null}
 
       <View style={styles.actions}>
-        <Pressable style={styles.surprise} onPress={surprise}>
+        <Animated.View style={{ transform: [{ scale: surpriseScale }] }}><Pressable style={styles.surprise} onPress={surprise} disabled={!shown.length}>
           <Ionicons name="shuffle" size={18} color="#fff" />
           <Text style={styles.surpriseText}>Surprends-moi</Text>
-        </Pressable>
+        </Pressable></Animated.View>
       </View>
 
       <FlatList
@@ -185,11 +191,11 @@ function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () 
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#08090D', paddingTop: 8 },
+  root: { flex: 1, backgroundColor: '#08090D', paddingTop: 4 },
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
   brand: { color: '#F5F3EE', fontSize: 20, fontWeight: '900' },
   gear: { backgroundColor: colors.muted, borderRadius: 999, padding: 8 },
-  eyebrow: { color: colors.primary, letterSpacing: 3, fontSize: 11, fontWeight: '700', paddingHorizontal: 16, marginTop: 14, marginBottom: 4 },
+  eyebrow: { color: colors.primary, letterSpacing: 2.4, fontSize: 10, fontWeight: '800', paddingHorizontal: 16, marginTop: 8, marginBottom: 2 },
   hscroll: { flexGrow: 0 },
   row: { paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: 'center' },
   pill: { backgroundColor: '#191A20', borderRadius: 999, paddingHorizontal: 15, paddingVertical: 10, minHeight: 40, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
