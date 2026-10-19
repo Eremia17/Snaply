@@ -2,13 +2,23 @@
 
 Application mobile Expo, React Native et TypeScript.
 
-## État actuel
+## Fonctionnalités présentes dans le code
 
-- Le code source fourni a été importé dans ce dépôt.
-- Le manifeste `package.json`, les scripts de lancement, la configuration d'environnement et un contrôle GitHub Actions ont été ajoutés.
-- La configuration Expo ne référence plus les images d'assets absentes.
-- L'application peut démarrer sans Supabase configuré ; les fonctionnalités nécessitant le backend restent désactivées jusqu'à la configuration.
-- Les données réelles, les clés de service et les tests sur téléphone restent à effectuer ensuite.
+- Application native Expo / React Native / TypeScript avec navigation par onglets.
+- Univers Films, Animés manga, Animés occidentaux et Séries.
+- Recherche distante avec filtres de type, note et année.
+- Fiches détaillées, bandes-annonces, casting, recommandations, titres liés et lecture via WebView.
+- Favoris, historique local, paramètres et écrans communautaires.
+- Fonctions Supabase Edge pour le catalogue, les fiches, les filtres, les chapitres manga et les informations complémentaires.
+
+## Configuration requise
+
+- URL du projet Supabase et clé publique/publishable côté application.
+- Secret serveur `TMDB_API_KEY` pour les fonctions Edge `catalog` et `browse`.
+- Déploiement des fonctions Edge dans le projet Supabase concerné.
+- Configuration des secrets GitHub Actions pour intégrer le backend dans l'APK généré.
+
+Les fonctionnalités connectées et la lecture de sources externes doivent être testées sur appareil avec les services configurés. Le code présent dans GitHub ne prouve pas à lui seul que le backend est déployé ou que toutes les sources externes sont disponibles.
 
 ## Installation
 
