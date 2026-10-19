@@ -51,7 +51,7 @@ function fromTmdb(x: any, kind: string, names: Record<number, string>) {
   };
 }
 
-const ANI_FIELDS = `id title { romaji english } coverImage { large } startDate { year } genres averageScore description(asHtml: false)`;
+const ANI_FIELDS = `id title { romaji english } coverImage { extraLarge large medium } startDate { year } genres averageScore description(asHtml: false)`;
 
 const ANI_GENRES_FR: Record<string, string> = {
   Action: 'Action', Adventure: 'Aventure', Comedy: 'Comédie', Drama: 'Drame', Ecchi: 'Ecchi', Fantasy: 'Fantastique',
@@ -66,7 +66,7 @@ function fromAni(m: any) {
     kind: "manga",
     id: String(m.id),
     title: m.title?.english ?? m.title?.romaji ?? "",
-    poster: m.coverImage?.large ?? null,
+    poster: m.coverImage?.extraLarge ?? m.coverImage?.large ?? m.coverImage?.medium ?? null,
     year: m.startDate?.year ? String(m.startDate.year) : null,
     genres: (m.genres ?? []).slice(0, 4).map((g: string) => ANI_GENRES_FR[g.replaceAll(' ', '')] ?? g),
     rating: m.averageScore ? Math.round(m.averageScore) / 10 : 0,
@@ -81,7 +81,7 @@ async function animeExtras(id: string) {
       Media(id: $id, type: ANIME) {
         id
         title { romaji english }
-        coverImage { large }
+        coverImage { extraLarge large medium }
         startDate { year }
         genres
         averageScore
@@ -96,7 +96,7 @@ async function animeExtras(id: string) {
             node {
               id type
               title { romaji english }
-              coverImage { large }
+              coverImage { extraLarge large medium }
               startDate { year }
               genres
               averageScore
@@ -279,18 +279,29 @@ async function chapters(mangaId: string, title: string) {
     resolvedId = match.id;
   }
   const d = await mdGet(
-    `/manga/${resolvedId}/feed?translatedLanguage[]=fr&translatedLanguage[]=en&order[chapter]=desc&limit=100&contentRating[]=safe&contentRating[]=suggestive`,
+    `/manga/${resolvedId}/feed?order[chapter]=desc&limit=500&contentRating[]=safe&contentRating[]=suggestive`,
   );
-  const seen = new Map<string, any>();
-  for (const c of d.data ?? []) {
-    const num = String(c.attributes.chapter ?? c.id);
-    const lang = c.attributes.translatedLanguage;
-    const prev = seen.get(num);
-    if (!prev || (lang === "fr" && prev.lang !== "fr")) {
-      seen.set(num, { id: c.id, chapter: c.attributes.chapter ?? "—", title: c.attributes.title ?? "", lang });
-    }
+  const languagePriority = (lang: string) => lang === "fr" ? 0 : lang === "en" ? 1 : 2;
+  const chapters = (d.data ?? []).map((c: any) => ({
+    id: c.id,
+    chapter: c.attributes.chapter ?? "—",
+    title: c.attributes.title ?? "",
+    lang: c.attributes.translatedLanguage ?? "und",
+    publishedAt: c.attributes.publishAt ?? "",
+  }));
+  // Préférer la VF pour un même numéro, puis l'anglais, puis les autres langues.
+  // Les autres traductions restent disponibles si aucune VF n'existe.
+  const grouped = new Map<string, any[]>();
+  for (const chapter of chapters) {
+    const key = String(chapter.chapter);
+    const group = grouped.get(key) ?? [];
+    group.push(chapter);
+    grouped.set(key, group);
   }
-  return { items: Array.from(seen.values()) };
+  const items = [...grouped.values()].flatMap((group) =>
+    group.sort((a, b) => languagePriority(a.lang) - languagePriority(b.lang) || String(b.publishedAt).localeCompare(String(a.publishedAt)))
+  );
+  return { items };
 }
 
 // Adresses des pages d'un chapitre
