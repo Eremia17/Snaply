@@ -4,6 +4,8 @@ import { VideoView, useVideoPlayer, type AudioTrack, type SubtitleTrack } from '
 import { colors } from '@/lib/theme';
 import { inferContentType, normalizeMediaSources, type MediaSource } from '@/lib/mediaSources';
 
+const EMPTY_SOURCES: MediaSource[] = [];
+
 type Props = {
   /** Direct HTTPS .mp4/.m3u8 URL. Pass this from screen state or a route parameter. */
   sourceUrl?: string;
@@ -16,7 +18,7 @@ type Props = {
 
 export function NativeVideoPlayer({
   sourceUrl,
-  sources = [],
+  sources = EMPTY_SOURCES,
   title,
   autoPlay = true,
   onSourceChange,
