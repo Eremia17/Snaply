@@ -181,6 +181,10 @@ export default function CatalogueScreen() {
       </View>
 
       <FlatList
+        removeClippedSubviews={false}
+        windowSize={7}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
         key={cols}
         data={shown}
         numColumns={cols}
