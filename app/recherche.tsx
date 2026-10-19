@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { PosterCard } from '@/components/PosterCard';
@@ -28,7 +28,10 @@ export default function RechercheScreen() {
   const [minNote, setMinNote] = useState(0);
   const [year, setYear] = useState<string | null>(null);
 
+  const searchRequest = useRef(0);
+
   useEffect(() => {
+    const request = ++searchRequest.current;
     const term = q.trim();
     if (term.length < 2) {
       setRemote([]);
@@ -37,8 +40,14 @@ export default function RechercheScreen() {
     }
     setBusy(true);
     const t = setTimeout(async () => {
-      setRemote(await searchRemote(term, kinds));
-      setBusy(false);
+      try {
+        const found = await searchRemote(term, kinds);
+        if (request === searchRequest.current) setRemote(found);
+      } catch {
+        if (request === searchRequest.current) setRemote([]);
+      } finally {
+        if (request === searchRequest.current) setBusy(false);
+      }
     }, 400);
     return () => clearTimeout(t);
   }, [q, kinds]);
