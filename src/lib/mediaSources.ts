@@ -27,10 +27,10 @@ export function isAllowedMediaUri(uri: string): boolean {
  * Conserve l'ordre de priorité configuré par le fournisseur et élimine les
  * URLs invalides ou dupliquées. N'invente jamais de source à partir d'un ID TMDB.
  */
-export function normalizeMediaSources(sources: MediaSource[]): MediaSource[] {
+function isLocalVideoFile(uri: string): boolean {\n  return uri.startsWith('file://') && /\\.(mp4|m4v|mov)$/i.test(uri.split('?')[0]);\n}\n\nexport function normalizeMediaSources(sources: MediaSource[]): MediaSource[] {
   const seen = new Set<string>();
   return sources.filter((source) => {
-    if (!source.id || !source.label || !isAllowedMediaUri(source.uri)) return false;
+    if (!source.id || !source.label || !(isAllowedMediaUri(source.uri) || isLocalVideoFile(source.uri))) return false;
     if (seen.has(source.uri)) return false;
     seen.add(source.uri);
     return true;
