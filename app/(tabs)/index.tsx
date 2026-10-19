@@ -69,8 +69,22 @@ export default function HomeScreen() {
       setRatedPicks(cached.slice().sort((a, b) => Number((b as Detail).rating ?? 0) - Number((a as Detail).rating ?? 0)) as Detail[]);
       return () => { active = false; };
     }
-    const safeBrowse = (kind: Kind, sort: 'recent' | 'rating') =>
-      browseKind(kind, 1, { sort }).catch(() => ({ items: [] as Detail[], hasMore: false }));
+    const safeBrowse = async (kind: Kind, sort: 'recent' | 'rating') => {
+      try {
+        const first = await browseKind(kind, 1, { sort });
+        const items = [...first.items];
+        let hasMore = first.hasMore;
+        // Charger plusieurs pages pour éviter de limiter le carrousel à un petit lot.
+        for (let page = 2; page <= 4 && items.length < 30 && hasMore; page++) {
+          const next = await browseKind(kind, page, { sort });
+          items.push(...next.items);
+          hasMore = next.hasMore;
+        }
+        return { items, hasMore };
+      } catch {
+        return { items: [] as Detail[], hasMore: false };
+      }
+    };
     Promise.all([
       safeBrowse('film', 'recent'), safeBrowse('film', 'rating'),
       safeBrowse('serie', 'recent'), safeBrowse('serie', 'rating'),
@@ -85,16 +99,13 @@ export default function HomeScreen() {
       const uniqueRated = Array.from(new Map(rated.filter((item) => !!(item.backdrop || item.poster)).map((item) => [item.kind + ':' + item.id, item])).values()).sort((a, b) => b.rating - a.rating);
       if (uniqueFresh.length) setFreshPicks(uniqueFresh.slice(0, 20));
       if (uniqueRated.length) setRatedPicks(uniqueRated.slice(0, 20));
-      const candidates = [
-        ...filmRecent.items.slice(0, 3), ...filmRated.items.slice(0, 3),
-        ...mangaRecent.items.slice(0, 3), ...mangaRated.items.slice(0, 3),
-        ...serieRecent.items.slice(0, 3), ...serieRated.items.slice(0, 3),
-        ...westRecent.items.slice(0, 3), ...westRated.items.slice(0, 3),
-      ].filter((item) => !!(item.backdrop || item.poster));
+      // Le carrousel mélange uniquement les nouveautés et les mieux notés,
+      // en alternant les univers pour ne pas montrer huit titres presque identiques.
+      const candidates = [...uniqueFresh, ...uniqueRated];
       const unique = Array.from(new Map(candidates.map((item) => [item.kind + ':' + item.id, item])).values());
       const balanced: Detail[] = [];
       const kinds: Kind[] = ['film', 'manga', 'serie', 'occidental'];
-      for (let round = 0; round < 6; round++) {
+      for (let round = 0; round < 30; round++) {
         for (const kind of kinds) {
           const matching = unique.filter((item) => item.kind === kind);
           if (matching[round]) balanced.push(matching[round]);
@@ -112,7 +123,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (spotlights.length < 2) return;
-    const timer = setInterval(() => setSpotlightIndex((index) => (index + 1) % spotlights.length), 3000);
+    const timer = setInterval(() => setSpotlightIndex((index) => (index + 1) % spotlights.length), 6500);
     return () => clearInterval(timer);
   }, [spotlights.length]);
 
@@ -196,14 +207,12 @@ export default function HomeScreen() {
             <View style={styles.spotlightShade} />
             <View style={styles.spotlightTopline}>
               <View style={styles.spotlightBadge}><Ionicons name="sparkles" size={12} color="#0B0B10" /><Text style={styles.spotlightBadgeText}>{Number(item.rating) >= 8 ? 'TRÈS BIEN NOTÉ' : 'À DÉCOUVRIR'}</Text></View>
-              <Text style={styles.spotlightCount}>{spotlightIndex + 1} / {spotlights.length}</Text>
             </View>
             <View style={styles.spotlightCopy}>
               <Text style={styles.spotlightKind}>{item.kind === 'film' ? 'FILM' : item.kind === 'serie' ? 'SÉRIE' : item.kind === 'manga' ? 'ANIMÉ MANGA' : 'ANIMATION' } · {item.year || 'NOUVEAUTÉ'}</Text>
               <Text style={styles.spotlightTitle} numberOfLines={2}>{item.title}</Text>
               <View style={styles.spotlightBottom}><Text style={styles.spotlightHint}>{Number(item.rating) > 0 ? '★ ' + Number(item.rating).toFixed(1) + '  ·  ' : ''}Touchez pour découvrir</Text><View style={styles.spotlightPlay}><Ionicons name="play" size={17} color="#fff" /></View></View>
             </View>
-            <View style={styles.spotlightDots}>{spotlights.slice(0, 12).map((entry, i) => <View key={entry.kind + ':' + entry.id} style={[styles.spotlightDot, i === spotlightIndex % 12 && styles.spotlightDotActive]} />)}</View>
           </Pressable>
         );
       })() : null}
@@ -433,7 +442,6 @@ const styles = StyleSheet.create({
   spotlightTopline: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 13 },
   spotlightBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#65F0BD', paddingHorizontal: 9, paddingVertical: 6, borderRadius: 999 },
   spotlightBadgeText: { color: '#0B0B10', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
-  spotlightCount: { color: '#FFF', fontSize: 11, fontWeight: '800', backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999 },
   spotlightCopy: { paddingHorizontal: 17, paddingBottom: 10, gap: 6 },
   spotlightKind: { color: '#70F0C0', fontSize: 10, fontWeight: '900', letterSpacing: 1.4 },
   spotlightTitle: { color: '#FFF', fontSize: 27, lineHeight: 31, fontWeight: '900', textShadowColor: '#000', textShadowRadius: 8 },
