@@ -10,7 +10,7 @@ const cors = {
 
 type Kind = "film" | "manga" | "occidental" | "serie";
 type Item = {
-  kind: Kind; id: string; title: string; poster: string | null; year: string | null;
+  kind: Kind; id: string; title: string; poster: string | null; backdrop?: string | null; year: string | null;
   genres: string[]; rating: number; synopsis: string; runtime?: string; upcoming?: string;
 };
 
@@ -44,6 +44,7 @@ function fromTmdb(x: any, kind: Kind, names: Record<number, string>): Item {
     id: String(x.id),
     title: x.title ?? x.name ?? "",
     poster: x.poster_path ? IMG + x.poster_path : null,
+    backdrop: x.backdrop_path ? `https://image.tmdb.org/t/p/w1280${x.backdrop_path}` : null,
     year: date ? date.slice(0, 4) : null,
     genres: (x.genre_ids ?? []).map((g: number) => names[g]).filter(Boolean),
     rating: Math.round((x.vote_average ?? 0) * 10) / 10,
