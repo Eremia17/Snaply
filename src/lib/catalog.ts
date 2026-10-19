@@ -165,12 +165,20 @@ export async function fetchSports(): Promise<SportMatch[]> {
 }
 
 export type SeriesSeason = { number: number; name: string; episodeCount: number };
+export type SeriesEpisode = { number: number; name: string; airDate: string | null; overview: string };
 
-export async function fetchSeriesSeasons(id: string): Promise<SeriesSeason[]> {
+export async function fetchSeriesSeasons(id: string, kind: Kind = 'serie', title = ''): Promise<SeriesSeason[]> {
   if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'seasons', id } });
+  const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'seasons', id, kind, title } });
   if (error || !data || data.error) throw new Error(data?.error || error?.message || 'Impossible de charger les saisons.');
   return Array.isArray(data.seasons) ? data.seasons as SeriesSeason[] : [];
+}
+
+export async function fetchSeriesEpisodes(id: string, season: number, kind: Kind = 'serie', title = ''): Promise<SeriesEpisode[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'episodes', id, season, kind, title } });
+  if (error || !data || data.error) throw new Error(data?.error || error?.message || 'Impossible de charger les épisodes.');
+  return Array.isArray(data.episodes) ? data.episodes as SeriesEpisode[] : [];
 }
 
 export type Chapter = { id: string; chapter: string; title: string; lang: string };
