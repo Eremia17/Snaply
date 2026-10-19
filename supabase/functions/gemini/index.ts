@@ -7,7 +7,7 @@ const json = (data: unknown, status = 200) =>
 
 async function callGemini(key: string, contents: unknown[], systemInstruction?: string) {
   const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${key}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
