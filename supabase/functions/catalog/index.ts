@@ -1,6 +1,7 @@
 const TMDB = "https://api.themoviedb.org/3";
 const IMG = "https://image.tmdb.org/t/p/w500";
 const MD = "https://api.mangadex.org";
+const AL = "https://graphql.anilist.co";
 const UA = { "User-Agent": "Eremia/1.0 (app mobile)" };
 
 const cors = {
@@ -138,8 +139,39 @@ async function search(q: string, kinds: Kind[]): Promise<Item[]> {
 
 async function detail(kind: Kind, id: string): Promise<Item> {
   if (kind === "manga") {
-    const d = await md(`/manga/${id}`, "includes[]=cover_art");
-    return fromManga(d.data);
+    // Les résultats de /browse proviennent d'AniList (ID numérique), tandis que
+    // le catalogue initial utilise les UUID MangaDex. Gérer explicitement les deux.
+    const isMangaDexId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (isMangaDexId) {
+      const d = await md(`/manga/${id}`, "includes[]=cover_art");
+      return fromManga(d.data);
+    }
+
+    const numericId = Number(id);
+    if (!Number.isInteger(numericId) || numericId <= 0) throw new Error("Identifiant d’animé invalide.");
+    const response = await fetch(AL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        query: `query ($id: Int) { Media(id: $id, type: ANIME) { id title { romaji english } coverImage { large } startDate { year } genres averageScore description(asHtml: false) } }`,
+        variables: { id: numericId },
+      }),
+    });
+    if (!response.ok) throw new Error(`AniList ${response.status}`);
+    const result = await response.json();
+    const m = result.data?.Media;
+    if (!m) throw new Error("Animé introuvable sur AniList.");
+    return {
+      kind: "manga",
+      id: String(m.id),
+      title: m.title?.english ?? m.title?.romaji ?? "",
+      poster: m.coverImage?.large ?? null,
+      backdrop: null,
+      year: m.startDate?.year ? String(m.startDate.year) : null,
+      genres: (m.genres ?? []).slice(0, 4),
+      rating: m.averageScore ? Math.round(m.averageScore) / 10 : 0,
+      synopsis: String(m.description ?? "").replace(/<[^>]+>/g, "").replace(/\\s+/g, " ").trim(),
+    };
   }
   const x = await tmdb(kind === "film" ? `/movie/${id}` : `/tv/${id}`);
   return fromTmdbDetail(x, kind);
