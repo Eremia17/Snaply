@@ -28,6 +28,10 @@ export default function RechercheScreen() {
   const [minNote, setMinNote] = useState(0);
   const [year, setYear] = useState<string | null>(null);
 
+  useEffect(() => {
+    setQ(params.q ?? '');
+  }, [params.q]);
+
   const searchRequest = useRef(0);
 
   useEffect(() => {
