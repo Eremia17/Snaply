@@ -302,7 +302,7 @@ async function pages(chapterId: string) {
   return { pages: files.map((f: string) => `${s.baseUrl}/${folder}/${s.chapter.hash}/${f}`) };
 }
 
-type BrowseFilters = { genre?: string; year?: string; minRating?: number; family?: boolean; short?: boolean; sort?: 'popularity' | 'rating' | 'recent' };
+type BrowseFilters = { genre?: string; year?: string; minRating?: number; family?: boolean; short?: boolean; originalLanguage?: string; sort?: 'popularity' | 'rating' | 'recent' };
 
 const FILM_GENRES: Record<string, { genre?: number; keyword?: number }> = {
   Romance: { genre: 10749 }, Action: { genre: 28 }, Horreur: { genre: 27 }, Zombie: { keyword: 12377 },
@@ -344,6 +344,7 @@ async function list(kind: string, page: number, filters: BrowseFilters = {}) {
     if (filters.sort === 'recent') params['primary_release_date.lte'] = new Date().toISOString().slice(0, 10);
     if (filters.year) params.primary_release_year = filters.year;
     if (filters.short) params['with_runtime.lte'] = '104';
+    if (filters.originalLanguage) params.with_original_language = filters.originalLanguage;
     if (g?.genre) params.with_genres = String(g.genre);
     if (g?.keyword) params.with_keywords = String(g.keyword);
     const excluded = g?.genre !== 16 ? ['16'] : [];
@@ -555,6 +556,7 @@ Deno.serve(async (req) => {
       sort: ['popularity', 'rating', 'recent'].includes(body.sort) ? body.sort : 'popularity',
       family: body.family === true,
       short: body.short === true,
+      originalLanguage: typeof body.originalLanguage === 'string' && /^[a-z]{2}$/.test(body.originalLanguage) ? body.originalLanguage : undefined,
     };
     return json(await list(kind, page, filters));
   } catch (e) {
