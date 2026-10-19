@@ -213,7 +213,7 @@ export default function CatalogueScreen() {
           {surpriseLoading ? (
             <View style={styles.cinemaStage}>
               <Text style={styles.cinemaKicker}>ERËMĪA ORIGINAL</Text>
-              <Animated.View style={[styles.cinemaFrame, { transform: [{ perspective: 700 }, { rotateY: surpriseTurn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '720deg'] }), { scale: surpriseScale }] }]}>
+              <Animated.View style={[styles.cinemaFrame, { transform: [{ perspective: 700 }, { rotateY: surpriseTurn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '720deg'] }) }, { scale: surpriseScale }] }]}>
                 <View style={styles.cinemaInner}><Ionicons name="film-outline" size={44} color="#FF5B70" /><Text style={styles.cinemaFrameTitle}>À L’AFFICHE</Text><View style={styles.cinemaLight} /></View>
               </Animated.View>
               <Animated.View style={{ opacity: surpriseTurn.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.25, 1, 0.35] }) }}><Text style={styles.cinemaCaption}>Recherche d’un film d’exception…</Text></Animated.View>
