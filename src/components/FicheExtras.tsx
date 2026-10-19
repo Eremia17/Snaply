@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Dimensions, Easing, FlatList, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -10,10 +10,10 @@ import type { Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
-const W = 320;
-const H = 320;
-const R = 118;
-const SAT = 52;
+const W = Math.min(Dimensions.get('window').width - 64, 340);
+const H = W;
+const R = W * 0.36;
+const SAT = 48;
 const C_DIRECTOR = '#F59E0B';
 const C_SAGA = '#A78BFA';
 const C_SIMILAR = '#F472B6';
@@ -28,7 +28,16 @@ function Constellation({ name, items, poster, onPick }: { name: string; items: D
   const cx = W / 2;
   const cy = H / 2;
   const color = relationColor(name);
-  const shown = items.slice(0, 12);
+  const shown = items.slice(0, 10);
+  const corePulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const pulse = Animated.loop(Animated.sequence([
+      Animated.timing(corePulse, { toValue: 1.12, duration: 1050, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      Animated.timing(corePulse, { toValue: 1, duration: 1050, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+    ]));
+    pulse.start();
+    return () => pulse.stop();
+  }, [corePulse]);
   const pts = shown.map((_, i) => {
     const a = (i * 2 * Math.PI) / shown.length - Math.PI / 2;
     return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
@@ -43,9 +52,9 @@ function Constellation({ name, items, poster, onPick }: { name: string; items: D
           const ang = (Math.atan2(p.y - cy, p.x - cx) * 180) / Math.PI;
           return <View key={`l${i}`} style={{ position: 'absolute', left: mx - len / 2, top: my - 0.75, width: len, height: 1.5, backgroundColor: color, opacity: 0.55, transform: [{ rotate: `${ang}deg` }] }} />;
         })}
-        <View style={[styles.center, { left: cx - 46, top: cy - 46 }]}>
+        <Animated.View style={[styles.center, { left: cx - 46, top: cy - 46, transform: [{ scale: corePulse }] }]}>
           {poster ? <Image source={{ uri: poster }} style={styles.centerImg} /> : <View style={[styles.centerImg, { backgroundColor: colors.muted }]} />}
-        </View>
+        </Animated.View>
         {shown.map((it, i) => (
           <Pressable key={`${it.kind}:${it.id}`} onPress={() => onPick(it)}
             style={[styles.sat, { left: pts[i].x - SAT / 2, top: pts[i].y - SAT / 2, borderColor: color }]}>
@@ -304,7 +313,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginTop: 16, gap: 10, paddingBottom: 18 },
+  wrap: { marginTop: 12, gap: 8, paddingBottom: 12 },
   loadingPreview: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden', backgroundColor: '#15161B', alignItems: 'center', justifyContent: 'center', gap: 10 },
   loadingShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.58)' },
   trailerPreview: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden', backgroundColor: '#111', position: 'relative' },
@@ -323,14 +332,14 @@ const styles = StyleSheet.create({
   trailerActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   closeTrailer: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
   openYoutube: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: '#C4302B', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
-  label: { color: '#F04455', letterSpacing: 1.5, fontSize: 11, fontWeight: '800', marginTop: 2 },
+  label: { color: '#F04455', letterSpacing: 1.4, fontSize: 11, fontWeight: '900', marginTop: 4, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#211820' },
   providers: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   provider: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderRadius: 12, padding: 8, borderWidth: 1, borderColor: colors.border },
   logo: { width: 28, height: 28, borderRadius: 6 },
   providerText: { color: colors.foreground, fontWeight: '600' },
   credit: { color: colors.mutedForeground, fontSize: 11 },
-  castItem: { width: 90, alignItems: 'center', gap: 4 },
-  castPhoto: { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.muted },
+  castItem: { width: 84, alignItems: 'center', gap: 4 },
+  castPhoto: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.muted, borderWidth: 1, borderColor: '#49313D' },
   castEmpty: { alignItems: 'center', justifyContent: 'center' },
   castName: { color: colors.foreground, fontSize: 13, fontWeight: '700' },
   castRole: { color: colors.mutedForeground, fontSize: 12 },
@@ -352,10 +361,10 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   legendText: { color: colors.mutedForeground, fontSize: 12 },
-  cosmos: { backgroundColor: '#090A10', borderRadius: 20, borderWidth: 1, borderColor: '#3C1C2B', padding: 10, alignItems: 'center', overflow: 'hidden' },
-  center: { position: 'absolute', width: 92, height: 92, borderRadius: 46, borderWidth: 2, borderColor: colors.foreground, overflow: 'hidden' },
+  cosmos: { width: '100%', backgroundColor: '#090A10', borderRadius: 20, borderWidth: 1, borderColor: '#3C1C2B', padding: 6, alignItems: 'center', overflow: 'hidden' },
+  center: { position: 'absolute', width: 92, height: 92, borderRadius: 46, borderWidth: 2, borderColor: '#FF5B70', overflow: 'hidden', shadowColor: '#FF173F', shadowOpacity: 0.9, shadowRadius: 14, elevation: 10 },
   centerImg: { width: 92, height: 92 },
-  sat: { position: 'absolute', width: SAT, height: SAT, borderRadius: SAT / 2, borderWidth: 2, overflow: 'hidden', backgroundColor: colors.card },
+  sat: { position: 'absolute', width: SAT, height: SAT, borderRadius: SAT / 2, borderWidth: 2, overflow: 'hidden', backgroundColor: colors.card, shadowColor: '#FF405C', shadowOpacity: 0.35, shadowRadius: 6, elevation: 4 },
   satImg: { width: SAT - 4, height: SAT - 4, borderRadius: (SAT - 4) / 2 },
   cosmosHint: { color: colors.mutedForeground, fontSize: 12, marginTop: 8, marginBottom: 2 },
 });
