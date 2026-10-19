@@ -82,7 +82,7 @@ export function FicheAssistant({ title, kind, year, synopsis }: {
               </View>
             ) : messages.map((m, i) => (
               <View key={i} style={[styles.bubble, m.role === 'user' ? styles.userBubble : styles.aiBubble]}>
-                <Text style={styles.messageText}>{m.text}</Text>
+                <Text style={[styles.messageText, m.role === 'user' && styles.userMessageText]}>{m.text}</Text>
               </View>
             ))}
             {busy ? <View style={styles.thinking}><ActivityIndicator color={colors.primary} /><Text style={styles.thinkingText}>L’assistant réfléchit…</Text></View> : null}
@@ -130,6 +130,7 @@ const styles = StyleSheet.create({
   userBubble: { alignSelf: 'flex-end', backgroundColor: colors.primary, borderBottomRightRadius: 4 },
   aiBubble: { alignSelf: 'flex-start', backgroundColor: colors.card, borderBottomLeftRadius: 4 },
   messageText: { color: colors.foreground, lineHeight: 21 },
+  userMessageText: { color: '#fff' },
   thinking: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 9, padding: 10 },
   thinkingText: { color: colors.mutedForeground },
   error: { color: '#ef4444', padding: 8, lineHeight: 19 },
