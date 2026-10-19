@@ -1,8 +1,8 @@
 import { Fragment } from 'react';
-import { Linking, StyleSheet, Text, type TextStyle } from 'react-native';
+import { Linking, StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
 import { colors } from '@/lib/theme';
 
-type Props = { children: string; style?: TextStyle | TextStyle[]; numberOfLines?: number };
+type Props = { children: string; style?: StyleProp<TextStyle>; numberOfLines?: number };
 
 const TOKEN = /(\*\*\*[\s\S]+?\*\*\*|\*\*[\s\S]+?\*\*|\*[\s\S]+?\*|\`[^\`]+\`|\[[^\]]+\]\(https?:\/\/[^\s)]+\)|https?:\/\/[^\s]+|\n)/g;
 
