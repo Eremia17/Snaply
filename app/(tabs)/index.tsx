@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openTitle } from '@/lib/navigation';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
-import { classics, featured, fetchSports, trending, upcomingList, useCatalog, type SportMatch } from '@/lib/catalog';
+import { classics, featured, fetchSports, listByKind, trending, upcomingList, useCatalog, type SportMatch } from '@/lib/catalog';
 import { useStore } from '@/lib/store';
 import { fetchPosts, type Post } from '@/lib/community';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
@@ -125,6 +125,16 @@ export default function HomeScreen() {
         />
       </View>
 
+      {/* Navigation rapide compacte : catégories visibles sans prendre la moitié de l’écran */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickCategories}>
+        {UNIVERSES.map((u) => (
+          <Pressable key={u.kind} style={styles.quickCategory} onPress={() => router.push(`/catalogue/${u.kind}`)}>
+            <Ionicons name={u.icon} size={14} color={colors.primary} />
+            <Text style={styles.quickCategoryText} numberOfLines={1}>{u.title}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
       {/* Héros */}
       <View style={styles.hero}>
         {(hero?.backdrop || hero?.poster) ? <Image key={hero.id} source={{ uri: hero.backdrop || hero.poster || undefined }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
@@ -188,19 +198,22 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      {/* Rangées éditoriales compactes pour prolonger l’accueil */}
+      {/* Rangées issues du catalogue complet, pas seulement des huit tendances */}
       <View style={styles.catalogRows}>
-        <Section title="Animés manga · à découvrir">
-          <Row data={trending().filter((item) => item.kind === 'manga')} cardWidth={cardWidth} />
+        <Section title="Animés récents" empty="Les animés datés apparaîtront ici quand le catalogue sera chargé.">
+          {listByKind('manga').concat(listByKind('occidental')).filter((item) => !!item.year).sort((a, b) => Number(b.year) - Number(a.year)).length ? <Row data={listByKind('manga').concat(listByKind('occidental')).filter((item) => !!item.year).sort((a, b) => Number(b.year) - Number(a.year))} cardWidth={cardWidth} /> : null}
         </Section>
-        <Section title="Animés occidentaux">
-          <Row data={trending().filter((item) => item.kind === 'occidental')} cardWidth={cardWidth} />
+        <Section title="Animés manga" empty="Aucun animé manga disponible pour le moment.">
+          {listByKind('manga').length ? <Row data={listByKind('manga')} cardWidth={cardWidth} /> : null}
         </Section>
-        <Section title="Films à découvrir">
-          <Row data={trending().filter((item) => item.kind === 'film')} cardWidth={cardWidth} />
+        <Section title="Animation occidentale" empty="Aucune animation occidentale disponible pour le moment.">
+          {listByKind('occidental').length ? <Row data={listByKind('occidental')} cardWidth={cardWidth} /> : null}
         </Section>
-        <Section title="Séries à suivre">
-          <Row data={trending().filter((item) => item.kind === 'serie')} cardWidth={cardWidth} />
+        <Section title="Films à découvrir" empty="Les films du catalogue apparaîtront ici.">
+          {listByKind('film').length ? <Row data={listByKind('film')} cardWidth={cardWidth} /> : null}
+        </Section>
+        <Section title="Séries à suivre" empty="Les séries du catalogue apparaîtront ici.">
+          {listByKind('serie').length ? <Row data={listByKind('serie')} cardWidth={cardWidth} /> : null}
         </Section>
       </View>
 
@@ -308,13 +321,16 @@ function Row({ data, cardWidth }: { data: Item[]; cardWidth: number }) {
       showsHorizontalScrollIndicator={false}
       removeClippedSubviews={false}
       contentContainerStyle={{ paddingRight: 4 }}
-      renderItem={({ item }) => <PosterCard item={item} width={CARD_W} />}
+      renderItem={({ item }) => <PosterCard item={item} width={cardWidth} />}
     />
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#08090D' },
+  quickCategories: { paddingHorizontal: 12, paddingTop: 5, paddingBottom: 3, gap: 6 },
+  quickCategory: { minHeight: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: '#2A2B35', backgroundColor: '#111219' },
+  quickCategoryText: { color: '#F1F1F5', fontSize: 10, fontWeight: '700', maxWidth: 104 },
   catalogRows: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4, gap: 14 },
   featureStack: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 12, gap: 12 },
   surpriseBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.86)', justifyContent: 'center', alignItems: 'center', padding: 22 },
