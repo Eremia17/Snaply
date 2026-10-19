@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import { useStore } from '@/lib/store';
 import { addToList, fetchLists, type UserList } from '@/lib/lists';
-import { KIND_LABEL, fetchDetail, getDetail, useCatalog, type Detail } from '@/lib/catalog';
+import { KIND_LABEL, fetchDetail, fetchSeriesSeasons, getDetail, useCatalog, type Detail, type SeriesSeason } from '@/lib/catalog';
 import type { Item, Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
 import { FicheExtras } from '@/components/FicheExtras';
@@ -36,6 +36,8 @@ export default function TitreScreen() {
   const [adding, setAdding] = useState(false);
   const [season, setSeason] = useState(1);
   const [episode, setEpisode] = useState(1);
+  const [seasons, setSeasons] = useState<SeriesSeason[]>([]);
+  const [seasonsLoading, setSeasonsLoading] = useState(false);
   const [language, setLanguage] = useState<'fr' | 'vostfr' | 'en' | 'original'>('fr');
   const [playerOpen, setPlayerOpen] = useState(false);
 
@@ -67,6 +69,27 @@ export default function TitreScreen() {
     });
     return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.kind, item.id]);
+
+  useEffect(() => {
+    let active = true;
+    setSeasons([]);
+    setSeasonsLoading(false);
+    if (item.kind === 'film' || item.kind === 'manga') return () => { active = false; };
+    setSeasonsLoading(true);
+    fetchSeriesSeasons(item.id).then((result) => {
+      if (!active) return;
+      setSeasons(result);
+      if (result.length) {
+        setSeason(result[0].number);
+        setEpisode(1);
+      }
+    }).catch(() => {
+      if (active) setSeasons([]);
+    }).finally(() => {
+      if (active) setSeasonsLoading(false);
+    });
+    return () => { active = false; };
   }, [item.kind, item.id]);
 
   const [seen, setSeen] = useState(false);
@@ -242,16 +265,30 @@ export default function TitreScreen() {
               <View style={styles.playerControls}>
                 <View style={styles.stepper}>
                   <Text style={styles.stepLabel}>Saison</Text>
-                  <Pressable accessibilityLabel="Saison précédente" onPress={() => { setSeason((v) => Math.max(1, v - 1)); setEpisode(1); }} style={styles.stepButton}><Ionicons name="remove" size={18} color={colors.foreground} /></Pressable>
-                  <Text style={styles.stepValue}>{season}</Text>
-                  <Pressable accessibilityLabel="Saison suivante" onPress={() => { setSeason((v) => Math.min(20, v + 1)); setEpisode(1); }} style={styles.stepButton}><Ionicons name="add" size={18} color={colors.foreground} /></Pressable>
+                  <Pressable accessibilityLabel="Saison précédente" onPress={() => {
+                    if (seasons.length) {
+                      const index = seasons.findIndex((s) => s.number === season);
+                      if (index > 0) setSeason(seasons[index - 1].number);
+                    } else setSeason((v) => Math.max(1, v - 1));
+                    setEpisode(1);
+                  }} style={styles.stepButton} disabled={seasons.length > 0 && seasons.findIndex((s) => s.number === season) <= 0}><Ionicons name="remove" size={18} color={colors.foreground} /></Pressable>
+                  <Text style={styles.stepValue}>{seasonsLoading ? '…' : season}</Text>
+                  <Pressable accessibilityLabel="Saison suivante" onPress={() => {
+                    if (seasons.length) {
+                      const index = seasons.findIndex((s) => s.number === season);
+                      if (index >= 0 && index < seasons.length - 1) setSeason(seasons[index + 1].number);
+                    } else setSeason((v) => Math.min(20, v + 1));
+                    setEpisode(1);
+                  }} style={styles.stepButton} disabled={seasons.length > 0 && seasons.findIndex((s) => s.number === season) >= seasons.length - 1}><Ionicons name="add" size={18} color={colors.foreground} /></Pressable>
                 </View>
                 <View style={styles.stepper}>
                   <Text style={styles.stepLabel}>Épisode</Text>
                   <Pressable accessibilityLabel="Épisode précédent" onPress={() => setEpisode((v) => Math.max(1, v - 1))} style={styles.stepButton}><Ionicons name="remove" size={18} color={colors.foreground} /></Pressable>
                   <Text style={styles.stepValue}>{episode}</Text>
-                  <Pressable accessibilityLabel="Épisode suivant" onPress={() => setEpisode((v) => Math.min(100, v + 1))} style={styles.stepButton}><Ionicons name="add" size={18} color={colors.foreground} /></Pressable>
+                  <Pressable accessibilityLabel="Épisode suivant" onPress={() => setEpisode((v) => Math.min(seasons.find((s) => s.number === season)?.episodeCount ?? 100, v + 1))} style={styles.stepButton} disabled={episode >= (seasons.find((s) => s.number === season)?.episodeCount ?? 100)}><Ionicons name="add" size={18} color={colors.foreground} /></Pressable>
                 </View>
+                {seasonsLoading ? <Text style={styles.playerNote}>Chargement des saisons réelles…</Text> : null}
+                {!seasonsLoading && seasons.length > 0 ? <Text style={styles.playerNote}>{seasons.find((s) => s.number === season)?.name ?? `Saison ${season}`} · {seasons.find((s) => s.number === season)?.episodeCount ?? 0} épisodes</Text> : null}
               </View>
             ) : null}
             <View style={styles.playerActions}>
