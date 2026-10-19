@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -250,12 +250,17 @@ export default function TitreScreen() {
     ? `https://vidsrc.to/embed/movie/${encodeURIComponent(selectedFilmId)}`
     : `https://vidsrc.to/embed/tv/${encodeURIComponent(playbackId)}/${season}/${episode}`;
 
-  const openPlaybackSource = async () => {
-    try {
-      await Linking.openURL(playbackUrl);
-    } catch {
-      Alert.alert('Ouverture impossible', 'Le téléphone ne peut pas ouvrir cette source vidéo pour le moment.');
+  const openPlayback = () => {
+    setDownloadPickerOpen(false);
+    setPlayerOpen(true);
+  };
+
+  const openWatchOptions = () => {
+    if (item.kind === 'film') {
+      setPlayerOpen(true);
+      return;
     }
+    setDownloadPickerOpen(true);
   };
 
   return (
@@ -344,11 +349,11 @@ export default function TitreScreen() {
         <FicheAssistant title={item.title} kind={item.kind} year={detail?.year ?? item.year} synopsis={detail?.synopsis ?? ''} />
 
         <View style={styles.downloadEntry}>
-          <Pressable style={styles.downloadButton} onPress={() => setDownloadPickerOpen(true)}>
-            <Ionicons name="download-outline" size={22} color="#fff" />
+          <Pressable style={styles.downloadButton} onPress={openWatchOptions}>
+            <Ionicons name="play-circle" size={24} color="#fff" />
             <View style={styles.downloadButtonCopy}>
-              <Text style={styles.downloadButtonTitle}>Télécharger</Text>
-              <Text style={styles.downloadButtonSub}>Choisir la langue, la saison et l’épisode</Text>
+              <Text style={styles.downloadButtonTitle}>{playerOpen ? 'Lecture en cours' : 'Regarder maintenant'}</Text>
+              <Text style={styles.downloadButtonSub}>{item.kind === 'film' ? 'Lancer le lecteur intégré' : 'Choisir une saison et un épisode'}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#fff" />
           </Pressable>
@@ -384,26 +389,14 @@ export default function TitreScreen() {
             <View style={styles.downloadHeading}>
               <View style={styles.downloadHeadingIcon}><Ionicons name="download-outline" size={23} color="#fff" /></View>
               <View style={{ flex: 1, gap: 3 }}>
-                <Text style={styles.downloadSheetTitle}>Préparer le téléchargement</Text>
+                <Text style={styles.downloadSheetTitle}>Choisir un épisode</Text>
                 <Text style={styles.downloadSheetSubtitle} numberOfLines={2}>{detail?.title || item.title}</Text>
               </View>
               <Pressable accessibilityLabel="Fermer" onPress={() => setDownloadPickerOpen(false)} style={styles.downloadClose}><Ionicons name="close" size={20} color={colors.foreground} /></Pressable>
             </View>
             <ScrollView style={styles.downloadOptionsScroll} contentContainerStyle={styles.downloadOptions} showsVerticalScrollIndicator={false}>
-              <Text style={styles.optionLabel}>LANGUE SOUHAITÉE</Text>
-              <View style={styles.optionChips}>
-                {([
-                  ['fr', 'VF · Français'],
-                  ['vostfr', 'VOSTFR'],
-                  ['en', 'VO · Anglais'],
-                  ['original', 'Langue originale'],
-                ] as const).map(([value, label]) => (
-                  <Pressable key={value} onPress={() => setLanguage(value)} style={[styles.playerChip, language === value && styles.playerChipOn]}>
-                    <Text style={[styles.playerChipText, language === value && styles.playerChipTextOn]}>{label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              <Text style={styles.languageNote}>Choix souhaité uniquement : la disponibilité réelle de la piste audio ne pourra être confirmée qu’après connexion des sources de téléchargement.</Text>
+              <Text style={styles.optionLabel}>LECTEUR INTÉGRÉ</Text>
+              <Text style={styles.noEpisodes}>La lecture se fait dans le lecteur intégré. Les pistes audio disponibles dépendent de la source vidéo.</Text>
               {item.kind === 'film' ? (
                 <>
                   <View style={styles.optionDivider} />
@@ -506,7 +499,7 @@ export default function TitreScreen() {
                           {episodes.map((ep) => {
                             const checked = selectedEpisodes.includes(ep.number);
                             return (
-                              <Pressable key={ep.number} onPress={() => toggleEpisodeSelection(ep.number)} style={[styles.episodeOption, checked && styles.episodeOptionOn]}>
+                              <Pressable key={ep.number} onPress={() => { setEpisode(ep.number); setSelectedEpisodes([ep.number]); }} style={[styles.episodeOption, (checked || episode === ep.number) && styles.episodeOptionOn]}>
                                 <View style={styles.episodeCheckboxRow}>
                                   <Ionicons name={checked ? 'checkbox' : 'square-outline'} size={17} color={checked ? colors.primary : colors.mutedForeground} />
                                   <Text style={[styles.episodeNumber, checked && styles.episodeNumberOn]}>E{String(ep.number).padStart(2, '0')}</Text>
@@ -524,8 +517,8 @@ export default function TitreScreen() {
                 </>
               ) : null}
               <View style={styles.downloadNotice}>
-                <Ionicons name="information-circle-outline" size={19} color={colors.primary} />
-                <Text style={styles.downloadNoticeText}>Les saisons, épisodes et sagas affichés viennent des métadonnées réelles. Les sources de fichiers et la vérification des pistes audio seront ajoutées dans une prochaine étape : aucun faux lien de téléchargement n’est créé.</Text>
+                <Ionicons name="play-circle-outline" size={19} color={colors.primary} />
+                <Text style={styles.downloadNoticeText}>Sélectionne une saison puis un épisode. Le lecteur intégré utilisera automatiquement cette sélection.</Text>
               </View>
               <Text style={styles.selectionSummary}>
                 {item.kind === 'film'
@@ -533,13 +526,9 @@ export default function TitreScreen() {
                   : `${selectedEpisodes.length} épisode(s) sélectionné(s) · ${seasons.find((s) => s.number === season)?.name ?? 'aucune saison'}`}
               </Text>
             </ScrollView>
-            <Pressable
-              style={[styles.continueButton, styles.continueButtonDisabled]}
-              disabled
-              accessibilityLabel="Téléchargement indisponible tant que les sources ne sont pas connectées"
-            >
-              <Ionicons name="download-outline" size={21} color="#fff" />
-              <Text style={styles.continueButtonText}>Sources de téléchargement à connecter</Text>
+            <Pressable style={styles.continueButton} onPress={openPlayback}>
+              <Ionicons name="play" size={21} color="#fff" />
+              <Text style={styles.continueButtonText}>Lire {item.kind === 'film' ? 'le film' : `S${season} · E${episode}`}</Text>
             </Pressable>
           </View>
         </View>
