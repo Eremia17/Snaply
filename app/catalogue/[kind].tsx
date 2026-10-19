@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Dimensions, Easing, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
 import { browseKind, type Detail } from '@/lib/catalog';
@@ -25,6 +26,7 @@ const GENRES: Record<Kind, string[]> = {
 
 export default function CatalogueScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { kind } = useLocalSearchParams<{ kind: Kind }>();
   const [prefs] = usePrefs();
   const [items, setItems] = useState<Detail[]>([]);
@@ -101,7 +103,7 @@ export default function CatalogueScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { paddingTop: Math.max(insets.top, 4) + 4 }]}>
       <View style={styles.topbar}>
         <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Retour">
           <Ionicons name="chevron-back" size={26} color={colors.foreground} />
@@ -214,14 +216,14 @@ function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () 
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#08090D', paddingTop: 4 },
-  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
-  brand: { color: '#F5F3EE', fontSize: 20, fontWeight: '900' },
+  root: { flex: 1, backgroundColor: '#08090D' },
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, minHeight: 44, paddingVertical: 5 },
+  brand: { color: '#F5F3EE', fontSize: 20, fontWeight: '900', fontFamily: 'sans-serif-black', includeFontPadding: false, lineHeight: 28 },
   gear: { backgroundColor: colors.muted, borderRadius: 999, padding: 8 },
   eyebrow: { color: colors.primary, letterSpacing: 2.4, fontSize: 10, fontWeight: '800', paddingHorizontal: 16, marginTop: 8, marginBottom: 2 },
   hscroll: { flexGrow: 0 },
   catalogTabsWrap: { marginTop: 6, marginBottom: 4 },
-  catalogTabs: { paddingHorizontal: 16, paddingVertical: 7, gap: 8, alignItems: 'center' },
+  catalogTabs: { paddingHorizontal: 16, paddingVertical: 9, gap: 8, alignItems: 'center' },
   compactFilterPanel: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 3, gap: 8 },
   compactFilterTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   filterToggle: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 34, maxWidth: 124, borderRadius: 999, borderWidth: 1, borderColor: '#353741', backgroundColor: '#191A20', paddingHorizontal: 10, flexShrink: 0 },
@@ -231,17 +233,17 @@ const styles = StyleSheet.create({
   pillOn: { backgroundColor: colors.primary },
   pillText: { color: '#E1E3E8', fontSize: 12, fontWeight: '800', includeFontPadding: false },
   pillTextOn: { color: '#FFFFFF' },
-  chip: { borderRadius: 999, borderWidth: 1, borderColor: '#353741', paddingHorizontal: 8, paddingVertical: 6, minHeight: 29, justifyContent: 'center', alignSelf: 'flex-start' },
+  chip: { borderRadius: 999, borderWidth: 1, borderColor: '#353741', paddingHorizontal: 9, paddingVertical: 7, minHeight: 32, justifyContent: 'center', alignSelf: 'flex-start' },
   chipOn: { borderColor: colors.primary, backgroundColor: '#211318' },
-  chipText: { color: '#D2D4DB', fontSize: 10, fontWeight: '600', includeFontPadding: false },
+  chipText: { color: '#D2D4DB', fontSize: 11, lineHeight: 16, fontWeight: '600', includeFontPadding: false },
   chipTextOn: { color: '#FFFFFF', fontWeight: '800' },
   filtersBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
   filterSelect: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 11 },
   filterSelectOn: { borderColor: colors.primary, backgroundColor: '#211318' },
-  filterSelectText: { color: colors.foreground, fontSize: 12, fontWeight: '600' },
+  filterSelectText: { color: colors.foreground, fontSize: 12, fontWeight: '600', includeFontPadding: false, flexShrink: 1, lineHeight: 18 },
   resetFilter: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: 6 },
   resetFilterText: { color: colors.mutedForeground, fontSize: 12 },
-  optionRow: { paddingHorizontal: 16, paddingVertical: 6, gap: 8, alignItems: 'center' },
+  optionRow: { paddingHorizontal: 16, paddingVertical: 9, gap: 8, alignItems: 'center', minHeight: 48 },
   actions: { alignItems: 'flex-start', paddingHorizontal: 16, marginTop: 8, marginBottom: 8 },
   surprise: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10 },
   surpriseText: { color: '#fff', fontWeight: '700' },
