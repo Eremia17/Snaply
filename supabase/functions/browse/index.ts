@@ -336,7 +336,8 @@ async function list(kind: string, page: number, filters: BrowseFilters = {}) {
     return { items: d.Page.media.map(fromAni), hasMore: d.Page.pageInfo.hasNextPage };
   }
 
-  const params: Record<string, string> = { include_adult: 'false', sort_by: filters.sort === 'rating' ? 'vote_average.desc' : filters.sort === 'recent' ? 'primary_release_date.desc' : 'popularity.desc', 'vote_count.gte': filters.sort === 'rating' ? '300' : filters.sort === 'recent' ? '50' : '20' };
+  const recentSort = kind === 'film' ? 'primary_release_date.desc' : 'first_air_date.desc';
+  const params: Record<string, string> = { include_adult: 'false', sort_by: filters.sort === 'rating' ? 'vote_average.desc' : filters.sort === 'recent' ? recentSort : 'popularity.desc', 'vote_count.gte': filters.sort === 'rating' ? '300' : filters.sort === 'recent' ? '50' : '20' };
   if (filters.minRating) params['vote_average.gte'] = String(filters.minRating);
   if (kind === 'film') {
     const g = FILM_GENRES[filters.genre ?? ''];
