@@ -5,6 +5,7 @@ export type Item = {
   id: string;
   title: string;
   poster?: string | null;
+  backdrop?: string | null;
   year?: string | null;
 };
 
