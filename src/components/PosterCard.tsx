@@ -4,16 +4,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useStore } from '@/lib/store';
 import type { Item } from '@/lib/types';
 import { colors } from '@/lib/theme';
+import { usePrefs } from '@/lib/prefs';
 
 export function PosterCard({ item, width, rating }: { item: Item; width?: number; rating?: number }) {
   const router = useRouter();
   const { isFavorite, toggleFavorite } = useStore();
+  const [prefs] = usePrefs();
   const fav = isFavorite(item);
   const note = rating ?? (item as { rating?: number }).rating ?? 0;
 
   return (
     <Pressable
-      style={[styles.card, width ? { width, flex: 0 } : null]}
+      style={[styles.card, width ? { width, flex: 0 } : null, prefs.contraste && styles.highContrastCard]}
       onPress={() =>
         router.push({
           pathname: '/titre/[kind]/[id]',
@@ -21,7 +23,7 @@ export function PosterCard({ item, width, rating }: { item: Item; width?: number
         })
       }
     >
-      <View style={styles.poster}>
+      <View style={[styles.poster, prefs.contraste && styles.highContrastPoster]}>
         {item.poster ? (
           <Image source={{ uri: item.poster }} style={styles.img} resizeMode="cover" />
         ) : (
@@ -39,13 +41,16 @@ export function PosterCard({ item, width, rating }: { item: Item; width?: number
           <Ionicons name={fav ? 'heart' : 'heart-outline'} size={16} color={fav ? colors.primary : '#fff'} />
         </Pressable>
       </View>
-      <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+      <Text style={[styles.title, prefs.contraste && styles.highContrastText]} numberOfLines={2}>{item.title}</Text>
       {item.year ? <Text style={styles.year}>{item.year}</Text> : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  highContrastCard: { borderColor: '#FFFFFF', borderWidth: 2 },
+  highContrastPoster: { borderColor: '#FFFFFF', borderWidth: 2 },
+  highContrastText: { color: '#FFFFFF', fontWeight: '900' },
   card: { flex: 1, margin: 4 },
   poster: {
     aspectRatio: 2 / 3, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.card,
