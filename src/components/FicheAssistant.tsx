@@ -3,6 +3,7 @@ import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, Text
 import { Ionicons } from '@expo/vector-icons';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
+import { MarkdownText } from '@/components/MarkdownText';
 import type { Kind } from '@/lib/types';
 
 type Message = { role: 'user' | 'assistant'; text: string };
@@ -78,11 +79,11 @@ export function FicheAssistant({ title, kind, year, synopsis }: {
               <View style={styles.welcome}>
                 <Ionicons name="chatbubbles-outline" size={34} color={colors.primary} />
                 <Text style={styles.welcomeTitle}>Parlons de {title}</Text>
-                <Text style={styles.welcomeText}>Demande un résumé sans spoiler, des explications sur les personnages, ou des recommandations similaires.</Text>
+                <Text style={styles.welcomeText}>🎬 Résumé sans spoiler, personnages, explications ou recommandations similaires.</Text>
               </View>
             ) : messages.map((m, i) => (
               <View key={i} style={[styles.bubble, m.role === 'user' ? styles.userBubble : styles.aiBubble]}>
-                <Text style={[styles.messageText, m.role === 'user' && styles.userMessageText]}>{m.text}</Text>
+                {m.role === 'assistant' ? <MarkdownText style={styles.messageText}>{m.text}</MarkdownText> : <Text style={[styles.messageText, styles.userMessageText]}>{m.text}</Text>}
               </View>
             ))}
             {busy ? <View style={styles.thinking}><ActivityIndicator color={colors.primary} /><Text style={styles.thinkingText}>L’assistant réfléchit…</Text></View> : null}
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background, paddingTop: 16, paddingHorizontal: 16, paddingBottom: 10 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingBottom: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   headerIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  heading: { color: colors.foreground, fontSize: 18, fontWeight: '800' },
+  heading: { color: colors.foreground, fontSize: 18, fontWeight: '800', fontFamily: 'sans-serif-medium', includeFontPadding: false },
   subheading: { color: colors.mutedForeground, fontSize: 12, marginTop: 2 },
   history: { flex: 1 },
   historyContent: { paddingVertical: 16, gap: 12, flexGrow: 1 },
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
   bubble: { maxWidth: '88%', padding: 12, borderRadius: 15 },
   userBubble: { alignSelf: 'flex-end', backgroundColor: colors.primary, borderBottomRightRadius: 4 },
   aiBubble: { alignSelf: 'flex-start', backgroundColor: colors.card, borderBottomLeftRadius: 4 },
-  messageText: { color: colors.foreground, lineHeight: 21 },
+  messageText: { color: colors.foreground, lineHeight: 22, fontFamily: 'sans-serif', fontSize: 14 },
   userMessageText: { color: '#fff' },
   thinking: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 9, padding: 10 },
   thinkingText: { color: colors.mutedForeground },

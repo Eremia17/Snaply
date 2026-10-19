@@ -458,9 +458,57 @@ async function sports() {
   return { items };
 }
 
-async function seriesSeasons(id: string) {
-  if (!/^\d+$/.test(id)) throw new Error("Identifiant de série invalide.");
-  const data = await tmdb(`/tv/${id}`);
+async function filmParts(id: string) {
+  if (!/^\d+$/.test(id)) return { parts: [], collection: null };
+  const movie = await tmdb(`/movie/${id}`);
+  const collection = movie.belongs_to_collection;
+  if (!collection?.id) return { parts: [], collection: null };
+  const data = await tmdb(`/collection/${collection.id}`);
+  const parts = (data.parts ?? [])
+    .filter((part: any) => Number(part.id) > 0)
+    .sort((a: any, b: any) => {
+      const ad = String(a.release_date ?? "9999");
+      const bd = String(b.release_date ?? "9999");
+      return ad.localeCompare(bd) || Number(a.id) - Number(b.id);
+    })
+    .map((part: any) => ({
+      id: String(part.id),
+      title: String(part.title ?? part.original_title ?? "Film"),
+      year: String(part.release_date ?? "").slice(0, 4) || null,
+      poster: part.poster_path ? `https://image.tmdb.org/t/p/w342${part.poster_path}` : null,
+      overview: String(part.overview ?? ""),
+      current: String(part.id) === id,
+    }));
+  return { collection: String(data.name ?? collection.name ?? "Saga"), parts };
+}
+
+function normalizeTitle(value: unknown): string {
+  return String(value ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+}
+
+// Pour les animés AniList, retrouver une correspondance TMDB exacte par titre.
+// Si aucune correspondance fiable n'existe, ne jamais inventer de saisons.
+async function resolveSeriesTmdbId(id: string, kind: string, title: string): Promise<string | null> {
+  if (kind !== "manga") return /^\d+$/.test(id) ? id : null;
+  if (!/^\d+$/.test(id)) return null;
+  const data = await anilist(`query ($id: Int) { Media(id: $id, type: ANIME) { title { romaji english native } } }`, { id: Number(id) });
+  const media = data.Media;
+  if (!media) return null;
+  const titles = [media.title?.english, media.title?.romaji, media.title?.native, title].filter(Boolean).map(normalizeTitle);
+  for (const queryTitle of [media.title?.english, media.title?.romaji, title].filter(Boolean)) {
+    const result = await tmdb("/search/tv", { query: String(queryTitle), include_adult: "false" });
+    const match = (result.results ?? []).find((x: any) =>
+      [x.name, x.original_name].some((candidate: unknown) => titles.includes(normalizeTitle(candidate)))
+    );
+    if (match?.id) return String(match.id);
+  }
+  return null;
+}
+
+async function seriesSeasons(id: string, kind: string, title: string) {
+  const resolvedId = await resolveSeriesTmdbId(id, kind, title);
+  if (!resolvedId) return { seasons: [], unavailable: true };
+  const data = await tmdb(`/tv/${resolvedId}`);
   const seasons = (data.seasons ?? [])
     .filter((s: any) => Number(s.season_number) > 0 && Number(s.episode_count) > 0)
     .map((s: any) => ({
@@ -468,7 +516,23 @@ async function seriesSeasons(id: string) {
       name: String(s.name ?? `Saison ${s.season_number}`),
       episodeCount: Number(s.episode_count),
     }));
-  return { seasons };
+  return { seasons, tmdbId: resolvedId, unavailable: false };
+}
+
+async function seriesEpisodes(id: string, kind: string, title: string, seasonNumber: number) {
+  if (!Number.isInteger(seasonNumber) || seasonNumber < 1) throw new Error("Saison invalide.");
+  const resolvedId = await resolveSeriesTmdbId(id, kind, title);
+  if (!resolvedId) return { episodes: [], unavailable: true };
+  const data = await tmdb(`/tv/${resolvedId}/season/${seasonNumber}`);
+  return {
+    episodes: (data.episodes ?? []).filter((e: any) => Number(e.episode_number) > 0).map((e: any) => ({
+      number: Number(e.episode_number),
+      name: String(e.name ?? `Épisode ${e.episode_number}`),
+      airDate: e.air_date ? String(e.air_date) : null,
+      overview: String(e.overview ?? ""),
+    })),
+    unavailable: false,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -479,7 +543,9 @@ Deno.serve(async (req) => {
     if (body.action === "chapters") return json(await chapters(String(body.id ?? ""), String(body.title ?? "")));
     if (body.action === "pages") return json(await pages(String(body.chapterId ?? "")));
     if (body.action === "sports") return json(await sports());
-    if (body.action === "seasons") return json(await seriesSeasons(String(body.id ?? "")));
+    if (body.action === "seasons") return json(await seriesSeasons(String(body.id ?? ""), String(body.kind ?? "serie"), String(body.title ?? "")));
+    if (body.action === "episodes") return json(await seriesEpisodes(String(body.id ?? ""), String(body.kind ?? "serie"), String(body.title ?? ""), Number(body.season ?? 1)));
+    if (body.action === "film_parts") return json(await filmParts(String(body.id ?? "")));
     if (body.action === "extras") return json(await extras(kind, String(body.id ?? "")));
     const page = Math.max(1, Number(body.page ?? 1));
     const filters: BrowseFilters = {

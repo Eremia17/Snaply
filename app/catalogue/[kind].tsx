@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Dimensions, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, Easing, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
 import { browseKind, type Detail } from '@/lib/catalog';
@@ -25,6 +26,7 @@ const GENRES: Record<Kind, string[]> = {
 
 export default function CatalogueScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { kind } = useLocalSearchParams<{ kind: Kind }>();
   const [prefs] = usePrefs();
   const [items, setItems] = useState<Detail[]>([]);
@@ -39,7 +41,9 @@ export default function CatalogueScreen() {
   const [sort, setSort] = useState<'popularity' | 'rating' | 'recent'>('popularity');
   const [yearOptionsOpen, setYearOptionsOpen] = useState(false);
   const [ratingOptionsOpen, setRatingOptionsOpen] = useState(false);
+  const [genresOpen, setGenresOpen] = useState(false);
   const requestId = useRef(0);
+  const surpriseScale = useRef(new Animated.Value(1)).current;
 
   const load = useCallback(async (p: number) => {
     const request = ++requestId.current;
@@ -73,6 +77,7 @@ export default function CatalogueScreen() {
     setSort('popularity');
     setYearOptionsOpen(false);
     setRatingOptionsOpen(false);
+    setGenresOpen(false);
   }, [kind]);
 
   useEffect(() => {
@@ -87,13 +92,18 @@ export default function CatalogueScreen() {
   // Tous les filtres sont appliqués côté serveur pour parcourir le catalogue complet.
   const shown = items;
   const cols = prefs.taille === 'Grand' ? 1 : prefs.taille === 'Normal' ? 2 : 3;
-  const cardW = (Dimensions.get('window').width - 32 - (cols - 1) * 12) / cols;
+  const cardW = (Dimensions.get('window').width - 32 - (cols - 1) * 12 - cols * 8) / cols;
   const surprise = () => {
-    if (shown.length) openTitle(router, shown[Math.floor(Math.random() * shown.length)]);
+    if (!shown.length) return;
+    const picked = shown[Math.floor(Math.random() * shown.length)];
+    Animated.sequence([
+      Animated.timing(surpriseScale, { toValue: 0.94, duration: 90, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.spring(surpriseScale, { toValue: 1, speed: 18, bounciness: 12, useNativeDriver: true }),
+    ]).start(() => openTitle(router, picked));
   };
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { paddingTop: Math.max(insets.top, 4) + 4 }]}>
       <View style={styles.topbar}>
         <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Retour">
           <Ionicons name="chevron-back" size={26} color={colors.foreground} />
@@ -106,25 +116,42 @@ export default function CatalogueScreen() {
 
       <Text style={styles.eyebrow}>LE CINÉMA DU MONDE ENTIER</Text>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hscroll} contentContainerStyle={styles.row}>
-        {TABS.map((t) => (
-          <Pressable key={t.kind} onPress={() => router.replace(`/catalogue/${t.kind}`)}
-            style={[styles.pill, t.kind === kind && styles.pillOn]}>
-            <Text style={[styles.pillText, t.kind === kind && styles.pillTextOn]}>{t.label}</Text>
+      <View style={styles.catalogTabsWrap}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catalogTabs}>
+          {TABS.map((t) => (
+            <Pressable key={t.kind} onPress={() => router.replace(`/catalogue/${t.kind}`)}
+              style={[styles.pill, t.kind === kind && styles.pillOn]}>
+              <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.pillText, t.kind === kind && styles.pillTextOn]}>{t.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
+      <View style={styles.compactFilterPanel}>
+        <View style={styles.compactFilterTop}>
+          <Pressable
+            style={[styles.filterToggle, (genresOpen || genre !== null) && styles.filterSelectOn]}
+            onPress={() => setGenresOpen((v) => !v)}
+            accessibilityRole="button"
+            accessibilityLabel="Afficher ou masquer les genres"
+          >
+            <Ionicons name="options-outline" size={15} color={colors.foreground} />
+            <Text numberOfLines={1} style={styles.filterSelectText}>{genre ?? 'Genres'}</Text>
+            <Ionicons name={genresOpen ? 'chevron-up' : 'chevron-down'} size={13} color={colors.mutedForeground} />
           </Pressable>
-        ))}
-      </ScrollView>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hscroll} contentContainerStyle={styles.row}>
-        <Chip label="Tous les genres" on={genre === null} onPress={() => setGenre(null)} />
-        {genres.map((g) => <Chip key={g} label={g} on={genre === g} onPress={() => setGenre(g)} />)}
-      </ScrollView>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionRow}>
-        <Chip label="Popularité" on={sort === 'popularity'} onPress={() => setSort('popularity')} />
-        <Chip label="Mieux notés" on={sort === 'rating'} onPress={() => setSort('rating')} />
-        <Chip label="Récents" on={sort === 'recent'} onPress={() => setSort('recent')} />
-      </ScrollView>
+          <View style={styles.sortInline}>
+            <Chip label="Pop." on={sort === 'popularity'} onPress={() => setSort('popularity')} />
+            <Chip label="Notes" on={sort === 'rating'} onPress={() => setSort('rating')} />
+            <Chip label="Récents" on={sort === 'recent'} onPress={() => setSort('recent')} />
+          </View>
+        </View>
+        {genresOpen ? (
+          <View style={styles.genreWrap}>
+            <Chip label="Tous les genres" on={genre === null} onPress={() => setGenre(null)} />
+            {genres.map((g) => <Chip key={g} label={g} on={genre === g} onPress={() => setGenre(g)} />)}
+          </View>
+        ) : null}
+      </View>
       <View style={styles.filtersBar}>
         <Pressable style={[styles.filterSelect, year !== null && styles.filterSelectOn]} onPress={() => { setYearOptionsOpen((v) => !v); setRatingOptionsOpen(false); }}>
           <Ionicons name="calendar-outline" size={15} color={colors.foreground} />
@@ -149,13 +176,17 @@ export default function CatalogueScreen() {
       {ratingOptionsOpen ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionRow}>{NOTES.map((n) => <Chip key={n} label={n === 0 ? 'Toutes les notes' : '★ ' + n + '+ / 10'} on={minNote === n} onPress={() => { setMinNote(n); setRatingOptionsOpen(false); }} />)}</ScrollView> : null}
 
       <View style={styles.actions}>
-        <Pressable style={styles.surprise} onPress={surprise}>
+        <Animated.View style={{ transform: [{ scale: surpriseScale }] }}><Pressable style={styles.surprise} onPress={surprise} disabled={!shown.length}>
           <Ionicons name="shuffle" size={18} color="#fff" />
           <Text style={styles.surpriseText}>Surprends-moi</Text>
-        </Pressable>
+        </Pressable></Animated.View>
       </View>
 
       <FlatList
+        removeClippedSubviews={false}
+        windowSize={7}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
         key={cols}
         data={shown}
         numColumns={cols}
@@ -185,29 +216,35 @@ function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () 
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background, paddingTop: 48 },
-  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
-  brand: { color: '#F5F3EE', fontSize: 20, fontWeight: '900' },
+  root: { flex: 1, backgroundColor: '#08090D' },
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, minHeight: 44, paddingVertical: 5 },
+  brand: { color: '#F5F3EE', fontSize: 20, fontWeight: '900', fontFamily: 'sans-serif-black', includeFontPadding: false, lineHeight: 28 },
   gear: { backgroundColor: colors.muted, borderRadius: 999, padding: 8 },
-  eyebrow: { color: colors.primary, letterSpacing: 3, fontSize: 11, fontWeight: '700', paddingHorizontal: 16, marginTop: 14, marginBottom: 4 },
+  eyebrow: { color: colors.primary, letterSpacing: 2.4, fontSize: 10, fontWeight: '800', paddingHorizontal: 16, marginTop: 8, marginBottom: 2 },
   hscroll: { flexGrow: 0 },
-  row: { paddingHorizontal: 16, paddingVertical: 6, gap: 8, alignItems: 'center' },
-  pill: { backgroundColor: '#22242C', borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10, minHeight: 38, justifyContent: 'center', alignItems: 'center' },
+  catalogTabsWrap: { marginTop: 6, marginBottom: 4 },
+  catalogTabs: { paddingHorizontal: 16, paddingVertical: 9, gap: 8, alignItems: 'center' },
+  compactFilterPanel: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 3, gap: 8 },
+  compactFilterTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  filterToggle: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 34, maxWidth: 124, borderRadius: 999, borderWidth: 1, borderColor: '#353741', backgroundColor: '#191A20', paddingHorizontal: 10, flexShrink: 0 },
+  sortInline: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end', gap: 5 },
+  genreWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, alignItems: 'center', paddingTop: 3 },
+  pill: { backgroundColor: '#191A20', borderRadius: 999, paddingHorizontal: 13, paddingVertical: 9, minHeight: 38, justifyContent: 'center', alignItems: 'center', flexShrink: 0, maxWidth: 190 },
   pillOn: { backgroundColor: colors.primary },
-  pillText: { color: '#E1E3E8', fontSize: 14, fontWeight: '700' },
+  pillText: { color: '#E1E3E8', fontSize: 12, fontWeight: '800', includeFontPadding: false },
   pillTextOn: { color: '#FFFFFF' },
-  chip: { borderRadius: 999, borderWidth: 1, borderColor: '#353741', paddingHorizontal: 12, paddingVertical: 7, minHeight: 32, justifyContent: 'center' },
+  chip: { borderRadius: 999, borderWidth: 1, borderColor: '#353741', paddingHorizontal: 9, paddingVertical: 7, minHeight: 32, justifyContent: 'center', alignSelf: 'flex-start' },
   chipOn: { borderColor: colors.primary, backgroundColor: '#211318' },
-  chipText: { color: '#D2D4DB', fontSize: 13, fontWeight: '500' },
+  chipText: { color: '#D2D4DB', fontSize: 11, lineHeight: 16, fontWeight: '600', includeFontPadding: false },
   chipTextOn: { color: '#FFFFFF', fontWeight: '800' },
   filtersBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
   filterSelect: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 11 },
   filterSelectOn: { borderColor: colors.primary, backgroundColor: '#211318' },
-  filterSelectText: { color: colors.foreground, fontSize: 12, fontWeight: '600' },
+  filterSelectText: { color: colors.foreground, fontSize: 12, fontWeight: '600', includeFontPadding: false, flexShrink: 1, lineHeight: 18 },
   resetFilter: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: 6 },
   resetFilterText: { color: colors.mutedForeground, fontSize: 12 },
-  optionRow: { paddingHorizontal: 16, paddingVertical: 5, gap: 8, alignItems: 'center' },
-  actions: { alignItems: 'flex-end', paddingHorizontal: 16, marginTop: 4 },
+  optionRow: { paddingHorizontal: 16, paddingVertical: 9, gap: 8, alignItems: 'center', minHeight: 48 },
+  actions: { alignItems: 'flex-start', paddingHorizontal: 16, marginTop: 8, marginBottom: 8 },
   surprise: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10 },
   surpriseText: { color: '#fff', fontWeight: '700' },
   empty: { color: '#D2D4DB', textAlign: 'center', marginTop: 12, lineHeight: 20 },

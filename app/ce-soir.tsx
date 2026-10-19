@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Easing, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { browseKind, KIND_LABEL, type Detail } from '@/lib/catalog';
@@ -33,6 +33,24 @@ export default function CeSoirScreen() {
   const [results, setResults] = useState<Detail[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultOpacity = useRef(new Animated.Value(0)).current;
+  const resultOffset = useRef(new Animated.Value(22)).current;
+  const sparkleTurn = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!loading) return;
+    const spin = Animated.loop(Animated.timing(sparkleTurn, { toValue: 1, duration: 850, easing: Easing.linear, useNativeDriver: true }));
+    spin.start();
+    return () => spin.stop();
+  }, [loading, sparkleTurn]);
+
+  useEffect(() => {
+    if (!results?.length) { resultOpacity.setValue(0); resultOffset.setValue(22); return; }
+    Animated.parallel([
+      Animated.timing(resultOpacity, { toValue: 1, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.spring(resultOffset, { toValue: 0, speed: 15, bounciness: 5, useNativeDriver: true }),
+    ]).start();
+  }, [results, resultOpacity, resultOffset]);
 
   const go = async () => {
     setLoading(true);
@@ -108,13 +126,13 @@ export default function CeSoirScreen() {
         </View>
 
         <Pressable style={[styles.primary, loading && styles.disabled]} onPress={go} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Ionicons name="sparkles-outline" size={20} color="#fff" />}
+          {loading ? <Animated.View style={{ transform: [{ rotate: sparkleTurn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}><Ionicons name="sparkles" size={20} color="#fff" /></Animated.View> : <Ionicons name="sparkles-outline" size={20} color="#fff" />}
           <Text style={styles.primaryText}>{loading ? 'Recherche en cours…' : 'Proposez-moi 3 titres'}</Text>
         </Pressable>
 
         {error ? <View style={styles.error}><Ionicons name="information-circle-outline" size={22} color={colors.primary} /><Text style={styles.errorText}>{error}</Text></View> : null}
         {results && results.length > 0 ? (
-          <View style={styles.results}>
+          <Animated.View style={[styles.results, { opacity: resultOpacity, transform: [{ translateY: resultOffset }] }]}>
             <View style={styles.resultHeading}>
               <Text style={styles.resultTitle}>Pour ce soir</Text>
               <Pressable onPress={go} disabled={loading} style={styles.again}><Ionicons name="refresh-outline" size={17} color={colors.foreground} /><Text style={styles.againText}>Autres idées</Text></Pressable>
@@ -131,7 +149,7 @@ export default function CeSoirScreen() {
                 </View>
               </Pressable>
             ))}
-          </View>
+          </Animated.View>
         ) : null}
       </ScrollView>
     </>
@@ -143,8 +161,8 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 16, paddingBottom: 42, gap: 10 },
+  root: { flex: 1, backgroundColor: '#08090D' },
+  content: { padding: 16, paddingBottom: 28, gap: 10 },
   intro: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   kicker: { color: colors.primary, fontSize: 12, fontWeight: '800', letterSpacing: 2 },
   title: { color: colors.foreground, fontSize: 30, fontWeight: '900', lineHeight: 36 },
@@ -170,7 +188,7 @@ const styles = StyleSheet.create({
   primaryText: { color: '#fff', fontWeight: '800', fontSize: 15 },
   error: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.border },
   errorText: { flex: 1, color: colors.foreground, lineHeight: 20 },
-  results: { gap: 12, marginTop: 16 },
+  results: { gap: 12, marginTop: 12, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#29212C' },
   resultHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   resultTitle: { color: colors.foreground, fontSize: 22, fontWeight: '900' },
   again: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
