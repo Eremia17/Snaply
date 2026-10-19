@@ -176,11 +176,11 @@ export default function TitreScreen() {
       : episodes.map((ep) => ep.number));
   };
   const toggleFilmSelection = (id: string) => {
-    setSelectedFilmIds((current) => {
-      const next = current.includes(id) ? current.filter((v) => v !== id) : [...current, id];
-      if (next.length) setSelectedFilmId(next[next.length - 1]);
-      return next;
-    });
+    const next = selectedFilmIds.includes(id)
+      ? selectedFilmIds.filter((v) => v !== id)
+      : [...selectedFilmIds, id];
+    setSelectedFilmIds(next);
+    if (next.length) setSelectedFilmId(next[next.length - 1]);
   };
 
   const [seen, setSeen] = useState(false);
@@ -433,7 +433,21 @@ export default function TitreScreen() {
                     </View>
                     </>
                   ) : (
-                    <Text style={styles.noEpisodes}>{filmPartsLoading ? 'Recherche des autres films de cette saga…' : 'Aucune autre partie référencée. Ce film reste sélectionnable seul.'}</Text>
+                    <>
+                      {filmPartsLoading ? (
+                        <Text style={styles.noEpisodes}>Recherche des autres films de cette saga…</Text>
+                      ) : (
+                        <Pressable onPress={() => toggleFilmSelection(item.id)} style={[styles.filmPartRow, selectedFilmIds.includes(item.id) && styles.filmPartRowOn]}>
+                          {item.poster ? <Image source={{ uri: item.poster }} style={styles.filmPartPoster} resizeMode="cover" /> : <View style={styles.filmPartPosterEmpty}><Ionicons name="film-outline" size={18} color={colors.mutedForeground} /></View>}
+                          <View style={styles.filmPartCopy}>
+                            <Text style={styles.filmPartOrder}>FILM ACTUEL</Text>
+                            <Text style={styles.filmPartTitle}>{detail?.title || item.title}</Text>
+                            <Text style={styles.filmPartCurrent}>Aucune autre partie confirmée dans le catalogue</Text>
+                          </View>
+                          <Ionicons name={selectedFilmIds.includes(item.id) ? 'checkbox' : 'square-outline'} size={20} color={selectedFilmIds.includes(item.id) ? colors.primary : colors.mutedForeground} />
+                        </Pressable>
+                      )}
+                    </>
                   )}
                 </>
               ) : null}
