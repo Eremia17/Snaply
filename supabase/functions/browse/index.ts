@@ -458,6 +458,30 @@ async function sports() {
   return { items };
 }
 
+async function filmParts(id: string) {
+  if (!/^\d+$/.test(id)) return { parts: [], collection: null };
+  const movie = await tmdb(`/movie/${id}`);
+  const collection = movie.belongs_to_collection;
+  if (!collection?.id) return { parts: [], collection: null };
+  const data = await tmdb(`/collection/${collection.id}`);
+  const parts = (data.parts ?? [])
+    .filter((part: any) => Number(part.id) > 0)
+    .sort((a: any, b: any) => {
+      const ad = String(a.release_date ?? "9999");
+      const bd = String(b.release_date ?? "9999");
+      return ad.localeCompare(bd) || Number(a.id) - Number(b.id);
+    })
+    .map((part: any) => ({
+      id: String(part.id),
+      title: String(part.title ?? part.original_title ?? "Film"),
+      year: String(part.release_date ?? "").slice(0, 4) || null,
+      poster: part.poster_path ? `https://image.tmdb.org/t/p/w342${part.poster_path}` : null,
+      overview: String(part.overview ?? ""),
+      current: String(part.id) === id,
+    }));
+  return { collection: String(data.name ?? collection.name ?? "Saga"), parts };
+}
+
 function normalizeTitle(value: unknown): string {
   return String(value ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
 }
@@ -521,6 +545,7 @@ Deno.serve(async (req) => {
     if (body.action === "sports") return json(await sports());
     if (body.action === "seasons") return json(await seriesSeasons(String(body.id ?? ""), String(body.kind ?? "serie"), String(body.title ?? "")));
     if (body.action === "episodes") return json(await seriesEpisodes(String(body.id ?? ""), String(body.kind ?? "serie"), String(body.title ?? ""), Number(body.season ?? 1)));
+    if (body.action === "film_parts") return json(await filmParts(String(body.id ?? "")));
     if (body.action === "extras") return json(await extras(kind, String(body.id ?? "")));
     const page = Math.max(1, Number(body.page ?? 1));
     const filters: BrowseFilters = {
