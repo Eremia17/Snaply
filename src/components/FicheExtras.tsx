@@ -63,6 +63,7 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
   const [loading, setLoading] = useState(true);
   const [showTrailer, setShowTrailer] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -77,7 +78,7 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
       if (active) setLoading(false);
     });
     return () => { active = false; };
-  }, [kind, id]);
+  }, [kind, id, retry]);
 
   if (loading) {
     return (
@@ -96,7 +97,11 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
     return (
       <View style={styles.wrap}>
         <Text style={styles.label}>INFORMATIONS COMPLÉMENTAIRES</Text>
-        <Text style={styles.emptyMessage}>Impossible de charger ces informations. Vérifiez la connexion au service puis réessayez plus tard.</Text>
+        <Text style={styles.emptyMessage}>Impossible de charger ces informations. Vérifiez la connexion puis réessayez.</Text>
+        <Pressable style={styles.retryButton} onPress={() => { setLoading(true); setRetry((n) => n + 1); }} accessibilityRole="button">
+          <Ionicons name="refresh-outline" size={18} color={colors.foreground} />
+          <Text style={styles.retryText}>Réessayer le chargement</Text>
+        </Pressable>
       </View>
     );
   }
@@ -271,6 +276,8 @@ const styles = StyleSheet.create({
   trailerWebView: { width: '100%', height: 220, backgroundColor: 'transparent' },
   videoLoadingOverlay: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: 'rgba(0,0,0,0.72)' },
   emptyMessage: { color: colors.mutedForeground, lineHeight: 20 },
+  retryButton: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 11 },
+  retryText: { color: colors.foreground, fontWeight: '700' },
   trailerActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   closeTrailer: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
   openYoutube: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: '#C4302B', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
