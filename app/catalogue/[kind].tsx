@@ -29,9 +29,9 @@ export default function CatalogueScreen() {
   const [year, setYear] = useState<string | null>(null);
   const [minNote, setMinNote] = useState(0);
 
-  const load = useCallback(
-    async (p: number) => {
-      setLoading(true);
+  const load = useCallback(async (p: number) => {
+    setLoading(true);
+    try {
       const r = await browseKind(kind, p);
       setItems((prev) => {
         if (p === 1) return r.items;
@@ -40,10 +40,10 @@ export default function CatalogueScreen() {
       });
       setPage(p);
       setHasMore(r.hasMore);
+    } finally {
       setLoading(false);
-    },
-    [kind],
-  );
+    }
+  }, [kind]);
 
   useEffect(() => {
     setItems([]);
@@ -55,21 +55,15 @@ export default function CatalogueScreen() {
 
   const genres = Array.from(new Set(items.flatMap((i) => i.genres))).slice(0, 10);
   const years = Array.from(new Set(items.map((i) => i.year).filter(Boolean) as string[]))
-    .sort()
-    .reverse()
-    .slice(0, 8);
-
-  const shown = items.filter(
-    (i) =>
-      (!genre || i.genres.includes(genre)) &&
-      (!year || i.year === year) &&
-      i.rating >= minNote &&
-      (!prefs.famille || isFamilySafe(i)),
+    .sort().reverse().slice(0, 8);
+  const shown = items.filter((i) =>
+    (!genre || i.genres.includes(genre)) &&
+    (!year || i.year === year) &&
+    i.rating >= minNote &&
+    (!prefs.famille || isFamilySafe(i)),
   );
-
   const cols = prefs.taille === 'Grand' ? 1 : prefs.taille === 'Normal' ? 2 : 3;
   const cardW = (Dimensions.get('window').width - 32 - (cols - 1) * 12) / cols;
-
   const surprise = () => {
     if (shown.length) openTitle(router, shown[Math.floor(Math.random() * shown.length)]);
   };
@@ -77,11 +71,11 @@ export default function CatalogueScreen() {
   return (
     <View style={styles.root}>
       <View style={styles.topbar}>
-        <Pressable onPress={() => router.back()} hitSlop={10}>
+        <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Retour">
           <Ionicons name="chevron-back" size={26} color={colors.foreground} />
         </Pressable>
         <Text style={styles.brand}>Erëmīa</Text>
-        <Pressable onPress={() => router.push('/parametres')} style={styles.gear}>
+        <Pressable onPress={() => router.push('/parametres')} style={styles.gear} accessibilityRole="button" accessibilityLabel="Paramètres">
           <Ionicons name="settings-outline" size={20} color={colors.foreground} />
         </Pressable>
       </View>
@@ -90,11 +84,8 @@ export default function CatalogueScreen() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hscroll} contentContainerStyle={styles.row}>
         {TABS.map((t) => (
-          <Pressable
-            key={t.kind}
-            onPress={() => router.replace(`/catalogue/${t.kind}`)}
-            style={[styles.pill, t.kind === kind && styles.pillOn]}
-          >
+          <Pressable key={t.kind} onPress={() => router.replace(`/catalogue/${t.kind}`)}
+            style={[styles.pill, t.kind === kind && styles.pillOn]}>
             <Text style={[styles.pillText, t.kind === kind && styles.pillTextOn]}>{t.label}</Text>
           </Pressable>
         ))}
@@ -102,22 +93,16 @@ export default function CatalogueScreen() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hscroll} contentContainerStyle={styles.row}>
         <Chip label="Tous les genres" on={genre === null} onPress={() => setGenre(null)} />
-        {genres.map((g) => (
-          <Chip key={g} label={g} on={genre === g} onPress={() => setGenre(g)} />
-        ))}
+        {genres.map((g) => <Chip key={g} label={g} on={genre === g} onPress={() => setGenre(g)} />)}
       </ScrollView>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hscroll} contentContainerStyle={styles.row}>
         <Chip label="Toutes les années" on={year === null} onPress={() => setYear(null)} />
-        {years.map((y) => (
-          <Chip key={y} label={y} on={year === y} onPress={() => setYear(y)} />
-        ))}
+        {years.map((y) => <Chip key={y} label={y} on={year === y} onPress={() => setYear(y)} />)}
       </ScrollView>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hscroll} contentContainerStyle={styles.row}>
-        {NOTES.map((n) => (
-          <Chip key={n} label={n === 0 ? 'Toutes les notes' : `★ ${n}+`} on={minNote === n} onPress={() => setMinNote(n)} />
-        ))}
+        {NOTES.map((n) => <Chip key={n} label={n === 0 ? 'Toutes les notes' : `★ ${n}+`} on={minNote === n} onPress={() => setMinNote(n)} />)}
       </ScrollView>
 
       <View style={styles.actions}>
@@ -136,17 +121,11 @@ export default function CatalogueScreen() {
         contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 40 }}
         renderItem={({ item }) => <PosterCard item={item} width={cardW} />}
         onEndReachedThreshold={1.5}
-        onEndReached={() => {
-          if (!loading && hasMore) load(page + 1);
-        }}
+        onEndReached={() => { if (!loading && hasMore) load(page + 1); }}
         ListFooterComponent={loading ? <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} /> : null}
-        ListEmptyComponent={
-          loading ? (
-            <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
-          ) : (
-            <Text style={styles.empty}>Aucun titre ne correspond à ces filtres.</Text>
-          )
-        }
+        ListEmptyComponent={loading
+          ? <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+          : <Text style={styles.empty}>Aucun titre ne correspond à ces filtres.</Text>}
       />
     </View>
   );
@@ -163,21 +142,21 @@ function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background, paddingTop: 48 },
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16 },
-  brand: { color: colors.foreground, fontSize: 20, fontWeight: '900' },
+  brand: { color: '#F5F3EE', fontSize: 20, fontWeight: '900' },
   gear: { backgroundColor: colors.muted, borderRadius: 999, padding: 8 },
-  eyebrow: { color: colors.primary, letterSpacing: 3, fontSize: 11, fontWeight: '700', paddingHorizontal: 16, marginTop: 14 },
+  eyebrow: { color: colors.primary, letterSpacing: 3, fontSize: 11, fontWeight: '700', paddingHorizontal: 16, marginTop: 14, marginBottom: 4 },
   hscroll: { flexGrow: 0 },
   row: { paddingHorizontal: 16, paddingVertical: 6, gap: 8, alignItems: 'center' },
-  pill: { backgroundColor: colors.muted, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9 },
+  pill: { backgroundColor: '#22242C', borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10, minHeight: 38, justifyContent: 'center', alignItems: 'center' },
   pillOn: { backgroundColor: colors.primary },
-  pillText: { color: colors.mutedForeground, fontWeight: '600' },
-  pillTextOn: { color: '#fff' },
-  chip: { borderRadius: 999, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 6 },
-  chipOn: { borderColor: colors.primary },
-  chipText: { color: colors.mutedForeground, fontSize: 13 },
-  chipTextOn: { color: colors.primary, fontWeight: '700' },
+  pillText: { color: '#E1E3E8', fontSize: 14, fontWeight: '700' },
+  pillTextOn: { color: '#FFFFFF' },
+  chip: { borderRadius: 999, borderWidth: 1, borderColor: '#353741', paddingHorizontal: 12, paddingVertical: 7, minHeight: 32, justifyContent: 'center' },
+  chipOn: { borderColor: colors.primary, backgroundColor: '#211318' },
+  chipText: { color: '#D2D4DB', fontSize: 13, fontWeight: '500' },
+  chipTextOn: { color: '#FFFFFF', fontWeight: '800' },
   actions: { alignItems: 'flex-end', paddingHorizontal: 16, marginTop: 4 },
   surprise: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10 },
   surpriseText: { color: '#fff', fontWeight: '700' },
-  empty: { color: colors.mutedForeground, textAlign: 'center', marginTop: 40 },
+  empty: { color: '#D2D4DB', textAlign: 'center', marginTop: 40 },
 });
