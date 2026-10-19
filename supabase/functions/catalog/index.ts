@@ -61,6 +61,7 @@ function fromTmdbDetail(x: any, kind: Kind): Item {
     id: String(x.id),
     title: x.title ?? x.name ?? "",
     poster: x.poster_path ? IMG + x.poster_path : null,
+    backdrop: x.backdrop_path ? `https://image.tmdb.org/t/p/w1280${x.backdrop_path}` : null,
     year: date ? date.slice(0, 4) : null,
     genres: (x.genres ?? []).map((g: any) => g.name),
     rating: Math.round((x.vote_average ?? 0) * 10) / 10,
