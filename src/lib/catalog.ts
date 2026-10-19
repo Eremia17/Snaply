@@ -58,16 +58,24 @@ export async function loadCatalog(): Promise<string | null> {
 
 export async function fetchDetail(kind: Kind, id: string): Promise<Detail | null> {
   if (!isSupabaseConfigured) return null;
-  const { data, error } = await supabase.functions.invoke('catalog', { body: { action: 'detail', kind, id } });
-  if (error || !data) return null;
-  return data as Detail;
+  try {
+    const { data, error } = await supabase.functions.invoke('catalog', { body: { action: 'detail', kind, id } });
+    if (error || !data) return null;
+    return data as Detail;
+  } catch {
+    return null;
+  }
 }
 
 export async function searchRemote(q: string, kinds: Kind[] = []): Promise<Detail[]> {
   if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase.functions.invoke('catalog', { body: { action: 'search', q, kinds } });
-  if (error || !data) return [];
-  return (data.items ?? []) as Detail[];
+  try {
+    const { data, error } = await supabase.functions.invoke('catalog', { body: { action: 'search', q, kinds } });
+    if (error || !data || !Array.isArray(data.items)) return [];
+    return data.items as Detail[];
+  } catch {
+    return [];
+  }
 }
 
 export function listByKind(kind: Kind): Detail[] {
@@ -128,9 +136,13 @@ export type Extras = {
 
 export async function fetchExtras(kind: Kind, id: string): Promise<Extras | null> {
   if (!isSupabaseConfigured) return null;
-  const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'extras', kind, id } });
-  if (error || !data || data.error) return null;
-  return data as Extras;
+  try {
+    const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'extras', kind, id } });
+    if (error || !data || data.error) return null;
+    return data as Extras;
+  } catch {
+    return null;
+  }
 }
 
 export type SportMatch = {
