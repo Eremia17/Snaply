@@ -28,7 +28,7 @@ export default function TitreScreen() {
   const { isFavorite, toggleFavorite, pushHistory } = useStore();
   const fav = isFavorite(item);
   const [remote, setRemote] = useState<Detail | null>(null);
-  const detail = getDetail(item.kind, item.id) ?? remote;
+  const detail = remote ?? getDetail(item.kind, item.id);
   const [myRating, setMyRating] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [lists, setLists] = useState<UserList[] | null>(null);
@@ -51,13 +51,12 @@ export default function TitreScreen() {
     setLanguage('fr');
     const cached = getDetail(item.kind, item.id);
     setRemote(cached ?? null);
-    if (!cached) {
-      fetchDetail(item.kind, item.id).then((result) => {
-        if (active) setRemote(result);
-      }).catch(() => {
-        if (active) setRemote(null);
-      });
-    }
+    // Le cache de catalogue est léger : charger aussi les détails complets (durée, synopsis, arrière-plan…).
+    fetchDetail(item.kind, item.id).then((result) => {
+      if (active && result) setRemote(result);
+    }).catch(() => {
+      // Conserver les données du catalogue si le service détaillé est temporairement indisponible.
+    });
     AsyncStorage.getItem('mv:ratings').then((v) => {
       if (!active) return;
       const all = v ? JSON.parse(v) : {};
