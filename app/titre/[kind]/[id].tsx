@@ -323,7 +323,7 @@ export default function TitreScreen() {
           </View>
         ) : null}
 
-        <FicheExtras kind={item.kind} id={item.id} poster={item.poster} />
+        <FicheExtras kind={item.kind} id={item.id} poster={item.poster} title={item.title} />
         <FicheAssistant title={item.title} kind={item.kind} year={detail?.year ?? item.year} synopsis={detail?.synopsis ?? ''} />
 
         {!detail ? <Text style={styles.note}>Chargement des informations…</Text> : null}
