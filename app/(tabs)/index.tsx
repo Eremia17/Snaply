@@ -85,17 +85,31 @@ export default function HomeScreen() {
             <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
             <Text style={styles.eyebrow}>VOTRE UNIVERS CINÉMA & ANIMATION</Text>
           </View>
-          <Text style={styles.heroTitle}>
-            Erëmīa
+          <Text style={styles.heroTitle} numberOfLines={2}>
+            {hero?.title ?? 'Erëmīa'}
           </Text>
-          <Text style={styles.lead}>
-            Découvrez films, séries, animés manga et créations occidentales dans un catalogue vivant, enrichi en temps réel.
+          {hero ? (
+            <View style={styles.heroMeta}>
+              {hero.year ? <Text style={styles.heroMetaText}>{hero.year}</Text> : null}
+              {hero.rating > 0 ? <Text style={styles.heroMetaText}>★ {hero.rating.toFixed(1)}/10</Text> : null}
+              {hero.genres.slice(0, 2).map((g) => <Text key={g} style={styles.heroMetaText}>{g}</Text>)}
+            </View>
+          ) : null}
+          <Text style={styles.lead} numberOfLines={4}>
+            {hero?.synopsis || 'Découvrez films, séries, animés manga et créations occidentales dans un catalogue vivant, enrichi en temps réel.'}
           </Text>
 
-          <Pressable style={styles.primaryBtn} onPress={() => router.push('/catalogue/film')}>
-            <Ionicons name="play" size={18} color="#fff" />
-            <Text style={styles.primaryText}>Explorer les catalogues</Text>
-          </Pressable>
+          {hero ? (
+            <Pressable style={styles.primaryBtn} onPress={() => openTitle(router, hero)}>
+              <Ionicons name="play" size={18} color="#fff" />
+              <Text style={styles.primaryText}>Découvrir ce titre</Text>
+            </Pressable>
+          ) : (
+            <Pressable style={styles.primaryBtn} onPress={() => router.push('/catalogue/film')}>
+              <Ionicons name="play" size={18} color="#fff" />
+              <Text style={styles.primaryText}>Explorer les catalogues</Text>
+            </Pressable>
+          )}
           <Pressable style={styles.secondaryBtn} onPress={() => router.push('/sports')}>
             <Ionicons name="trophy-outline" size={18} color={colors.foreground} />
             <Text style={styles.secondaryText}>Sports en direct</Text>
@@ -256,6 +270,8 @@ const styles = StyleSheet.create({
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   eyebrow: { color: colors.primary, fontSize: 13, fontWeight: '700' },
   heroTitle: { color: colors.foreground, fontSize: 56, fontWeight: '900', lineHeight: 58 },
+  heroMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10, marginBottom: 2 },
+  heroMetaText: { color: '#F5F3EE', fontSize: 12, fontWeight: '700', backgroundColor: 'rgba(0,0,0,0.42)', overflow: 'hidden', paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999 },
   lead: { color: colors.foreground, fontSize: 16, lineHeight: 24, opacity: 0.9 },
   primaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 15, marginTop: 6 },
   primaryText: { color: '#fff', fontWeight: '800', fontSize: 16 },
