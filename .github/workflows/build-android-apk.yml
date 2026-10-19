@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+# Ne garder que la dernière construction en attente pour éviter une file d'APK obsolètes.
+concurrency:
+  group: eremia-android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-apk:
     name: Build installable Android APK
