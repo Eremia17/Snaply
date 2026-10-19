@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -137,10 +137,21 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
                   </View>
                 ) : null}
               </View>
-              <Pressable style={styles.closeTrailer} onPress={() => { setShowTrailer(false); setVideoLoading(false); }}>
-                <Ionicons name="close" size={18} color="#fff" />
-                <Text style={styles.trailerText}>Fermer la vidéo</Text>
-              </Pressable>
+              <View style={styles.trailerActions}>
+                <Pressable style={styles.closeTrailer} onPress={() => { setShowTrailer(false); setVideoLoading(false); }}>
+                  <Ionicons name="close" size={18} color="#fff" />
+                  <Text style={styles.trailerText}>Fermer la vidéo</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.openYoutube}
+                  onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${encodeURIComponent(data.trailer!)}`).catch(() => {})}
+                  accessibilityRole="button"
+                  accessibilityLabel="Ouvrir la bande-annonce sur YouTube"
+                >
+                  <Ionicons name="logo-youtube" size={18} color="#fff" />
+                  <Text style={styles.trailerText}>Ouvrir sur YouTube</Text>
+                </Pressable>
+              </View>
             </View>
           ) : (
             <Pressable style={styles.trailerPreview} onPress={() => { setVideoLoading(true); setShowTrailer(true); }}
@@ -260,7 +271,9 @@ const styles = StyleSheet.create({
   trailerWebView: { width: '100%', height: 220, backgroundColor: 'transparent' },
   videoLoadingOverlay: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: 'rgba(0,0,0,0.72)' },
   emptyMessage: { color: colors.mutedForeground, lineHeight: 20 },
+  trailerActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   closeTrailer: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
+  openYoutube: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: '#C4302B', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
   label: { color: colors.mutedForeground, letterSpacing: 2, fontSize: 12, marginTop: 6 },
   providers: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   provider: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderRadius: 12, padding: 8, borderWidth: 1, borderColor: colors.border },
