@@ -111,10 +111,11 @@ async function list(): Promise<Item[]> {
 
 async function search(q: string, kinds: Kind[]): Promise<Item[]> {
   const want = (k: Kind) => kinds.length === 0 || kinds.includes(k);
+  const needsTmdb = want("film") || want("serie") || want("occidental");
   const [multi, gMovie, gTv, mangas] = await Promise.all([
-    want("film") || want("serie") ? tmdb("/search/multi", { query: q }) : Promise.resolve({ results: [] }),
-    genres("movie"),
-    genres("tv"),
+    needsTmdb ? tmdb("/search/multi", { query: q }) : Promise.resolve({ results: [] }),
+    needsTmdb ? genres("movie") : Promise.resolve({}),
+    needsTmdb ? genres("tv") : Promise.resolve({}),
     want("manga") ? md("/manga", `title=${encodeURIComponent(q)}&limit=10&includes[]=cover_art`) : Promise.resolve({ data: [] }),
   ]);
   const out: Item[] = [];
