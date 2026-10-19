@@ -133,9 +133,10 @@ export type SportMatch = {
 };
 
 export async function fetchSports(): Promise<SportMatch[]> {
-  if (!isSupabaseConfigured) return [];
+  if (!isSupabaseConfigured) throw new Error('Supabase n’est pas configuré.');
   const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'sports' } });
-  if (error || !data) return [];
+  if (error) throw new Error(error.message || 'Impossible de joindre le service sportif.');
+  if (!data || data.error) throw new Error(data?.error || 'Le service sportif n’a renvoyé aucune réponse.');
   return (data.items ?? []) as SportMatch[];
 }
 
