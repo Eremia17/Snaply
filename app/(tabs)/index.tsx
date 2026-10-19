@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openTitle } from '@/lib/navigation';
@@ -56,20 +56,6 @@ export default function HomeScreen() {
     pulse.start();
     return () => pulse.stop();
   }, [dicePulse, prefs.animations]);
-
-  const launchSurprise = () => {
-    const pool = [...trending(), ...classics(), ...upcomingList()].filter((item, index, all) => all.findIndex((x) => x.kind === item.kind && x.id === item.id) === index);
-    if (!pool.length) { router.push('/catalogue/film'); return; }
-    setSurpriseItem(pool[Math.floor(Math.random() * pool.length)]);
-    if (prefs.animations) { setSurpriseVisible(true); return; }
-    diceRotation.setValue(0);
-    Animated.sequence([
-      Animated.timing(diceRotation, { toValue: 1, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      Animated.timing(diceRotation, { toValue: -1, duration: 180, useNativeDriver: true }),
-      Animated.timing(diceRotation, { toValue: 0.7, duration: 150, useNativeDriver: true }),
-      Animated.timing(diceRotation, { toValue: 0, duration: 160, useNativeDriver: true }),
-    ]).start(() => setSurpriseVisible(true));
-  };
 
   useEffect(() => {
     if (!isSupabaseConfigured || prefs.economiseur) { setMalagasyFilms([]); return; }
