@@ -117,8 +117,15 @@ export default function CatalogueScreen() {
       await new Promise((resolve) => setTimeout(resolve, 3000));
       const response = await browseKind('film', 1, { minRating: 8.6, sort: 'rating' });
       const eligible = response.items.filter((item) => item.rating > 8.5 && !!item.poster);
-      if (!eligible.length) setSurpriseError('Aucun film noté au-dessus de 8,5 n’est disponible pour le moment. Réessaie plus tard.');
-      else setSurpriseResult(eligible[Math.floor(Math.random() * eligible.length)]);
+      if (!eligible.length) {
+        setSurpriseError('Aucun film noté au-dessus de 8,5 n’est disponible pour le moment. Réessaie plus tard.');
+      } else {
+        const chosen = eligible[Math.floor(Math.random() * eligible.length)];
+        setSurpriseResult(chosen);
+        // La surprise ouvre directement la fiche du film, sans écran intermédiaire « Voir l’affiche ».
+        setSurpriseVisible(false);
+        openTitle(router, chosen);
+      }
     } catch (e) {
       setSurpriseError(e instanceof Error ? e.message : 'Impossible de récupérer les films les mieux notés.');
     } finally {
@@ -225,7 +232,7 @@ export default function CatalogueScreen() {
               {surpriseResult.poster ? <Image source={{ uri: surpriseResult.poster }} style={styles.cinemaPoster} resizeMode="cover" /> : null}
               <Text style={styles.cinemaResultTitle} numberOfLines={2}>{surpriseResult.title}</Text>
               <Text style={styles.cinemaRating}>★ {surpriseResult.rating.toFixed(1)} / 10  ·  {surpriseResult.year ?? 'Année inconnue'}</Text>
-              <Pressable style={styles.cinemaAction} onPress={() => { const item = surpriseResult; setSurpriseVisible(false); openTitle(router, item); }}><Text style={styles.cinemaActionText}>DÉCOUVRIR LE FILM</Text><Ionicons name="arrow-forward" size={17} color="#FFFFFF" /></Pressable>
+              <Pressable style={styles.cinemaAction} onPress={() => { const item = surpriseResult; setSurpriseVisible(false); openTitle(router, item); }}><Text style={styles.cinemaActionText}>OUVRIR LA FICHE</Text><Ionicons name="arrow-forward" size={17} color="#FFFFFF" /></Pressable>
               <Pressable style={styles.cinemaAgain} onPress={surprise}><Text style={styles.cinemaAgainText}>Tenter une autre surprise</Text></Pressable>
             </View>
           ) : (
