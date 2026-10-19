@@ -164,6 +164,15 @@ export async function fetchSports(): Promise<SportMatch[]> {
   return (data.items ?? []) as SportMatch[];
 }
 
+export type SeriesSeason = { number: number; name: string; episodeCount: number };
+
+export async function fetchSeriesSeasons(id: string): Promise<SeriesSeason[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'seasons', id } });
+  if (error || !data || data.error) throw new Error(data?.error || error?.message || 'Impossible de charger les saisons.');
+  return Array.isArray(data.seasons) ? data.seasons as SeriesSeason[] : [];
+}
+
 export type Chapter = { id: string; chapter: string; title: string; lang: string };
 
 export async function fetchChapters(mangaId: string, title = ''): Promise<Chapter[]> {
