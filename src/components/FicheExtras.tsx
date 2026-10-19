@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { PosterCard } from '@/components/PosterCard';
-import { fetchExtras, type Extras } from '@/lib/catalog';
+import { fetchExtras, type Extras, type Detail } from '@/lib/catalog';
 import { openTitle } from '@/lib/navigation';
-import type { Detail } from '@/lib/catalog';
 import type { Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
 
@@ -33,7 +31,6 @@ function Constellation({ name, items, poster, onPick }: { name: string; items: D
     const a = (i * 2 * Math.PI) / shown.length - Math.PI / 2;
     return { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
   });
-
   return (
     <View style={styles.cosmos}>
       <View style={{ width: W, height: H }}>
@@ -42,27 +39,14 @@ function Constellation({ name, items, poster, onPick }: { name: string; items: D
           const my = (cy + p.y) / 2;
           const len = Math.hypot(p.x - cx, p.y - cy);
           const ang = (Math.atan2(p.y - cy, p.x - cx) * 180) / Math.PI;
-          return (
-            <View
-              key={`l${i}`}
-              style={{
-                position: 'absolute', left: mx - len / 2, top: my - 0.75, width: len, height: 1.5,
-                backgroundColor: color, opacity: 0.55, transform: [{ rotate: `${ang}deg` }],
-              }}
-            />
-          );
+          return <View key={`l${i}`} style={{ position: 'absolute', left: mx - len / 2, top: my - 0.75, width: len, height: 1.5, backgroundColor: color, opacity: 0.55, transform: [{ rotate: `${ang}deg` }] }} />;
         })}
-
         <View style={[styles.center, { left: cx - 46, top: cy - 46 }]}>
           {poster ? <Image source={{ uri: poster }} style={styles.centerImg} /> : <View style={[styles.centerImg, { backgroundColor: colors.muted }]} />}
         </View>
-
         {shown.map((it, i) => (
-          <Pressable
-            key={`${it.kind}:${it.id}`}
-            onPress={() => onPick(it)}
-            style={[styles.sat, { left: pts[i].x - SAT / 2, top: pts[i].y - SAT / 2, borderColor: color }]}
-          >
+          <Pressable key={`${it.kind}:${it.id}`} onPress={() => onPick(it)}
+            style={[styles.sat, { left: pts[i].x - SAT / 2, top: pts[i].y - SAT / 2, borderColor: color }]}>
             {it.poster ? <Image source={{ uri: it.poster }} style={styles.satImg} /> : <View style={[styles.satImg, { backgroundColor: colors.muted }]} />}
           </Pressable>
         ))}
@@ -77,25 +61,41 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
   const [data, setData] = useState<Extras | null>(null);
   const [loading, setLoading] = useState(true);
   const [showTrailer, setShowTrailer] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     setData(null);
+    setShowTrailer(false);
     fetchExtras(kind, id).then((result) => {
       if (active) setData(result);
+    }).catch(() => {
+      if (active) setData(null);
     }).finally(() => {
       if (active) setLoading(false);
     });
     return () => { active = false; };
   }, [kind, id]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <View style={styles.wrap}>
+        <Text style={styles.label}>BANDE-ANNONCE ET INFORMATIONS</Text>
+        <View style={styles.loadingPreview}>
+          {poster ? <Image source={{ uri: poster }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+          <View style={styles.loadingShade} />
+          <ActivityIndicator color="#FFFFFF" size="large" />
+          <Text style={styles.trailerOverlayText}>Préparation des informations…</Text>
+        </View>
+      </View>
+    );
+  }
   if (!data) {
     return (
       <View style={styles.wrap}>
         <Text style={styles.label}>INFORMATIONS COMPLÉMENTAIRES</Text>
-        <Text style={styles.emptyMessage}>Impossible de charger ces informations. La fonction serveur doit être déployée et accessible.</Text>
+        <Text style={styles.emptyMessage}>Impossible de charger ces informations. Vérifiez la connexion au service puis réessayez plus tard.</Text>
       </View>
     );
   }
@@ -115,32 +115,42 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
           <Text style={styles.label}>BANDE-ANNONCE</Text>
           {showTrailer ? (
             <View style={styles.trailerPlayer}>
-              <WebView
-                source={{ uri: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(data.trailer)}?playsinline=1&autoplay=1&rel=0` }}
-                style={styles.trailerWebView}
-                javaScriptEnabled
-                domStorageEnabled
-                allowsFullscreenVideo
-                mediaPlaybackRequiresUserAction={false}
-                allowsInlineMediaPlayback
-                originWhitelist={['https://*']}
-              />
-              <Pressable style={styles.closeTrailer} onPress={() => setShowTrailer(false)}>
+              <View style={styles.webViewFrame}>
+                <WebView
+                  source={{ uri: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(data.trailer)}?playsinline=1&autoplay=1&rel=0` }}
+                  style={styles.trailerWebView}
+                  javaScriptEnabled
+                  domStorageEnabled
+                  allowsFullscreenVideo
+                  mediaPlaybackRequiresUserAction={false}
+                  allowsInlineMediaPlayback
+                  originWhitelist={['https://*']}
+                  onLoadStart={() => setVideoLoading(true)}
+                  onLoadEnd={() => setVideoLoading(false)}
+                  onError={() => setVideoLoading(false)}
+                />
+                {videoLoading ? (
+                  <View style={styles.videoLoadingOverlay}>
+                    <ActivityIndicator color="#FFFFFF" size="large" />
+                    <Text style={styles.trailerOverlayText}>Chargement de la vidéo…</Text>
+                  </View>
+                ) : null}
+              </View>
+              <Pressable style={styles.closeTrailer} onPress={() => { setShowTrailer(false); setVideoLoading(false); }}>
                 <Ionicons name="close" size={18} color="#fff" />
                 <Text style={styles.trailerText}>Fermer la vidéo</Text>
               </Pressable>
             </View>
           ) : (
-            <Pressable style={styles.trailerPreview} onPress={() => setShowTrailer(true)} accessibilityRole="button" accessibilityLabel="Lire la bande-annonce dans Erëmīa">
+            <Pressable style={styles.trailerPreview} onPress={() => { setVideoLoading(true); setShowTrailer(true); }}
+              accessibilityRole="button" accessibilityLabel="Lire la bande-annonce dans Erëmīa">
               <Image
                 source={{ uri: `https://i.ytimg.com/vi/${encodeURIComponent(data.trailer)}/hqdefault.jpg` }}
                 style={styles.trailerPoster}
                 resizeMode="cover"
               />
               <View style={styles.trailerOverlay}>
-                <View style={styles.trailerPlayCircle}>
-                  <Ionicons name="play" size={28} color="#fff" />
-                </View>
+                <View style={styles.trailerPlayCircle}><Ionicons name="play" size={28} color="#fff" /></View>
                 <Text style={styles.trailerOverlayText}>Lire dans Erëmīa</Text>
               </View>
             </Pressable>
@@ -166,26 +176,17 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
       {data.cast.length ? (
         <>
           <Text style={styles.label}>PERSONNAGES</Text>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={data.cast}
-            keyExtractor={(c, i) => `${c.name}${i}`}
-            contentContainerStyle={{ gap: 14 }}
+          <FlatList horizontal showsHorizontalScrollIndicator={false} data={data.cast}
+            keyExtractor={(c, i) => `${c.name}${i}`} contentContainerStyle={{ gap: 14 }}
             renderItem={({ item }) => (
               <View style={styles.castItem}>
-                {item.photo ? (
-                  <Image source={{ uri: item.photo }} style={styles.castPhoto} />
-                ) : (
-                  <View style={[styles.castPhoto, styles.castEmpty]}>
-                    <Ionicons name="person" size={28} color={colors.mutedForeground} />
-                  </View>
+                {item.photo ? <Image source={{ uri: item.photo }} style={styles.castPhoto} /> : (
+                  <View style={[styles.castPhoto, styles.castEmpty]}><Ionicons name="person" size={28} color={colors.mutedForeground} /></View>
                 )}
                 <Text style={styles.castName} numberOfLines={1}>{item.name}</Text>
                 <Text style={styles.castRole} numberOfLines={1}>{item.character}</Text>
               </View>
-            )}
-          />
+            )} />
         </>
       ) : null}
 
@@ -196,12 +197,7 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
             <View key={`${r.author}${i}`} style={styles.review}>
               <View style={styles.reviewHead}>
                 <Text style={styles.reviewAuthor}>{r.author}</Text>
-                {r.rating ? (
-                  <View style={styles.reviewRating}>
-                    <Ionicons name="star" size={12} color="#000" />
-                    <Text style={styles.reviewRatingText}>{r.rating}/10</Text>
-                  </View>
-                ) : null}
+                {r.rating ? <View style={styles.reviewRating}><Ionicons name="star" size={12} color="#000" /><Text style={styles.reviewRatingText}>{r.rating}/10</Text></View> : null}
                 <Text style={styles.reviewDate}>{r.date}</Text>
               </View>
               <Text style={styles.reviewText}>{r.content}</Text>
@@ -220,12 +216,8 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
             <LegendDot color={C_SAGA} label="Même saga" />
             <LegendDot color={C_SIMILAR} label="Dans le même esprit" />
           </View>
-          <Constellation
-            name={data.constellation.name}
-            items={data.constellation.items}
-            poster={poster ?? null}
-            onPick={(it) => openTitle(router, it)}
-          />
+          <Constellation name={data.constellation.name} items={data.constellation.items} poster={poster ?? null}
+            onPick={(it) => openTitle(router, it)} />
           <Text style={styles.credit}>{data.constellation.name}</Text>
         </>
       ) : null}
@@ -234,16 +226,13 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
 }
 
 function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <View style={styles.legendItem}>
-      <View style={[styles.legendDot, { backgroundColor: color }]} />
-      <Text style={styles.legendText}>{label}</Text>
-    </View>
-  );
+  return <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: color }]} /><Text style={styles.legendText}>{label}</Text></View>;
 }
 
 const styles = StyleSheet.create({
   wrap: { marginTop: 24, gap: 14 },
+  loadingPreview: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden', backgroundColor: '#15161B', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  loadingShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.58)' },
   trailerPreview: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden', backgroundColor: '#111', position: 'relative' },
   trailerPoster: { width: '100%', height: '100%' },
   trailerOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: 'rgba(0,0,0,0.22)' },
@@ -251,15 +240,14 @@ const styles = StyleSheet.create({
   trailerOverlayText: { color: '#fff', fontWeight: '800', textShadowColor: '#000', textShadowRadius: 4 },
   trailerText: { color: '#fff', fontWeight: '700' },
   trailerPlayer: { width: '100%', gap: 8 },
+  webViewFrame: { width: '100%', height: 220, borderRadius: 12, overflow: 'hidden', backgroundColor: '#111', position: 'relative' },
+  trailerWebView: { width: '100%', height: 220, backgroundColor: 'transparent' },
+  videoLoadingOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: 'rgba(0,0,0,0.72)' },
   emptyMessage: { color: colors.mutedForeground, lineHeight: 20 },
-  trailerWebView: { width: '100%', height: 220, backgroundColor: '#000', borderRadius: 12, overflow: 'hidden' },
   closeTrailer: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
   label: { color: colors.mutedForeground, letterSpacing: 2, fontSize: 12, marginTop: 6 },
   providers: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  provider: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card,
-    borderRadius: 12, padding: 8, borderWidth: 1, borderColor: colors.border,
-  },
+  provider: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderRadius: 12, padding: 8, borderWidth: 1, borderColor: colors.border },
   logo: { width: 28, height: 28, borderRadius: 6 },
   providerText: { color: colors.foreground, fontWeight: '600' },
   credit: { color: colors.mutedForeground, fontSize: 11 },
