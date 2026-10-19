@@ -65,7 +65,8 @@ export default function ParametresScreen() {
         </Section>
 
         <Section icon="grid-outline" title="Affichage">
-          <Text style={styles.label}>Taille des cartes</Text>
+          <Text style={styles.label}>Taille des cartes et grille</Text>
+          <Text style={styles.hint}>Compact : 3 colonnes. Normal : 2 colonnes. Grand : 1 grande affiche. L’accueil ajuste aussi la largeur des affiches.</Text>
           <Segment options={['Compact', 'Normal', 'Grand'] as const} value={prefs.taille} onChange={(v) => setPref('taille', v)} />
         </Section>
 
