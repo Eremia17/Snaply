@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +11,7 @@ export function PosterCard({ item, width, rating }: { item: Item; width?: number
   const router = useRouter();
   const { isFavorite, toggleFavorite } = useStore();
   const [prefs] = usePrefs();
+  const [imageFailed, setImageFailed] = useState(false);
   const fav = isFavorite(item);
   const note = rating ?? (item as { rating?: number }).rating ?? 0;
 
@@ -24,10 +26,11 @@ export function PosterCard({ item, width, rating }: { item: Item; width?: number
       }
     >
       <View style={[styles.poster, prefs.contraste && styles.highContrastPoster]}>
-        {item.poster ? (
-          <Image source={{ uri: item.poster }} style={styles.img} resizeMode="cover" />
+        {item.poster && !imageFailed ? (
+          <Image source={{ uri: item.poster }} style={styles.img} resizeMode="cover" onError={() => setImageFailed(true)} />
         ) : (
           <View style={[styles.img, styles.fallback]}>
+            <Ionicons name={imageFailed ? 'image-outline' : 'film-outline'} size={26} color={colors.mutedForeground} />
             <Text style={styles.fallbackText} numberOfLines={4}>{item.title}</Text>
           </View>
         )}
