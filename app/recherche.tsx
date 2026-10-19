@@ -43,6 +43,8 @@ export default function RechercheScreen() {
       setBusy(false);
       return;
     }
+    // Ne pas conserver les résultats de l'ancienne requête pendant le délai anti-rebond.
+    setRemote([]);
     setBusy(true);
     const t = setTimeout(async () => {
       try {
