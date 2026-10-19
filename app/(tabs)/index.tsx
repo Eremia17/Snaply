@@ -6,7 +6,7 @@ import { PosterCard } from '@/components/PosterCard';
 import { classics, featured, fetchSports, trending, upcomingList, useCatalog, type SportMatch } from '@/lib/catalog';
 import { useStore } from '@/lib/store';
 import { fetchPosts, type Post } from '@/lib/community';
-import { supabase } from '@/lib/supabase';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { Item, Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
 
@@ -33,11 +33,17 @@ export default function HomeScreen() {
   const [query, setQuery] = useState('');
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setPosts([]);
+      setSports([]);
+      setVisits(null);
+      return;
+    }
     fetchPosts().then((p) => setPosts(p.slice(0, 5))).catch(() => setPosts([]));
     fetchSports().then((items) => setSports(items.slice(0, 4))).catch(() => setSports([]));
     supabase.from('site_stats').select('visits').eq('id', 1).maybeSingle().then(({ data }) => {
       if (data) setVisits(Number((data as { visits: number }).visits));
-    });
+    }).catch(() => setVisits(null));
   }, []);
 
   return (
