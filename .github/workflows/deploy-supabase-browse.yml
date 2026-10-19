@@ -1,4 +1,4 @@
-name: Deploy Supabase browse function
+name: Deploy Supabase Edge Functions
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "supabase/functions/browse/**"
+      - "supabase/functions/catalog/**"
       - "supabase/config.toml"
       - ".github/workflows/deploy-supabase-browse.yml"
   workflow_dispatch:
@@ -25,5 +26,7 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-      - name: Deploy browse Edge Function
-        run: supabase functions deploy browse --use-api --project-ref "$SUPABASE_PROJECT_ID"
+      - name: Deploy catalogue and browse Edge Functions
+        run: |
+          supabase functions deploy catalog --use-api --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions deploy browse --use-api --project-ref "$SUPABASE_PROJECT_ID"
