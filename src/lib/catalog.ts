@@ -167,11 +167,21 @@ export async function fetchSports(): Promise<SportMatch[]> {
 export type SeriesSeason = { number: number; name: string; episodeCount: number };
 export type SeriesEpisode = { number: number; name: string; airDate: string | null; overview: string };
 
-export async function fetchSeriesSeasons(id: string, kind: Kind = 'serie', title = ''): Promise<SeriesSeason[]> {
-  if (!isSupabaseConfigured) return [];
+export type SeriesMetadata = { seasons: SeriesSeason[]; sourceId: string | null; unavailable: boolean };
+
+export async function fetchSeriesMetadata(id: string, kind: Kind = 'serie', title = ''): Promise<SeriesMetadata> {
+  if (!isSupabaseConfigured) return { seasons: [], sourceId: null, unavailable: true };
   const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'seasons', id, kind, title } });
   if (error || !data || data.error) throw new Error(data?.error || error?.message || 'Impossible de charger les saisons.');
-  return Array.isArray(data.seasons) ? data.seasons as SeriesSeason[] : [];
+  return {
+    seasons: Array.isArray(data.seasons) ? data.seasons as SeriesSeason[] : [],
+    sourceId: data.tmdbId ? String(data.tmdbId) : null,
+    unavailable: data.unavailable === true,
+  };
+}
+
+export async function fetchSeriesSeasons(id: string, kind: Kind = 'serie', title = ''): Promise<SeriesSeason[]> {
+  return (await fetchSeriesMetadata(id, kind, title)).seasons;
 }
 
 export async function fetchSeriesEpisodes(id: string, season: number, kind: Kind = 'serie', title = ''): Promise<SeriesEpisode[]> {
