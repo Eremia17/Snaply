@@ -1,7 +1,7 @@
 // Avis et discussions : mêmes tables que le site (posts, post_comments, post_likes).
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Share } from 'react-native';
-import { supabase } from './supabase';
+import { isSupabaseConfigured, supabase } from './supabase';
 import type { Kind } from './types';
 
 export type Post = {
@@ -55,18 +55,14 @@ export async function likedPosts(): Promise<string[]> {
 }
 
 export async function fetchPosts(): Promise<Post[]> {
-  // Avis masqués par la modération exclus
-  const first = await supabase
-    .from('posts')
-    .select('*')
-    .eq('hidden', false)
-    .order('created_at', { ascending: false })
-    .limit(50);
-  if (!first.error) return (first.data ?? []) as Post[];
+  if (!isSupabaseConfigured) return [];
 
+  // Échec fermé : ne jamais relancer une requête sans le filtre de modération,
+  // car cela pourrait exposer des avis masqués si la première requête échoue.
   const { data, error } = await supabase
     .from('posts')
     .select('*')
+    .eq('hidden', false)
     .order('created_at', { ascending: false })
     .limit(50);
   if (error) throw error;
