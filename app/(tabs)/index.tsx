@@ -308,7 +308,7 @@ function Row({ data, cardWidth }: { data: Item[]; cardWidth: number }) {
       showsHorizontalScrollIndicator={false}
       removeClippedSubviews={false}
       contentContainerStyle={{ paddingRight: 4 }}
-      renderItem={({ item }) => <PosterCard item={item} width={CARD_W} />
+      renderItem={({ item }) => <PosterCard item={item} width={CARD_W} />}
     />
   );
 }
