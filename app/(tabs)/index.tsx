@@ -188,6 +188,22 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
+      {/* Rangées éditoriales compactes pour prolonger l’accueil */}
+      <View style={styles.catalogRows}>
+        <Section title="Animés manga · à découvrir">
+          <Row data={trending().filter((item) => item.kind === 'manga')} cardWidth={cardWidth} />
+        </Section>
+        <Section title="Animés occidentaux">
+          <Row data={trending().filter((item) => item.kind === 'occidental')} cardWidth={cardWidth} />
+        </Section>
+        <Section title="Films à découvrir">
+          <Row data={trending().filter((item) => item.kind === 'film')} cardWidth={cardWidth} />
+        </Section>
+        <Section title="Séries à suivre">
+          <Row data={trending().filter((item) => item.kind === 'serie')} cardWidth={cardWidth} />
+        </Section>
+      </View>
+
       {/* Tendances et listes personnelles */}
       <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8, gap: 18 }}>
         <Section title="Tendances">
@@ -299,6 +315,7 @@ function Row({ data, cardWidth }: { data: Item[]; cardWidth: number }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#08090D' },
+  catalogRows: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4, gap: 14 },
   featureStack: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 12, gap: 12 },
   surpriseBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.86)', justifyContent: 'center', alignItems: 'center', padding: 22 },
   surpriseReveal: { width: '100%', maxWidth: 360, alignItems: 'center', backgroundColor: '#100D14', borderRadius: 26, borderWidth: 1, borderColor: '#8C2035', padding: 22, gap: 9, overflow: 'hidden' },
