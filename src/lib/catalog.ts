@@ -164,6 +164,16 @@ export async function fetchSports(): Promise<SportMatch[]> {
   return (data.items ?? []) as SportMatch[];
 }
 
+export type FilmPart = { id: string; title: string; year: string | null; poster: string | null; overview: string; current: boolean };
+export type FilmCollection = { collection: string | null; parts: FilmPart[] };
+
+export async function fetchFilmParts(id: string): Promise<FilmCollection> {
+  if (!isSupabaseConfigured) return { collection: null, parts: [] };
+  const { data, error } = await supabase.functions.invoke('browse', { body: { action: 'film_parts', id } });
+  if (error || !data || data.error) throw new Error(data?.error || error?.message || 'Impossible de charger les films de cette saga.');
+  return { collection: data.collection ?? null, parts: Array.isArray(data.parts) ? data.parts as FilmPart[] : [] };
+}
+
 export type SeriesSeason = { number: number; name: string; episodeCount: number };
 export type SeriesEpisode = { number: number; name: string; airDate: string | null; overview: string };
 
