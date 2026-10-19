@@ -283,6 +283,9 @@ export default function TitreScreen() {
           ))}
         </View>
 
+        <FicheExtras kind={item.kind} id={item.id} poster={item.poster} title={item.title} />
+        <FicheAssistant title={item.title} kind={item.kind} year={detail?.year ?? item.year} synopsis={detail?.synopsis ?? ''} />
+
         <View style={styles.downloadEntry}>
           <Pressable style={styles.downloadButton} onPress={() => setDownloadPickerOpen(true)}>
             <Ionicons name="download-outline" size={22} color="#fff" />
@@ -312,8 +315,6 @@ export default function TitreScreen() {
           ) : null}
         </View>
 
-        <FicheExtras kind={item.kind} id={item.id} poster={item.poster} title={item.title} />
-        <FicheAssistant title={item.title} kind={item.kind} year={detail?.year ?? item.year} synopsis={detail?.synopsis ?? ''} />
 
         {!detail ? <Text style={styles.note}>Chargement des informations…</Text> : null}
       </ScrollView>
