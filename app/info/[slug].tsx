@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/lib/theme';
@@ -52,6 +53,7 @@ const PAGES: Record<string, InfoPage> = {
 export default function InfoScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const page = PAGES[String(slug)];
+  const [expanded, setExpanded] = useState<number | null>(0);
 
   return (
     <>
@@ -65,15 +67,24 @@ export default function InfoScreen() {
               <Text style={styles.title}>{page.title}</Text>
               <Text style={styles.subtitle}>{page.subtitle}</Text>
             </View>
-            {page.sections.map((section, index) => (
-              <View key={section.heading} style={styles.card}>
-                <View style={styles.cardTop}>
-                  <View style={styles.number}><Text style={styles.numberText}>{String(index + 1).padStart(2, '0')}</Text></View>
-                  <Text style={styles.heading}>{section.heading}</Text>
+            <View style={styles.guideLabel}><Ionicons name="layers-outline" size={14} color={colors.primary} /><Text style={styles.guideLabelText}>GUIDE RAPIDE</Text></View>
+            {page.sections.map((section, index) => {
+              const open = expanded === index;
+              const sectionIcons: (keyof typeof Ionicons.glyphMap)[] = ['compass-outline', 'bookmark-outline', 'information-circle-outline', 'chatbubble-ellipses-outline'];
+              return (
+                <View key={section.heading} style={[styles.card, open && styles.cardOpen]}>
+                  <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setExpanded(open ? null : index)} style={styles.cardTop}>
+                    <View style={[styles.number, open && styles.numberOpen]}><Ionicons name={sectionIcons[index % sectionIcons.length]} size={18} color={open ? '#fff' : colors.primary} /></View>
+                    <View style={styles.cardHeadingWrap}>
+                      <Text style={styles.cardIndex}>ÉTAPE {String(index + 1).padStart(2, '0')}</Text>
+                      <Text style={styles.heading}>{section.heading}</Text>
+                    </View>
+                    <View style={[styles.chevron, open && styles.chevronOpen]}><Ionicons name={open ? 'remove' : 'add'} size={18} color={open ? '#fff' : colors.mutedForeground} /></View>
+                  </Pressable>
+                  {open ? <Text style={styles.body}>{section.body}</Text> : null}
                 </View>
-                <Text style={styles.body}>{section.body}</Text>
-              </View>
-            ))}
+              );
+            })}
             <Text style={styles.footer}>Erëmīa · Découvrir, comprendre, partager.</Text>
           </>
         ) : (
@@ -90,15 +101,23 @@ export default function InfoScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 38, gap: 12 },
-  hero: { borderRadius: 22, padding: 20, marginBottom: 4, backgroundColor: '#171923', borderWidth: 1, borderColor: '#303341', gap: 10 },
+  content: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 38, gap: 10 },
+  hero: { borderRadius: 24, padding: 22, marginBottom: 8, backgroundColor: '#171923', borderWidth: 1, borderColor: '#303341', gap: 10, overflow: 'hidden' },
   iconTile: { width: 54, height: 54, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, marginBottom: 3 },
   eyebrow: { color: colors.primary, fontSize: 10, fontWeight: '800', letterSpacing: 1.7, includeFontPadding: false },
   title: { color: colors.foreground, fontSize: 26, lineHeight: 32, fontWeight: '900', fontFamily: 'sans-serif-black', includeFontPadding: false },
   subtitle: { color: colors.mutedForeground, fontSize: 14, lineHeight: 21, fontFamily: 'sans-serif' },
-  card: { backgroundColor: colors.card, borderRadius: 17, padding: 16, gap: 11, borderWidth: 1, borderColor: colors.border },
-  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  number: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2B1A23' },
+  guideLabel: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 2, marginBottom: 2, paddingHorizontal: 4 },
+  guideLabelText: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
+  card: { backgroundColor: colors.card, borderRadius: 18, padding: 13, gap: 12, borderWidth: 1, borderColor: colors.border },
+  cardOpen: { borderColor: colors.primary, backgroundColor: '#171820' },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  cardHeadingWrap: { flex: 1, gap: 3 },
+  cardIndex: { color: colors.mutedForeground, fontSize: 9, fontWeight: '900', letterSpacing: 1.4 },
+  chevron: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#252731' },
+  chevronOpen: { backgroundColor: colors.primary },
+  number: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2B1A23' },
+  numberOpen: { backgroundColor: colors.primary },
   numberText: { color: colors.primary, fontSize: 11, fontWeight: '900', fontFamily: 'sans-serif-medium' },
   heading: { flex: 1, color: colors.foreground, fontSize: 16, lineHeight: 21, fontWeight: '800', fontFamily: 'sans-serif-medium', includeFontPadding: false },
   body: { color: colors.mutedForeground, fontSize: 14, lineHeight: 22, fontFamily: 'sans-serif' },
