@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Dimensions, Easing, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, Easing, FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,6 +44,11 @@ export default function CatalogueScreen() {
   const [genresOpen, setGenresOpen] = useState(false);
   const requestId = useRef(0);
   const surpriseScale = useRef(new Animated.Value(1)).current;
+  const surpriseTurn = useRef(new Animated.Value(0)).current;
+  const [surpriseVisible, setSurpriseVisible] = useState(false);
+  const [surpriseLoading, setSurpriseLoading] = useState(false);
+  const [surpriseResult, setSurpriseResult] = useState<Detail | null>(null);
+  const [surpriseError, setSurpriseError] = useState<string | null>(null);
 
   const load = useCallback(async (p: number) => {
     const request = ++requestId.current;
@@ -93,13 +98,32 @@ export default function CatalogueScreen() {
   const shown = items;
   const cols = prefs.taille === 'Grand' ? 1 : prefs.taille === 'Normal' ? 2 : 3;
   const cardW = (Dimensions.get('window').width - 32 - (cols - 1) * 12 - cols * 8) / cols;
-  const surprise = () => {
-    if (!shown.length) return;
-    const picked = shown[Math.floor(Math.random() * shown.length)];
-    Animated.sequence([
-      Animated.timing(surpriseScale, { toValue: 0.94, duration: 90, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      Animated.spring(surpriseScale, { toValue: 1, speed: 18, bounciness: 12, useNativeDriver: true }),
-    ]).start(() => openTitle(router, picked));
+  const surprise = async () => {
+    setSurpriseVisible(true);
+    setSurpriseLoading(true);
+    setSurpriseResult(null);
+    setSurpriseError(null);
+    surpriseTurn.setValue(0);
+    Animated.parallel([
+      Animated.timing(surpriseTurn, { toValue: 1, duration: 3000, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }),
+      Animated.sequence([
+        Animated.timing(surpriseScale, { toValue: 1.08, duration: 700, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(surpriseScale, { toValue: 0.94, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(surpriseScale, { toValue: 1.12, duration: 800, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(surpriseScale, { toValue: 1, duration: 800, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]),
+    ]).start();
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const response = await browseKind('film', 1, { minRating: 8.6, sort: 'rating' });
+      const eligible = response.items.filter((item) => item.rating > 8.5 && !!item.poster);
+      if (!eligible.length) setSurpriseError('Aucun film noté au-dessus de 8,5 n’est disponible pour le moment. Réessaie plus tard.');
+      else setSurpriseResult(eligible[Math.floor(Math.random() * eligible.length)]);
+    } catch (e) {
+      setSurpriseError(e instanceof Error ? e.message : 'Impossible de récupérer les films les mieux notés.');
+    } finally {
+      setSurpriseLoading(false);
+    }
   };
 
   return (
@@ -182,6 +206,34 @@ export default function CatalogueScreen() {
         </Pressable></Animated.View>
       </View>
 
+
+      <Modal visible={surpriseVisible} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setSurpriseVisible(false)}>
+        <View style={styles.cinemaBackdrop}>
+          <Pressable style={styles.cinemaClose} onPress={() => setSurpriseVisible(false)} accessibilityRole="button" accessibilityLabel="Fermer la surprise"><Ionicons name="close" size={23} color="#FFFFFF" /></Pressable>
+          {surpriseLoading ? (
+            <View style={styles.cinemaStage}>
+              <Text style={styles.cinemaKicker}>ERËMĪA ORIGINAL</Text>
+              <Animated.View style={[styles.cinemaFrame, { transform: [{ perspective: 700 }, { rotateY: surpriseTurn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '720deg'] }), { scale: surpriseScale }] }]}>
+                <View style={styles.cinemaInner}><Ionicons name="film-outline" size={44} color="#FF5B70" /><Text style={styles.cinemaFrameTitle}>À L’AFFICHE</Text><View style={styles.cinemaLight} /></View>
+              </Animated.View>
+              <Animated.View style={{ opacity: surpriseTurn.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.25, 1, 0.35] }) }}><Text style={styles.cinemaCaption}>Recherche d’un film d’exception…</Text></Animated.View>
+              <ActivityIndicator color="#FF5368" style={{ marginTop: 16 }} />
+            </View>
+          ) : surpriseResult ? (
+            <View style={styles.cinemaResult}>
+              <Text style={styles.cinemaKicker}>LE HASARD A CHOISI</Text>
+              {surpriseResult.poster ? <Image source={{ uri: surpriseResult.poster }} style={styles.cinemaPoster} resizeMode="cover" /> : null}
+              <Text style={styles.cinemaResultTitle} numberOfLines={2}>{surpriseResult.title}</Text>
+              <Text style={styles.cinemaRating}>★ {surpriseResult.rating.toFixed(1)} / 10  ·  {surpriseResult.year ?? 'Année inconnue'}</Text>
+              <Pressable style={styles.cinemaAction} onPress={() => { const item = surpriseResult; setSurpriseVisible(false); openTitle(router, item); }}><Text style={styles.cinemaActionText}>DÉCOUVRIR LE FILM</Text><Ionicons name="arrow-forward" size={17} color="#FFFFFF" /></Pressable>
+              <Pressable style={styles.cinemaAgain} onPress={surprise}><Text style={styles.cinemaAgainText}>Tenter une autre surprise</Text></Pressable>
+            </View>
+          ) : (
+            <View style={styles.cinemaResult}><Ionicons name="film-outline" size={36} color="#FF5368" /><Text style={styles.cinemaResultTitle}>Aucune projection</Text><Text style={styles.cinemaCaption}>{surpriseError ?? 'Aucun film admissible.'}</Text><Pressable style={styles.cinemaAction} onPress={() => setSurpriseVisible(false)}><Text style={styles.cinemaActionText}>FERMER</Text></Pressable></View>
+          )}
+        </View>
+      </Modal>
+
       <FlatList
         removeClippedSubviews={false}
         windowSize={7}
@@ -223,30 +275,47 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.primary, letterSpacing: 2.4, fontSize: 10, fontWeight: '800', paddingHorizontal: 16, marginTop: 8, marginBottom: 2 },
   hscroll: { flexGrow: 0 },
   catalogTabsWrap: { marginTop: 6, marginBottom: 4 },
-  catalogTabs: { paddingHorizontal: 16, paddingVertical: 9, gap: 8, alignItems: 'center' },
-  compactFilterPanel: { paddingHorizontal: 16, paddingTop: 2, paddingBottom: 3, gap: 8 },
+  catalogTabs: { paddingHorizontal: 12, paddingVertical: 4, gap: 5, alignItems: 'center' },
+  compactFilterPanel: { paddingHorizontal: 12, paddingTop: 0, paddingBottom: 1, gap: 5 },
   compactFilterTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  filterToggle: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 34, maxWidth: 124, borderRadius: 999, borderWidth: 1, borderColor: '#353741', backgroundColor: '#191A20', paddingHorizontal: 10, flexShrink: 0 },
+  filterToggle: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 28, maxWidth: 124, borderRadius: 999, borderWidth: 1, borderColor: '#353741', backgroundColor: '#191A20', paddingHorizontal: 8, flexShrink: 0 },
   sortInline: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end', gap: 5 },
-  genreWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, alignItems: 'center', paddingTop: 3 },
-  pill: { backgroundColor: '#191A20', borderRadius: 999, paddingHorizontal: 13, paddingVertical: 9, minHeight: 38, justifyContent: 'center', alignItems: 'center', flexShrink: 0, maxWidth: 190 },
+  genreWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, alignItems: 'center', paddingTop: 2 },
+  pill: { backgroundColor: '#191A20', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, minHeight: 29, justifyContent: 'center', alignItems: 'center', flexShrink: 0, maxWidth: 160 },
   pillOn: { backgroundColor: colors.primary },
-  pillText: { color: '#E1E3E8', fontSize: 12, fontWeight: '800', includeFontPadding: false },
+  pillText: { color: '#E1E3E8', fontSize: 10, fontWeight: '800', includeFontPadding: false },
   pillTextOn: { color: '#FFFFFF' },
-  chip: { borderRadius: 999, borderWidth: 1, borderColor: '#353741', paddingHorizontal: 9, paddingVertical: 7, minHeight: 32, justifyContent: 'center', alignSelf: 'flex-start' },
+  chip: { borderRadius: 999, borderWidth: 1, borderColor: '#353741', paddingHorizontal: 8, paddingVertical: 4, minHeight: 25, justifyContent: 'center', alignSelf: 'flex-start' },
   chipOn: { borderColor: colors.primary, backgroundColor: '#211318' },
-  chipText: { color: '#D2D4DB', fontSize: 11, lineHeight: 16, fontWeight: '600', includeFontPadding: false },
+  chipText: { color: '#D2D4DB', fontSize: 10, lineHeight: 13, fontWeight: '600', includeFontPadding: false },
   chipTextOn: { color: '#FFFFFF', fontWeight: '800' },
-  filtersBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
-  filterSelect: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 11 },
+  filtersBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 4 },
+  filterSelect: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 29, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 8 },
   filterSelectOn: { borderColor: colors.primary, backgroundColor: '#211318' },
-  filterSelectText: { color: colors.foreground, fontSize: 12, fontWeight: '600', includeFontPadding: false, flexShrink: 1, lineHeight: 18 },
+  filterSelectText: { color: colors.foreground, fontSize: 10, fontWeight: '600', includeFontPadding: false, flexShrink: 1, lineHeight: 13 },
   resetFilter: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: 6 },
   resetFilterText: { color: colors.mutedForeground, fontSize: 12 },
   optionRow: { paddingHorizontal: 16, paddingVertical: 9, gap: 8, alignItems: 'center', minHeight: 48 },
-  actions: { alignItems: 'flex-start', paddingHorizontal: 16, marginTop: 8, marginBottom: 8 },
+  actions: { alignItems: 'flex-start', paddingHorizontal: 12, marginTop: 4, marginBottom: 3 },
   surprise: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10 },
   surpriseText: { color: '#fff', fontWeight: '700' },
+  cinemaBackdrop: { flex: 1, backgroundColor: '#030307', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  cinemaClose: { position: 'absolute', top: 42, right: 18, zIndex: 5, padding: 8, borderRadius: 999, backgroundColor: '#181820' },
+  cinemaStage: { alignItems: 'center', width: '100%', gap: 18 },
+  cinemaKicker: { color: '#FF5368', fontSize: 10, fontWeight: '900', letterSpacing: 3, textAlign: 'center' },
+  cinemaFrame: { width: 190, height: 260, borderRadius: 18, borderWidth: 2, borderColor: '#FF5368', padding: 7, backgroundColor: '#141018', shadowColor: '#FF1744', shadowOpacity: 0.8, shadowRadius: 28, elevation: 18 },
+  cinemaInner: { flex: 1, borderRadius: 11, borderWidth: 1, borderColor: '#65303B', alignItems: 'center', justifyContent: 'center', gap: 16, overflow: 'hidden', backgroundColor: '#0B0B11' },
+  cinemaFrameTitle: { color: '#FFFFFF', fontSize: 13, fontWeight: '900', letterSpacing: 3 },
+  cinemaLight: { position: 'absolute', width: 190, height: 28, backgroundColor: '#FF5368', opacity: 0.12, transform: [{ rotate: '-28deg' }], top: 40 },
+  cinemaCaption: { color: '#C9C7D0', fontSize: 12, textAlign: 'center', lineHeight: 19 },
+  cinemaResult: { width: '100%', maxWidth: 340, alignItems: 'center', gap: 12, backgroundColor: '#101017', borderRadius: 24, borderWidth: 1, borderColor: '#48232C', padding: 22 },
+  cinemaPoster: { width: 150, height: 220, borderRadius: 13, borderWidth: 1, borderColor: '#73313F' },
+  cinemaResultTitle: { color: '#FFFFFF', fontSize: 21, fontWeight: '900', textAlign: 'center' },
+  cinemaRating: { color: '#F5C96A', fontSize: 13, fontWeight: '800' },
+  cinemaAction: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 999, backgroundColor: '#C51D39', paddingHorizontal: 16, paddingVertical: 12, marginTop: 4 },
+  cinemaActionText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900', letterSpacing: 0.6 },
+  cinemaAgain: { padding: 8 },
+  cinemaAgainText: { color: '#FF7182', fontSize: 12, fontWeight: '800' },
   empty: { color: '#D2D4DB', textAlign: 'center', marginTop: 12, lineHeight: 20 },
   errorBox: { alignItems: 'center', gap: 8, paddingHorizontal: 20, marginTop: 36 },
   retry: { backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 20, paddingVertical: 10, marginTop: 6 },
