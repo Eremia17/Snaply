@@ -178,7 +178,7 @@ export default function TitreScreen() {
           headerShadowVisible: false,
         }}
       />
-      <ScrollView removeClippedSubviews={false} style={styles.root} contentContainerStyle={styles.content} removeClippedSubviews={false}>
+      <ScrollView removeClippedSubviews={false} style={styles.root} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View pointerEvents="none" style={styles.backdropHero}>
           {(detail?.backdrop || item.backdrop) ? <Image source={{ uri: detail?.backdrop || item.backdrop || undefined }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
           <View style={styles.backdropShade} />
@@ -362,21 +362,21 @@ function Btn({ label, icon, onPress, primary }: { label: string; icon: IconName;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24, gap: 0 },
-  backdropHero: { position: 'absolute', top: 0, left: 0, right: 0, height: 360, overflow: 'hidden' },
+  content: { paddingHorizontal: 16, paddingTop: 0, paddingBottom: 18 },
+  backdropHero: { position: 'absolute', top: 0, left: 0, right: 0, height: 250, overflow: 'hidden' },
   backdropShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10,11,16,0.72)' },
-  posterWrap: { alignItems: 'center', marginBottom: 20 },
-  poster: { width: 210, aspectRatio: 2 / 3, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  posterWrap: { alignItems: 'center', marginTop: 8, marginBottom: 12 },
+  poster: { width: 154, aspectRatio: 2 / 3, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   posterEmpty: { alignItems: 'center', justifyContent: 'center', padding: 12 },
   posterEmptyText: { color: colors.mutedForeground, textAlign: 'center', fontWeight: '600' },
   kind: { color: colors.primary, letterSpacing: 3, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  title: { color: colors.foreground, fontSize: 30, fontWeight: '900', marginTop: 6, lineHeight: 34 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginTop: 14 },
+  title: { color: colors.foreground, fontSize: 27, fontWeight: '900', marginTop: 4, lineHeight: 32 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 10 },
   ratingPill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   ratingText: { color: '#000', fontWeight: '900', fontSize: 18 },
   ratingSub: { color: '#000', fontWeight: '600' },
   meta: { color: colors.mutedForeground },
-  genres: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
+  genres: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   genre: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
   genreText: { color: colors.foreground, fontSize: 13 },
   synopsis: { color: colors.foreground, lineHeight: 23, marginTop: 10, fontSize: 15 },
