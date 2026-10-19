@@ -40,7 +40,7 @@ export default function CatalogueScreen() {
   const load = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const r = await browseKind(kind, p);
+      const r = await browseKind(kind, p, { genre: genre ?? undefined, year: year ?? undefined, minRating: minNote || undefined });
       setItems((prev) => {
         if (p === 1) return r.items;
         const ids = new Set(prev.map((x) => x.id));
@@ -51,26 +51,27 @@ export default function CatalogueScreen() {
     } finally {
       setLoading(false);
     }
-  }, [kind]);
+  }, [kind, genre, year, minNote]);
 
   useEffect(() => {
-    setItems([]);
     setGenre(null);
     setYear(null);
     setMinNote(0);
     setYearOptionsOpen(false);
     setRatingOptionsOpen(false);
+  }, [kind]);
+
+  useEffect(() => {
+    setItems([]);
+    setPage(1);
+    setHasMore(true);
     load(1);
-  }, [kind, load]);
+  }, [kind, genre, year, minNote, load]);
 
   const genres = GENRES[kind] ?? [];
   const years = Array.from({ length: new Date().getFullYear() - 1979 }, (_, i) => String(new Date().getFullYear() - i));
-  const shown = items.filter((i) =>
-    (!genre || i.genres.some((g) => g.toLocaleLowerCase().includes(genre.toLocaleLowerCase())) || i.title.toLocaleLowerCase().includes(genre.toLocaleLowerCase())) &&
-    (!year || i.year === year) &&
-    i.rating >= minNote &&
-    (!prefs.famille || isFamilySafe(i)),
-  );
+  // Genre, année et note sont appliqués côté serveur pour parcourir tout le catalogue ; le mode famille reste local.
+  const shown = items.filter((i) => !prefs.famille || isFamilySafe(i));
   const cols = prefs.taille === 'Grand' ? 1 : prefs.taille === 'Normal' ? 2 : 3;
   const cardW = (Dimensions.get('window').width - 32 - (cols - 1) * 12) / cols;
   const surprise = () => {
