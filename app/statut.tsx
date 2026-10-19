@@ -18,7 +18,13 @@ export default function StatutScreen() {
       setChecks((c) => [{ ...c[0], ok: !error }, c[1]]);
     });
     fetchExtras('film', '603').then((d) => {
-      setChecks((c) => [c[0], { ...c[1], ok: d.cast.length > 0 || d.reviews.length > 0 || d.providers.length > 0 || d.constellation.items.length > 0 }]);
+      const available = !!d && (
+        d.cast.length > 0 || d.reviews.length > 0 ||
+        d.providers.length > 0 || d.constellation.items.length > 0
+      );
+      setChecks((c) => [c[0], { ...c[1], ok: available }]);
+    }).catch(() => {
+      setChecks((c) => [c[0], { ...c[1], ok: false }]);
     });
   }, []);
 
