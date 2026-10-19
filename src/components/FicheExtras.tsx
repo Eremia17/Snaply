@@ -304,7 +304,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginTop: 24, gap: 14 },
+  wrap: { marginTop: 16, gap: 10, paddingBottom: 18 },
   loadingPreview: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden', backgroundColor: '#15161B', alignItems: 'center', justifyContent: 'center', gap: 10 },
   loadingShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.58)' },
   trailerPreview: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, overflow: 'hidden', backgroundColor: '#111', position: 'relative' },
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   trailerActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
   closeTrailer: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
   openYoutube: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: '#C4302B', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 9 },
-  label: { color: colors.mutedForeground, letterSpacing: 2, fontSize: 12, marginTop: 6 },
+  label: { color: '#F04455', letterSpacing: 1.5, fontSize: 11, fontWeight: '800', marginTop: 2 },
   providers: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   provider: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderRadius: 12, padding: 8, borderWidth: 1, borderColor: colors.border },
   logo: { width: 28, height: 28, borderRadius: 6 },
@@ -352,10 +352,10 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   legendText: { color: colors.mutedForeground, fontSize: 12 },
-  cosmos: { backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: 8, alignItems: 'center' },
+  cosmos: { backgroundColor: '#090A10', borderRadius: 20, borderWidth: 1, borderColor: '#3C1C2B', padding: 10, alignItems: 'center', overflow: 'hidden' },
   center: { position: 'absolute', width: 92, height: 92, borderRadius: 46, borderWidth: 2, borderColor: colors.foreground, overflow: 'hidden' },
   centerImg: { width: 92, height: 92 },
   sat: { position: 'absolute', width: SAT, height: SAT, borderRadius: SAT / 2, borderWidth: 2, overflow: 'hidden', backgroundColor: colors.card },
   satImg: { width: SAT - 4, height: SAT - 4, borderRadius: (SAT - 4) / 2 },
-  cosmosHint: { color: colors.mutedForeground, fontSize: 12, marginBottom: 6 },
+  cosmosHint: { color: colors.mutedForeground, fontSize: 12, marginTop: 8, marginBottom: 2 },
 });
