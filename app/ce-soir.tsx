@@ -1,65 +1,187 @@
-import { useEffect, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { KIND_LABEL, trending, useCatalog, type Detail } from '@/lib/catalog';
+import { browseKind, KIND_LABEL, type Detail } from '@/lib/catalog';
 import { openTitle } from '@/lib/navigation';
+import type { Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
 
-function pickRandom(exclude?: string): Detail | null {
-  const pool = trending().filter((x) => x.id !== exclude);
-  return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
-}
+type Mood = 'rire' | 'frissons' | 'emotion' | 'action' | 'reve';
+const MOODS: { value: Mood; label: string; hint: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { value: 'rire', label: 'Rire', hint: 'Comédies légères', icon: 'happy-outline' },
+  { value: 'frissons', label: 'Frissons', hint: 'Suspense et horreur', icon: 'eye-outline' },
+  { value: 'emotion', label: 'Émotion', hint: 'Drames et romances', icon: 'heart-outline' },
+  { value: 'action', label: 'Action', hint: 'Adrénaline et aventure', icon: 'flash-outline' },
+  { value: 'reve', label: 'Évasion', hint: 'Fantastique et science-fiction', icon: 'planet-outline' },
+];
+const KINDS: Kind[] = ['film', 'manga', 'occidental', 'serie'];
+const moodGenre: Record<Mood, Record<Kind, string>> = {
+  rire: { film: 'Comédie', manga: 'Comédie', occidental: 'Comédie', serie: 'Comédie' },
+  frissons: { film: 'Horreur', manga: 'Horreur', occidental: 'Science-fiction', serie: 'Mystère' },
+  emotion: { film: 'Romance', manga: 'Shojo', occidental: 'Famille', serie: 'Drame' },
+  action: { film: 'Action', manga: 'Shonen', occidental: 'Action', serie: 'Action & Aventure' },
+  reve: { film: 'Fantastique', manga: 'Fantastique', occidental: 'Science-fiction', serie: 'Science-fiction & Fantastique' },
+};
 
 export default function CeSoirScreen() {
-  const version = useCatalog();
   const router = useRouter();
-  const [pick, setPick] = useState<Detail | null>(null);
+  const [mood, setMood] = useState<Mood>('rire');
+  const [kind, setKind] = useState<Kind>('film');
+  const [short, setShort] = useState(false);
+  const [family, setFamily] = useState(false);
+  const [results, setResults] = useState<Detail[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Choisit un titre dès que le catalogue est disponible
-  useEffect(() => {
-    if (!pick) setPick(pickRandom());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [version]);
+  const go = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const genre = moodGenre[mood][kind];
+      const response = await browseKind(kind, 1, {
+        genre,
+        family,
+        short: short && kind === 'film',
+      });
+      const pool = response.items.filter((item) => item.poster);
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      setResults(pool.slice(0, 3));
+      if (!pool.length) setError('Aucun titre ne correspond à ces critères. Essayez une autre combinaison.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Impossible de chercher pour le moment.');
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
-      <Stack.Screen options={{ headerShown: true, title: 'Que regarder ce soir ?', headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.foreground }} />
-      <View style={styles.root}>
-        {!pick ? (
-          <Text style={styles.empty}>Le catalogue se charge…</Text>
-        ) : (
-          <>
-            <View style={styles.card}>
-              {pick.poster ? <Image source={{ uri: pick.poster }} style={styles.poster} /> : <View style={[styles.poster, styles.posterEmpty]}><Ionicons name="film-outline" size={48} color={colors.mutedForeground} /></View>}
-              <Text style={styles.kind}>{KIND_LABEL[pick.kind]}</Text>
-              <Text style={styles.title}>{pick.title}</Text>
-              <Text style={styles.meta}>{pick.year} · ★ {pick.rating.toFixed(1)}/10</Text>
-              <Text style={styles.synopsis}>{pick.synopsis}</Text>
+      <Stack.Screen options={{ headerShown: true, title: 'Que regarder ce soir ?', headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.foreground, headerShadowVisible: false }} />
+      <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+        <View style={styles.intro}>
+          <Ionicons name="sparkles-outline" size={20} color={colors.primary} />
+          <Text style={styles.kicker}>IDÉE DE SOIRÉE</Text>
+        </View>
+        <Text style={styles.title}>Que regarder ce soir ?</Text>
+        <Text style={styles.description}>Répondez à quatre petites questions et Erëmīa vous propose trois titres adaptés à votre soirée.</Text>
+
+        <View style={styles.question}>
+          <Text style={styles.questionTitle}>1. Votre humeur</Text>
+          <View style={styles.moods}>
+            {MOODS.map((m) => (
+              <Pressable key={m.value} accessibilityRole="button" accessibilityState={{ selected: mood === m.value }} onPress={() => setMood(m.value)} style={[styles.moodCard, mood === m.value && styles.selectedCard]}>
+                <View style={[styles.moodIcon, mood === m.value && styles.selectedIcon]}><Ionicons name={m.icon} size={21} color={mood === m.value ? '#fff' : colors.mutedForeground} /></View>
+                <Text style={[styles.moodLabel, mood === m.value && styles.selectedText]}>{m.label}</Text>
+                <Text style={styles.moodHint}>{m.hint}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.question}>
+          <Text style={styles.questionTitle}>2. Votre univers</Text>
+          <View style={styles.chips}>
+            {KINDS.map((k) => <Chip key={k} label={KIND_LABEL[k]} active={kind === k} onPress={() => setKind(k)} />)}
+          </View>
+        </View>
+
+        <View style={styles.question}>
+          <Text style={styles.questionTitle}>3. Durée</Text>
+          <View style={styles.chips}>
+            <Chip label="Peu importe" active={!short} onPress={() => setShort(false)} />
+            <Chip label="Court (moins de 1 h 45)" active={short} onPress={() => setShort(true)} />
+          </View>
+          {short && kind !== 'film' ? <Text style={styles.hint}>Le filtre de durée s’applique uniquement aux films.</Text> : null}
+        </View>
+
+        <View style={styles.question}>
+          <Text style={styles.questionTitle}>4. Avec qui ?</Text>
+          <View style={styles.chips}>
+            <Chip label="Seul·e ou entre amis" active={!family} onPress={() => setFamily(false)} />
+            <Chip label="En famille (sans horreur)" active={family} onPress={() => setFamily(true)} />
+          </View>
+        </View>
+
+        <Pressable style={[styles.primary, loading && styles.disabled]} onPress={go} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Ionicons name="sparkles-outline" size={20} color="#fff" />}
+          <Text style={styles.primaryText}>{loading ? 'Recherche en cours…' : 'Proposez-moi 3 titres'}</Text>
+        </Pressable>
+
+        {error ? <View style={styles.error}><Ionicons name="information-circle-outline" size={22} color={colors.primary} /><Text style={styles.errorText}>{error}</Text></View> : null}
+        {results && results.length > 0 ? (
+          <View style={styles.results}>
+            <View style={styles.resultHeading}>
+              <Text style={styles.resultTitle}>Pour ce soir</Text>
+              <Pressable onPress={go} disabled={loading} style={styles.again}><Ionicons name="refresh-outline" size={17} color={colors.foreground} /><Text style={styles.againText}>Autres idées</Text></Pressable>
             </View>
-            <Pressable style={[styles.btn, { backgroundColor: colors.primary }]} onPress={() => openTitle(router, pick)}>
-              <Text style={styles.btnText}>Voir la fiche</Text>
-            </Pressable>
-            <Pressable style={[styles.btn, { backgroundColor: colors.muted }]} onPress={() => setPick(pickRandom(pick.id) ?? pick)}>
-              <Text style={styles.btnText}>Proposer autre chose</Text>
-            </Pressable>
-          </>
-        )}
-      </View>
+            {results.map((item) => (
+              <Pressable key={`${item.kind}:${item.id}`} style={styles.resultCard} onPress={() => openTitle(router, item)}>
+                {item.poster ? <Image source={{ uri: item.poster }} style={styles.poster} /> : <View style={[styles.poster, styles.posterFallback]}><Ionicons name="film-outline" size={28} color={colors.mutedForeground} /></View>}
+                <View style={styles.resultCopy}>
+                  <Text style={styles.kind}>{KIND_LABEL[item.kind]}</Text>
+                  <Text style={styles.resultName} numberOfLines={2}>{item.title}</Text>
+                  <Text style={styles.meta}>{item.year || 'Année inconnue'} · ★ {item.rating.toFixed(1)}/10</Text>
+                  <Text style={styles.synopsis} numberOfLines={3}>{item.synopsis || 'Synopsis non disponible.'}</Text>
+                  <Text style={styles.open}>Voir la fiche  →</Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+      </ScrollView>
     </>
   );
 }
 
+function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}><Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text></Pressable>;
+}
+
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background, padding: 16, gap: 12 },
-  empty: { color: colors.mutedForeground, textAlign: 'center', marginTop: 60 },
-  card: { backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border, gap: 6 },
-  poster: { width: '100%', aspectRatio: 2 / 3, borderRadius: 12, backgroundColor: colors.muted, marginBottom: 8 },
-  posterEmpty: { alignItems: 'center', justifyContent: 'center' },
-  kind: { color: colors.primary, fontWeight: '700', fontSize: 12, textTransform: 'uppercase' },
-  title: { color: colors.foreground, fontSize: 22, fontWeight: '900' },
-  meta: { color: colors.gold, fontWeight: '600' },
-  synopsis: { color: colors.mutedForeground, lineHeight: 20, marginTop: 4 },
-  btn: { borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  btnText: { color: '#fff', fontWeight: '700' },
+  root: { flex: 1, backgroundColor: colors.background },
+  content: { padding: 16, paddingBottom: 42, gap: 10 },
+  intro: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  kicker: { color: colors.primary, fontSize: 12, fontWeight: '800', letterSpacing: 2 },
+  title: { color: colors.foreground, fontSize: 30, fontWeight: '900', lineHeight: 36 },
+  description: { color: colors.mutedForeground, fontSize: 14, lineHeight: 21, marginBottom: 8 },
+  question: { backgroundColor: colors.card, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.border, gap: 12 },
+  questionTitle: { color: colors.foreground, fontSize: 16, fontWeight: '800' },
+  moods: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  moodCard: { width: '48%', minHeight: 106, padding: 10, borderRadius: 14, borderWidth: 1, borderColor: colors.border, gap: 5 },
+  selectedCard: { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
+  moodIcon: { width: 34, height: 34, borderRadius: 11, backgroundColor: colors.muted, alignItems: 'center', justifyContent: 'center' },
+  selectedIcon: { backgroundColor: colors.primary },
+  moodLabel: { color: colors.foreground, fontWeight: '800' },
+  selectedText: { color: colors.primary },
+  moodHint: { color: colors.mutedForeground, fontSize: 11, lineHeight: 15 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 9 },
+  chipActive: { borderColor: colors.primary, backgroundColor: colors.primary },
+  chipText: { color: colors.foreground, fontSize: 12, fontWeight: '600' },
+  chipTextActive: { color: '#fff' },
+  hint: { color: colors.mutedForeground, fontSize: 12, lineHeight: 17 },
+  primary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 15, marginTop: 6 },
+  disabled: { opacity: 0.65 },
+  primaryText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  error: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.border },
+  errorText: { flex: 1, color: colors.foreground, lineHeight: 20 },
+  results: { gap: 12, marginTop: 16 },
+  resultHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  resultTitle: { color: colors.foreground, fontSize: 22, fontWeight: '900' },
+  again: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  againText: { color: colors.foreground, fontSize: 12, fontWeight: '700' },
+  resultCard: { flexDirection: 'row', gap: 12, padding: 12, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  poster: { width: 100, aspectRatio: 2 / 3, borderRadius: 10, backgroundColor: colors.muted },
+  posterFallback: { alignItems: 'center', justifyContent: 'center' },
+  resultCopy: { flex: 1, gap: 5 },
+  kind: { color: colors.primary, fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  resultName: { color: colors.foreground, fontSize: 16, fontWeight: '900' },
+  meta: { color: colors.gold, fontSize: 12, fontWeight: '700' },
+  synopsis: { color: colors.mutedForeground, fontSize: 12, lineHeight: 17 },
+  open: { color: colors.primary, fontWeight: '800', fontSize: 12, marginTop: 3 },
 });
