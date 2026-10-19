@@ -31,6 +31,7 @@ export default function CatalogueScreen() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [genre, setGenre] = useState<string | null>(null);
   const [year, setYear] = useState<string | null>(null);
   const [minNote, setMinNote] = useState(0);
@@ -39,6 +40,7 @@ export default function CatalogueScreen() {
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
+    setLoadError(null);
     try {
       const r = await browseKind(kind, p, { genre: genre ?? undefined, year: year ?? undefined, minRating: minNote || undefined, family: prefs.famille });
       setItems((prev) => {
@@ -48,6 +50,8 @@ export default function CatalogueScreen() {
       });
       setPage(p);
       setHasMore(r.hasMore);
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : 'Impossible de charger le catalogue.');
     } finally {
       setLoading(false);
     }
@@ -142,7 +146,9 @@ export default function CatalogueScreen() {
         ListFooterComponent={loading ? <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} /> : null}
         ListEmptyComponent={loading
           ? <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
-          : <Text style={styles.empty}>Aucun titre ne correspond à ces filtres.</Text>}
+          : loadError
+            ? <View style={styles.errorBox}><Ionicons name="cloud-offline-outline" size={28} color={colors.primary} /><Text style={styles.empty}>{loadError}</Text><Pressable style={styles.retry} onPress={() => load(1)}><Text style={styles.retryText}>Réessayer</Text></Pressable></View>
+            : <Text style={styles.empty}>Aucun titre ne correspond à ces filtres.</Text>}
       />
     </View>
   );
@@ -182,5 +188,8 @@ const styles = StyleSheet.create({
   actions: { alignItems: 'flex-end', paddingHorizontal: 16, marginTop: 4 },
   surprise: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10 },
   surpriseText: { color: '#fff', fontWeight: '700' },
-  empty: { color: '#D2D4DB', textAlign: 'center', marginTop: 40 },
+  empty: { color: '#D2D4DB', textAlign: 'center', marginTop: 12, lineHeight: 20 },
+  errorBox: { alignItems: 'center', gap: 8, paddingHorizontal: 20, marginTop: 36 },
+  retry: { backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 20, paddingVertical: 10, marginTop: 6 },
+  retryText: { color: '#fff', fontWeight: '800' },
 });
