@@ -28,7 +28,8 @@ export default function TitreScreen() {
   const { isFavorite, toggleFavorite, pushHistory } = useStore();
   const fav = isFavorite(item);
   const [remote, setRemote] = useState<Detail | null>(null);
-  const detail = remote ?? getDetail(item.kind, item.id);
+  const matchingRemote = remote?.kind === item.kind && remote.id === item.id ? remote : null;
+  const detail = matchingRemote ?? getDetail(item.kind, item.id);
   const [myRating, setMyRating] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [lists, setLists] = useState<UserList[] | null>(null);
