@@ -13,13 +13,14 @@ import { FicheExtras } from '@/components/FicheExtras';
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 export default function TitreScreen() {
-  const p = useLocalSearchParams<{ kind: Kind; id: string; title: string; poster?: string; year?: string }>();
+  const p = useLocalSearchParams<{ kind: Kind; id: string; title: string; poster?: string; backdrop?: string; year?: string }>();
   const router = useRouter();
   const item: Item = {
     kind: p.kind,
     id: String(p.id),
     title: String(p.title ?? ''),
     poster: p.poster || null,
+    backdrop: p.backdrop || null,
     year: p.year || null,
   };
   useCatalog();
@@ -114,6 +115,10 @@ export default function TitreScreen() {
         }}
       />
       <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+        <View pointerEvents="none" style={styles.backdropHero}>
+          {item.backdrop ? <Image source={{ uri: item.backdrop }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+          <View style={styles.backdropShade} />
+        </View>
         <View style={styles.posterWrap}>
           {item.poster ? (
             <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
@@ -216,6 +221,8 @@ function Btn({ label, icon, onPress, primary }: { label: string; icon: IconName;
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { padding: 20, paddingBottom: 48 },
+  backdropHero: { position: 'absolute', top: 0, left: 0, right: 0, height: 640, overflow: 'hidden' },
+  backdropShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10,11,16,0.72)' },
   posterWrap: { alignItems: 'center', marginBottom: 20 },
   poster: { width: 210, aspectRatio: 2 / 3, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   posterEmpty: { alignItems: 'center', justifyContent: 'center', padding: 12 },
