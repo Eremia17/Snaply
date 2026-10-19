@@ -58,6 +58,8 @@ export default function CatalogueScreen() {
     setGenre(null);
     setYear(null);
     setMinNote(0);
+    setYearOptionsOpen(false);
+    setRatingOptionsOpen(false);
     load(1);
   }, [kind, load]);
 
