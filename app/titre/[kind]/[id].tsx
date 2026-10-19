@@ -50,6 +50,9 @@ export default function TitreScreen() {
   const [filmCollection, setFilmCollection] = useState<string | null>(null);
   const [filmPartsLoading, setFilmPartsLoading] = useState(false);
   const [selectedFilmId, setSelectedFilmId] = useState(item.id);
+  const [selectedFilmIds, setSelectedFilmIds] = useState<string[]>([item.id]);
+  const [selectedEpisodes, setSelectedEpisodes] = useState<number[]>([]);
+  const [seasonPickerOpen, setSeasonPickerOpen] = useState(false);
 
   useEffect(() => {
     pushHistory(item);
@@ -66,6 +69,9 @@ export default function TitreScreen() {
     setFilmParts([]);
     setFilmCollection(null);
     setSelectedFilmId(item.id);
+    setSelectedFilmIds([item.id]);
+    setSelectedEpisodes([]);
+    setSeasonPickerOpen(false);
     setSeason(1);
     setEpisode(1);
     setLanguage('fr');
@@ -99,7 +105,9 @@ export default function TitreScreen() {
       if (!active) return;
       setFilmParts(result.parts);
       setFilmCollection(result.collection);
-      setSelectedFilmId(result.parts.some((part) => part.id === item.id) ? item.id : result.parts[0]?.id ?? item.id);
+      const initialId = result.parts.some((part) => part.id === item.id) ? item.id : result.parts[0]?.id ?? item.id;
+      setSelectedFilmId(initialId);
+      setSelectedFilmIds([initialId]);
     }).catch(() => {
       if (active) { setFilmParts([]); setFilmCollection(null); }
     }).finally(() => { if (active) setFilmPartsLoading(false); });
@@ -145,7 +153,10 @@ export default function TitreScreen() {
     fetchSeriesEpisodes(item.id, season, item.kind, item.title).then((result) => {
       if (!active) return;
       setEpisodes(result);
-      if (result.length) setEpisode(result[0].number);
+      if (result.length) {
+        setEpisode(result[0].number);
+        setSelectedEpisodes([]);
+      }
     }).catch(() => {
       if (active) setEpisodes([]);
     }).finally(() => {
@@ -153,6 +164,24 @@ export default function TitreScreen() {
     });
     return () => { active = false; };
   }, [downloadPickerOpen, item.kind, item.id, item.title, season, seriesSourceId, seasons]);
+
+  const toggleEpisodeSelection = (number: number) => {
+    setSelectedEpisodes((current) => current.includes(number)
+      ? current.filter((n) => n !== number)
+      : [...current, number].sort((a, b) => a - b));
+  };
+  const toggleAllEpisodes = () => {
+    setSelectedEpisodes((current) => current.length === episodes.length
+      ? []
+      : episodes.map((ep) => ep.number));
+  };
+  const toggleFilmSelection = (id: string) => {
+    setSelectedFilmIds((current) => {
+      const next = current.includes(id) ? current.filter((v) => v !== id) : [...current, id];
+      if (next.length) setSelectedFilmId(next[next.length - 1]);
+      return next;
+    });
+  };
 
   const [seen, setSeen] = useState(false);
   useEffect(() => {
@@ -358,7 +387,7 @@ export default function TitreScreen() {
               <Pressable accessibilityLabel="Fermer" onPress={() => setDownloadPickerOpen(false)} style={styles.downloadClose}><Ionicons name="close" size={20} color={colors.foreground} /></Pressable>
             </View>
             <ScrollView style={styles.downloadOptionsScroll} contentContainerStyle={styles.downloadOptions} showsVerticalScrollIndicator={false}>
-              <Text style={styles.optionLabel}>LANGUE SOUHAITÉE · VF EN PRIORITÉ</Text>
+              <Text style={styles.optionLabel}>LANGUE SOUHAITÉE</Text>
               <View style={styles.optionChips}>
                 {([
                   ['fr', 'VF · Français'],
@@ -371,7 +400,7 @@ export default function TitreScreen() {
                   </Pressable>
                 ))}
               </View>
-              <Text style={styles.languageNote}>La préférence française est sélectionnée par défaut. La source doit réellement proposer une piste VF : ce choix seul ne peut pas la créer.</Text>
+              <Text style={styles.languageNote}>Choix souhaité uniquement : la disponibilité réelle de la piste audio ne pourra être confirmée qu’après connexion des sources de téléchargement.</Text>
               {item.kind === 'film' ? (
                 <>
                   <View style={styles.optionDivider} />
@@ -380,21 +409,31 @@ export default function TitreScreen() {
                     {filmPartsLoading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
                   </View>
                   {filmParts.length > 1 ? (
+                    <>
+                    <Pressable style={styles.selectAllRow} onPress={() => {
+                      const allIds = filmParts.map((part) => part.id);
+                      setSelectedFilmIds((current) => current.length === allIds.length ? [] : allIds);
+                    }}>
+                      <Ionicons name={selectedFilmIds.length === filmParts.length ? 'checkbox' : 'square-outline'} size={20} color={colors.primary} />
+                      <Text style={styles.selectAllText}>{selectedFilmIds.length === filmParts.length ? 'Tout désélectionner' : 'Tout sélectionner'}</Text>
+                      <Text style={styles.selectionCount}>{selectedFilmIds.length} sélectionné(s)</Text>
+                    </Pressable>
                     <View style={styles.filmPartsList}>
                       {filmParts.map((part, index) => (
-                        <Pressable key={part.id} onPress={() => setSelectedFilmId(part.id)} style={[styles.filmPartRow, selectedFilmId === part.id && styles.filmPartRowOn]}>
+                        <Pressable key={part.id} onPress={() => toggleFilmSelection(part.id)} style={[styles.filmPartRow, selectedFilmIds.includes(part.id) && styles.filmPartRowOn]}>
                           {part.poster ? <Image source={{ uri: part.poster }} style={styles.filmPartPoster} resizeMode="cover" /> : <View style={styles.filmPartPosterEmpty}><Ionicons name="film-outline" size={18} color={colors.mutedForeground} /></View>}
                           <View style={styles.filmPartCopy}>
-                            <Text style={styles.filmPartOrder}>{`PARTIE ${index + 1}`}{part.year ? ` · ${part.year}` : ''}</Text>
+                            <Text style={styles.filmPartOrder}>{`FILM ${index + 1}`}{part.year ? ` · ${part.year}` : ''}</Text>
                             <Text style={styles.filmPartTitle} numberOfLines={2}>{part.title}</Text>
                             {part.current ? <Text style={styles.filmPartCurrent}>Film affiché</Text> : null}
                           </View>
-                          <Ionicons name={selectedFilmId === part.id ? 'radio-button-on' : 'radio-button-off'} size={20} color={selectedFilmId === part.id ? colors.primary : colors.mutedForeground} />
+                          <Ionicons name={selectedFilmIds.includes(part.id) ? 'checkbox' : 'square-outline'} size={20} color={selectedFilmIds.includes(part.id) ? colors.primary : colors.mutedForeground} />
                         </Pressable>
                       ))}
                     </View>
+                    </>
                   ) : (
-                    <Text style={styles.noEpisodes}>{filmPartsLoading ? 'Recherche des autres films de cette saga…' : 'Aucune suite ou partie supplémentaire référencée pour ce film.'}</Text>
+                    <Text style={styles.noEpisodes}>{filmPartsLoading ? 'Recherche des autres films de cette saga…' : 'Aucune autre partie référencée. Ce film reste sélectionnable seul.'}</Text>
                   )}
                 </>
               ) : null}
@@ -406,13 +445,28 @@ export default function TitreScreen() {
                     {seasonsLoading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
                   </View>
                   {seasons.length > 0 ? (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionChips}>
-                      {seasons.map((s) => (
-                        <Pressable key={s.number} onPress={() => { setSeason(s.number); setEpisode(1); }} style={[styles.seasonChip, season === s.number && styles.playerChipOn]}>
-                          <Text style={[styles.playerChipText, season === s.number && styles.playerChipTextOn]}>{s.name}</Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
+                    <>
+                    <Pressable style={styles.seasonDropdown} onPress={() => setSeasonPickerOpen((open) => !open)}>
+                      <Text style={styles.seasonDropdownText}>{seasons.find((s) => s.number === season)?.name ?? 'Choisir une saison'}</Text>
+                      <Ionicons name={seasonPickerOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.foreground} />
+                    </Pressable>
+                    {seasonPickerOpen ? (
+                      <View style={styles.seasonDropdownList}>
+                        {seasons.map((s) => (
+                          <Pressable key={s.number} onPress={() => {
+                            setSeason(s.number);
+                            setEpisode(1);
+                            setSelectedEpisodes([]);
+                            setSeasonPickerOpen(false);
+                          }} style={styles.seasonDropdownItem}>
+                            <Text style={styles.seasonDropdownText}>{s.name}</Text>
+                            <Text style={styles.seasonEpisodeCount}>{s.episodeCount} épisode(s)</Text>
+                            {season === s.number ? <Ionicons name="checkmark" size={18} color={colors.primary} /> : null}
+                          </Pressable>
+                        ))}
+                      </View>
+                    ) : null}
+                    </>
                   ) : (
                     <Text style={styles.noEpisodes}>{seasonsLoading ? 'Récupération des saisons officielles…' : seasonUnavailable ? 'Les saisons officielles de ce titre ne sont pas disponibles. Aucune saison fictive ne sera proposée.' : 'Aucune saison disponible.'}</Text>
                   )}
@@ -425,32 +479,50 @@ export default function TitreScreen() {
                       {episodesLoading ? (
                         <View style={styles.episodeLoading}><ActivityIndicator color={colors.primary} /><Text style={styles.noEpisodes}>Chargement des épisodes réels…</Text></View>
                       ) : episodes.length ? (
+                        <>
+                        <Pressable style={styles.selectAllRow} onPress={toggleAllEpisodes}>
+                          <Ionicons name={selectedEpisodes.length === episodes.length ? 'checkbox' : 'square-outline'} size={20} color={colors.primary} />
+                          <Text style={styles.selectAllText}>{selectedEpisodes.length === episodes.length ? 'Tout désélectionner' : 'Tout sélectionner'}</Text>
+                          <Text style={styles.selectionCount}>{selectedEpisodes.length} sélectionné(s)</Text>
+                        </Pressable>
                         <View style={styles.episodeGrid}>
-                          {episodes.map((ep) => (
-                            <Pressable key={ep.number} onPress={() => setEpisode(ep.number)} style={[styles.episodeOption, episode === ep.number && styles.episodeOptionOn]}>
-                              <Text style={[styles.episodeNumber, episode === ep.number && styles.episodeNumberOn]}>E{String(ep.number).padStart(2, '0')}</Text>
-                              <Text style={[styles.episodeName, episode === ep.number && styles.episodeNameOn]} numberOfLines={2}>{ep.name}</Text>
-                              {ep.airDate ? <Text style={styles.episodeDate}>{ep.airDate}</Text> : null}
-                            </Pressable>
-                          ))}
+                          {episodes.map((ep) => {
+                            const checked = selectedEpisodes.includes(ep.number);
+                            return (
+                              <Pressable key={ep.number} onPress={() => toggleEpisodeSelection(ep.number)} style={[styles.episodeOption, checked && styles.episodeOptionOn]}>
+                                <View style={styles.episodeCheckboxRow}>
+                                  <Ionicons name={checked ? 'checkbox' : 'square-outline'} size={17} color={checked ? colors.primary : colors.mutedForeground} />
+                                  <Text style={[styles.episodeNumber, checked && styles.episodeNumberOn]}>E{String(ep.number).padStart(2, '0')}</Text>
+                                </View>
+                                <Text style={[styles.episodeName, checked && styles.episodeNameOn]} numberOfLines={2}>{ep.name}</Text>
+                                {ep.airDate ? <Text style={styles.episodeDate}>{ep.airDate}</Text> : null}
+                              </Pressable>
+                            );
+                          })}
                         </View>
-                      ) : <Text style={styles.noEpisodes}>Aucun épisode trouvé pour cette saison.</Text>}
+                        </> 
+                      ) : <Text style={styles.noEpisodes}>Aucun épisode réel trouvé pour cette saison. Aucun numéro fictif ne sera ajouté.</Text>}
                     </>
                   ) : null}
                 </>
               ) : null}
               <View style={styles.downloadNotice}>
                 <Ionicons name="information-circle-outline" size={19} color={colors.primary} />
-                <Text style={styles.downloadNoticeText}>Le téléchargement hors ligne n’est pas encore disponible dans cette version. Vous pouvez choisir un épisode puis ouvrir le lecteur.</Text>
+                <Text style={styles.downloadNoticeText}>Les saisons, épisodes et sagas affichés viennent des métadonnées réelles. Les sources de fichiers et la vérification des pistes audio seront ajoutées dans une prochaine étape : aucun faux lien de téléchargement n’est créé.</Text>
               </View>
+              <Text style={styles.selectionSummary}>
+                {item.kind === 'film'
+                  ? `${selectedFilmIds.length || 0} film(s) sélectionné(s)`
+                  : `${selectedEpisodes.length} épisode(s) sélectionné(s) · ${seasons.find((s) => s.number === season)?.name ?? 'aucune saison'}`}
+              </Text>
             </ScrollView>
             <Pressable
-              style={[styles.continueButton, item.kind !== 'film' && (!seriesSourceId || !episodes.some((ep) => ep.number === episode)) && styles.continueButtonDisabled]}
-              disabled={item.kind !== 'film' && (!seriesSourceId || !episodes.some((ep) => ep.number === episode))}
-              onPress={() => { setDownloadPickerOpen(false); setPlayerOpen(true); }}
+              style={[styles.continueButton, styles.continueButtonDisabled]}
+              disabled
+              accessibilityLabel="Téléchargement indisponible tant que les sources ne sont pas connectées"
             >
-              <Ionicons name="play-circle-outline" size={21} color="#fff" />
-              <Text style={styles.continueButtonText}>Ouvrir la lecture</Text>
+              <Ionicons name="download-outline" size={21} color="#fff" />
+              <Text style={styles.continueButtonText}>Sources de téléchargement à connecter</Text>
             </Pressable>
           </View>
         </View>
@@ -547,6 +619,16 @@ const styles = StyleSheet.create({
   optionDivider: { height: 1, backgroundColor: colors.border, marginVertical: 1 },
   optionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   seasonChip: { maxWidth: 210, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 },
+  seasonDropdown: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10 },
+  seasonDropdownText: { color: colors.foreground, fontSize: 13, fontWeight: '700' },
+  seasonDropdownList: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 10, overflow: 'hidden' },
+  seasonDropdownItem: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.border },
+  seasonEpisodeCount: { flex: 1, textAlign: 'right', color: colors.mutedForeground, fontSize: 11 },
+  selectAllRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 7 },
+  selectAllText: { color: colors.foreground, fontSize: 12, fontWeight: '700' },
+  selectionCount: { marginLeft: 'auto', color: colors.mutedForeground, fontSize: 10 },
+  episodeCheckboxRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  selectionSummary: { color: colors.foreground, fontSize: 12, fontWeight: '800', paddingVertical: 5 },
   noEpisodes: { color: colors.mutedForeground, fontSize: 12, lineHeight: 18 },
   episodeCount: { color: colors.mutedForeground, fontSize: 11 },
   episodeLoading: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
