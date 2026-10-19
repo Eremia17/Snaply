@@ -67,7 +67,7 @@ function Constellation({ name, items, poster, onPick }: { name: string; items: D
           const dx = q.x - p.x, dy = q.y - p.y;
           const len = Math.hypot(dx, dy);
           const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-          return <View key={`edge-${i}`} style={{ position: 'absolute', left: p.x, top: p.y, width: len, height: 1, backgroundColor: '#9DBEFF', opacity: 0.55, transform: [{ rotate: `${angle}deg` }], transformOrigin: 'left center' as any }} />;
+          return <View key={`edge-${i}`} style={{ position: 'absolute', left: (p.x + q.x) / 2 - len / 2, top: (p.y + q.y) / 2 - 0.5, width: len, height: 1, backgroundColor: '#9DBEFF', opacity: 0.55, transform: [{ rotate: `${angle}deg` }] }} />;
         })}
         {points.map((p, i) => {
           const color = i % 3 === 0 ? C_DIRECTOR : i % 3 === 1 ? C_SAGA : C_SIMILAR;
