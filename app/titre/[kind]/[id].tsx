@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, Share, S
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { WebView } from 'react-native-webview';
 import { useStore } from '@/lib/store';
 import { addToList, fetchLists, type UserList } from '@/lib/lists';
 import { KIND_LABEL, fetchDetail, getDetail, useCatalog, type Detail } from '@/lib/catalog';
@@ -32,6 +33,10 @@ export default function TitreScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [lists, setLists] = useState<UserList[] | null>(null);
   const [adding, setAdding] = useState(false);
+  const [season, setSeason] = useState(1);
+  const [episode, setEpisode] = useState(1);
+  const [language, setLanguage] = useState<'fr' | 'vostfr' | 'en' | 'original'>('fr');
+  const [playerOpen, setPlayerOpen] = useState(false);
 
   useEffect(() => {
     pushHistory(item);
@@ -182,6 +187,65 @@ export default function TitreScreen() {
           ))}
         </View>
 
+        {item.kind !== 'manga' ? (
+          <View style={styles.playerSection}>
+            <Text style={styles.playerTitle}>Lecteur vidéo</Text>
+            <Text style={styles.playerNote}>Choisissez la langue souhaitée. Les options réellement disponibles dépendent du lecteur vidéo externe.</Text>
+            <View style={styles.playerControls}>
+              {([
+                ['fr', 'VF — Français'],
+                ['vostfr', 'VOSTFR'],
+                ['en', 'VO — Anglais'],
+                ['original', 'Langue originale'],
+              ] as const).map(([value, label]) => (
+                <Pressable key={value} onPress={() => setLanguage(value)} style={[styles.playerChip, language === value && styles.playerChipOn]}>
+                  <Text style={[styles.playerChipText, language === value && styles.playerChipTextOn]}>{label}</Text>
+                </Pressable>
+              ))}
+            </View>
+            {item.kind !== 'film' ? (
+              <View style={styles.playerControls}>
+                <View style={styles.stepper}>
+                  <Text style={styles.stepLabel}>Saison</Text>
+                  <Pressable accessibilityLabel="Saison précédente" onPress={() => setSeason((v) => Math.max(1, v - 1))} style={styles.stepButton}><Ionicons name="remove" size={18} color={colors.foreground} /></Pressable>
+                  <Text style={styles.stepValue}>{season}</Text>
+                  <Pressable accessibilityLabel="Saison suivante" onPress={() => { setSeason((v) => Math.min(20, v + 1)); setEpisode(1); }} style={styles.stepButton}><Ionicons name="add" size={18} color={colors.foreground} /></Pressable>
+                </View>
+                <View style={styles.stepper}>
+                  <Text style={styles.stepLabel}>Épisode</Text>
+                  <Pressable accessibilityLabel="Épisode précédent" onPress={() => setEpisode((v) => Math.max(1, v - 1))} style={styles.stepButton}><Ionicons name="remove" size={18} color={colors.foreground} /></Pressable>
+                  <Text style={styles.stepValue}>{episode}</Text>
+                  <Pressable accessibilityLabel="Épisode suivant" onPress={() => setEpisode((v) => Math.min(100, v + 1))} style={styles.stepButton}><Ionicons name="add" size={18} color={colors.foreground} /></Pressable>
+                </View>
+              </View>
+            ) : null}
+            <Pressable style={styles.playerToggle} onPress={() => setPlayerOpen((v) => !v)}>
+              <Ionicons name={playerOpen ? 'close-circle-outline' : 'play-circle-outline'} size={20} color="#fff" />
+              <Text style={styles.playerToggleText}>{playerOpen ? 'Fermer le lecteur' : 'Lancer le lecteur vidéo'}</Text>
+            </Pressable>
+            {playerOpen ? (
+              <View style={styles.playerFrame}>
+                <WebView
+                  key={`${item.kind}-${item.id}-${season}-${episode}-${language}`}
+                  source={{ uri: item.kind === 'film'
+                    ? `https://vidsrc.to/embed/movie/${encodeURIComponent(item.id)}`
+                    : `https://vidsrc.to/embed/tv/${encodeURIComponent(item.id)}/${season}/${episode}` }}
+                  style={styles.playerWebView}
+                  javaScriptEnabled
+                  domStorageEnabled
+                  allowsFullscreenVideo
+                  allowsInlineMediaPlayback
+                  mediaPlaybackRequiresUserAction
+                  originWhitelist={['https://*']}
+                  setSupportMultipleWindows={false}
+                  startInLoadingState
+                  renderLoading={() => <View style={styles.playerLoading}><ActivityIndicator color={colors.primary} /><Text style={styles.playerNote}>Chargement du lecteur…</Text></View>}
+                />
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
         <FicheExtras kind={item.kind} id={item.id} poster={item.poster} />
 
         {!detail ? <Text style={styles.note}>Chargement des informations…</Text> : null}
@@ -247,6 +311,23 @@ const styles = StyleSheet.create({
   btnText: { color: colors.foreground, fontWeight: '600' },
   sectionLabel: { color: colors.mutedForeground, letterSpacing: 2, fontSize: 12, marginTop: 26 },
   stars: { flexDirection: 'row', gap: 6, marginTop: 10 },
+  playerSection: { marginTop: 28, paddingTop: 22, borderTopWidth: 1, borderTopColor: colors.border, gap: 12 },
+  playerTitle: { color: colors.foreground, fontSize: 23, fontWeight: '900' },
+  playerNote: { color: colors.mutedForeground, fontSize: 13, lineHeight: 19 },
+  playerControls: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  playerChip: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  playerChipOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  playerChipText: { color: colors.foreground, fontSize: 12, fontWeight: '600' },
+  playerChipTextOn: { color: '#fff' },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 6, borderWidth: 1, borderColor: colors.border },
+  stepLabel: { color: colors.mutedForeground, fontSize: 12 },
+  stepButton: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 999, backgroundColor: colors.muted },
+  stepValue: { color: colors.foreground, minWidth: 16, textAlign: 'center', fontWeight: '800' },
+  playerToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 999, paddingVertical: 13, paddingHorizontal: 16 },
+  playerToggleText: { color: '#fff', fontWeight: '800' },
+  playerFrame: { width: '100%', height: 240, overflow: 'hidden', borderRadius: 14, backgroundColor: '#000', borderWidth: 1, borderColor: colors.border },
+  playerWebView: { flex: 1, backgroundColor: '#000' },
+  playerLoading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#111' },
   note: { color: colors.mutedForeground, marginTop: 20 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
   sheet: { backgroundColor: colors.card, padding: 20, paddingBottom: 36, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
