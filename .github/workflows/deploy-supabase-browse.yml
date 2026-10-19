@@ -11,6 +11,11 @@ on:
       - ".github/workflows/deploy-supabase-browse.yml"
   workflow_dispatch:
 
+# Les déploiements doivent rester séquentiels : ne pas interrompre un déploiement en cours.
+concurrency:
+  group: supabase-edge-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   deploy-browse:
     runs-on: ubuntu-latest
