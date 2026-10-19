@@ -11,6 +11,7 @@ import { fetchPosts, type Post } from '@/lib/community';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import type { Item, Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
+import { usePrefs } from '@/lib/prefs';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -29,7 +30,11 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { favorites, history } = useStore();
-  const hero = featured();
+  const [prefs] = usePrefs();
+  const heroItems = trending().filter((item) => item.backdrop || item.poster);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const hero = heroItems.length ? heroItems[heroIndex % heroItems.length] : featured();
+  const cardWidth = prefs.taille === 'Compact' ? 96 : prefs.taille === 'Grand' ? 132 : CARD_W;
   const [posts, setPosts] = useState<Post[]>([]);
   const [sports, setSports] = useState<SportMatch[]>([]);
   const [visits, setVisits] = useState<number | null>(null);
@@ -40,13 +45,20 @@ export default function HomeScreen() {
   const dicePulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (prefs.economiseur || prefs.animations || heroItems.length < 2) return;
+    const timer = setInterval(() => setHeroIndex((index) => (index + 1) % heroItems.length), 10000);
+    return () => clearInterval(timer);
+  }, [prefs.economiseur, prefs.animations, heroItems.length]);
+
+  useEffect(() => {
+    if (prefs.animations) { dicePulse.setValue(1); return; }
     const pulse = Animated.loop(Animated.sequence([
       Animated.timing(dicePulse, { toValue: 1.06, duration: 950, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
       Animated.timing(dicePulse, { toValue: 1, duration: 950, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
     ]));
     pulse.start();
     return () => pulse.stop();
-  }, [dicePulse]);
+  }, [dicePulse, prefs.animations]);
 
   const launchSurprise = () => {
     const pool = [...trending(), ...classics(), ...upcomingList()].filter((item, index, all) => all.findIndex((x) => x.kind === item.kind && x.id === item.id) === index);
@@ -114,7 +126,7 @@ export default function HomeScreen() {
 
       {/* Héros */}
       <View style={styles.hero}>
-        {(hero?.backdrop || hero?.poster) ? <Image source={{ uri: hero.backdrop || hero.poster || undefined }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+        {(hero?.backdrop || hero?.poster) ? <Image key={hero.id} source={{ uri: hero.backdrop || hero.poster || undefined }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
         <View style={styles.heroShadeA} />
         <View style={styles.heroShadeB} />
         <View style={styles.heroContent}>
@@ -178,19 +190,19 @@ export default function HomeScreen() {
       {/* Tendances et listes personnelles */}
       <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8, gap: 18 }}>
         <Section title="Tendances">
-          <Row data={trending()} />
+          <Row data={trending()} cardWidth={cardWidth} />
         </Section>
         <Section title="Classiques à redécouvrir" empty="Les classiques du catalogue apparaîtront ici lorsqu’ils seront identifiés.">
-          {classics().length ? <Row data={classics()} /> : null}
+          {classics().length ? <Row data={classics()} cardWidth={cardWidth} /> : null}
         </Section>
         <Section title="Prochainement" empty="Les prochaines sorties apparaîtront ici lorsqu’une date sera disponible.">
-          {upcomingList().length ? <Row data={upcomingList()} /> : null}
+          {upcomingList().length ? <Row data={upcomingList()} cardWidth={cardWidth} /> : null}
         </Section>
         <Section title="Vu récemment" empty="Les fiches que vous consultez apparaîtront ici.">
-          {history.length ? <Row data={history} /> : null}
+          {history.length ? <Row data={history} cardWidth={cardWidth} /> : null}
         </Section>
         <Section title="Mes favoris" empty="Ajoutez des titres avec le cœur pour les retrouver ici.">
-          {favorites.length ? <Row data={favorites} /> : null}
+          {favorites.length ? <Row data={favorites} cardWidth={cardWidth} /> : null}
         </Section>
       </View>
 
@@ -270,7 +282,7 @@ function Section({ title, empty, children }: { title: string; empty?: string; ch
   );
 }
 
-function Row({ data }: { data: Item[] }) {
+function Row({ data, cardWidth }: { data: Item[]; cardWidth: number }) {
   return (
     <FlatList
       horizontal
