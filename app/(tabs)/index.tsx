@@ -258,10 +258,12 @@ export default function HomeScreen() {
 }
 
 function Section({ title, empty, children }: { title: string; empty?: string; children?: React.ReactNode }) {
+  // Ne pas réserver de hauteur aux rubriques sans contenu.
+  if (children == null || children === false) return null;
   return (
     <View>
       <Text style={styles.h2}>{title}</Text>
-      {children ?? <Text style={styles.empty}>{empty}</Text>}
+      {children}
     </View>
   );
 }
