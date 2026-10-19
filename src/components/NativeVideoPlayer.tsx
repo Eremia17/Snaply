@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { colors } from '@/lib/theme';
@@ -17,7 +17,7 @@ export function NativeVideoPlayer({
   autoPlay = true,
   onSourceChange,
 }: Props) {
-  const validSources = normalizeMediaSources(sources);
+  const validSources = useMemo(() => normalizeMediaSources(sources), [sources]);
   const [sourceIndex, setSourceIndex] = useState(0);
   const [playerError, setPlayerError] = useState<string | null>(null);
   const attemptedIndex = useRef(-1);
