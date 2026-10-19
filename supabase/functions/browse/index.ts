@@ -295,28 +295,76 @@ async function pages(chapterId: string) {
   return { pages: files.map((f: string) => `${s.baseUrl}/${folder}/${s.chapter.hash}/${f}`) };
 }
 
-async function list(kind: string, page: number) {
+type BrowseFilters = { genre?: string; year?: string; minRating?: number };
+
+const FILM_GENRES: Record<string, { genre?: number; keyword?: number }> = {
+  Romance: { genre: 10749 }, Action: { genre: 28 }, Horreur: { genre: 27 }, Zombie: { keyword: 12377 },
+  Comédie: { genre: 35 }, Thriller: { genre: 53 }, 'Science-fiction': { genre: 878 }, Drame: { genre: 18 },
+  Aventure: { genre: 12 }, Fantastique: { genre: 14 }, Documentaire: { genre: 99 }, Animation: { genre: 16 },
+  Guerre: { genre: 10752 }, Policier: { genre: 80 },
+};
+const SERIES_GENRES: Record<string, { genre?: number; keyword?: number }> = {
+  'Action & Aventure': { genre: 10759 }, Comédie: { genre: 35 }, Drame: { genre: 18 }, Crime: { genre: 80 },
+  Mystère: { genre: 9648 }, 'Science-fiction & Fantastique': { genre: 10765 }, Famille: { genre: 10751 },
+  'Guerre & Politique': { genre: 10768 }, Western: { genre: 37 }, Documentaire: { genre: 99 }, Téléréalité: { genre: 10764 },
+};
+const WEST_GENRES: Record<string, { genre?: number; keyword?: number }> = {
+  Action: { genre: 10759 }, Comédie: { genre: 35 }, Aventure: { genre: 10759 },
+  'Super-héros': { keyword: 9715 }, 'Science-fiction': { genre: 10765 }, Famille: { genre: 10751 },
+};
+const MANGA_GENRES: Record<string, { genre?: string; tag?: string }> = {
+  Shonen: { tag: 'Shounen' }, Shojo: { tag: 'Shoujo' }, Seinen: { tag: 'Seinen' },
+  'Isekai / Réincarnation': { tag: 'Isekai' }, Mecha: { genre: 'Mecha' },
+  'Tranche de vie': { genre: 'Slice of Life' }, Horreur: { genre: 'Horror' },
+  Sport: { genre: 'Sports' }, Fantastique: { genre: 'Fantasy' }, Comédie: { genre: 'Comedy' },
+};
+
+async function list(kind: string, page: number, filters: BrowseFilters = {}) {
   if (kind === "manga") {
+    const g = MANGA_GENRES[filters.genre ?? ''];
     const d = await anilist(
-      `query ($page: Int) { Page(page: $page, perPage: 40) { pageInfo { hasNextPage } media(type: ANIME, countryOfOrigin: "JP", sort: POPULARITY_DESC, isAdult: false) { ${ANI_FIELDS} } } }`,
-      { page },
+      `query ($page: Int, $genre: String, $tag: String, $year: Int, $score: Int) { Page(page: $page, perPage: 40) { pageInfo { hasNextPage } media(type: ANIME, countryOfOrigin: "JP", sort: POPULARITY_DESC, isAdult: false, genre: $genre, tag: $tag, seasonYear: $year, averageScore_greater: $score) { ${ANI_FIELDS} } } }`,
+      { page, genre: g?.genre, tag: g?.tag, year: filters.year ? Number(filters.year) : undefined, score: filters.minRating ? Math.max(0, Math.round(filters.minRating * 10) - 1) : undefined },
     );
     return { items: d.Page.media.map(fromAni), hasMore: d.Page.pageInfo.hasNextPage };
   }
-  if (kind === "film") {
-    const [d, names] = await Promise.all([tmdbPair("/movie/popular", {}, page), genreNames("movie")]);
-    return { items: d.results.map((x: any) => fromTmdb(x, "film", names)), hasMore: page < d.total_pages };
+
+  const params: Record<string, string> = { include_adult: 'false', sort_by: 'popularity.desc', 'vote_count.gte': '20' };
+  if (filters.minRating) params['vote_average.gte'] = String(filters.minRating);
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (kind === 'film') {
+    const g = FILM_GENRES[filters.genre ?? ''];
+    if (filters.year) params.primary_release_year = filters.year;
+    if (g?.genre) params.with_genres = String(g.genre);
+    if (g?.keyword) params.with_keywords = String(g.keyword);
+    if (g?.genre !== 16) params.without_genres = '16';
+    const d = await tmdbPair('/discover/movie', params, page);
+    const [names] = await Promise.all([genreNames('movie')]);
+    return { items: d.results.map((x: any) => fromTmdb(x, 'film', names)), hasMore: page < d.total_pages };
   }
-  if (kind === "serie") {
-    const [d, names] = await Promise.all([tmdbPair("/tv/popular", {}, page), genreNames("tv")]);
-    return { items: d.results.map((x: any) => fromTmdb(x, "serie", names)), hasMore: page < d.total_pages };
+
+  if (filters.year) params.first_air_date_year = filters.year;
+  if (kind === 'serie') {
+    const g = SERIES_GENRES[filters.genre ?? ''];
+    if (g?.genre) params.with_genres = String(g.genre);
+    params.without_genres = '16,10762';
+    const d = await tmdbPair('/discover/tv', params, page);
+    const names = await genreNames('tv');
+    return { items: d.results.filter((x: any) => !x.genre_ids?.includes(16)).map((x: any) => fromTmdb(x, 'serie', names)), hasMore: page < d.total_pages };
   }
-  if (kind === "occidental") {
-    const [d, names] = await Promise.all([
-      tmdbPair("/discover/tv", { with_genres: "16", with_original_language: "en", sort_by: "popularity.desc" }, page),
-      genreNames("tv"),
-    ]);
-    return { items: d.results.map((x: any) => fromTmdb(x, "occidental", names)), hasMore: page < d.total_pages };
+
+  if (kind === 'occidental') {
+    const g = WEST_GENRES[filters.genre ?? ''];
+    params.with_genres = g?.genre ? `16,${g.genre}` : '16';
+    if (g?.keyword) params.with_keywords = String(g.keyword);
+    params.with_origin_country = 'US|GB|FR|CA|BE|IE|AU|DE|ES|IT';
+    params.without_genres = '10762';
+    params.with_original_language = 'en';
+    const d = await tmdbPair('/discover/tv', params, page);
+    const names = await genreNames('tv');
+    const items = d.results.filter((x: any) => x.genre_ids?.includes(16) && !(x.origin_country ?? []).includes('JP'));
+    return { items: items.map((x: any) => fromTmdb(x, 'occidental', names)), hasMore: page < d.total_pages };
   }
   return { items: [], hasMore: false };
 }
@@ -410,7 +458,12 @@ Deno.serve(async (req) => {
     if (body.action === "sports") return json(await sports());
     if (body.action === "extras") return json(await extras(kind, String(body.id ?? "")));
     const page = Math.max(1, Number(body.page ?? 1));
-    return json(await list(kind, page));
+    const filters: BrowseFilters = {
+      genre: typeof body.genre === 'string' && body.genre ? body.genre : undefined,
+      year: typeof body.year === 'string' && body.year ? body.year : undefined,
+      minRating: Number(body.minRating) > 0 ? Number(body.minRating) : undefined,
+    };
+    return json(await list(kind, page, filters));
   } catch (e) {
     return json({ error: String(e) }, 500);
   }
