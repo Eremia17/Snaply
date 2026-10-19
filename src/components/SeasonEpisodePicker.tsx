@@ -12,7 +12,9 @@ type Props = {
 };
 
 export function SeasonEpisodePicker({ id, kind, title, onSelect }: Props) {
-  const onSelectRef = useRef(onSelect);\n  onSelectRef.current = onSelect;\n  const [seasons, setSeasons] = useState<SeriesSeason[]>([]);
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+  const [seasons, setSeasons] = useState<SeriesSeason[]>([]);
   const [episodes, setEpisodes] = useState<SeriesEpisode[]>([]);
   const [season, setSeason] = useState<number | null>(null);
   const [episode, setEpisode] = useState<number | null>(null);
