@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { PosterCard } from '@/components/PosterCard';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { KIND_LABEL, searchCatalog, searchRemote, useCatalog, type Detail } from '@/lib/catalog';
 import type { Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
@@ -56,7 +57,9 @@ export default function RechercheScreen() {
     return () => clearTimeout(t);
   }, [q, kinds]);
 
-  const base = remote.length ? remote : searchCatalog(q, kinds);
+  // Quand la recherche distante est active, une réponse vide doit rester vide :
+  // ne pas afficher des résultats locaux sans rapport avec la requête.
+  const base = isSupabaseConfigured && q.trim().length >= 2 ? remote : searchCatalog(q, kinds);
   const years = useMemo(
     () => Array.from(new Set(base.map((i) => i.year).filter(Boolean) as string[])).sort().reverse().slice(0, 8),
     [base],
