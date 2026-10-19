@@ -123,9 +123,9 @@ async function search(q: string, kinds: Kind[]): Promise<Item[]> {
   for (const x of multi.results) {
     if (x.media_type === "movie" && want("film")) out.push(fromTmdb(x, "film", gMovie));
     if (x.media_type === "tv") {
-      // Comme dans le catalogue principal, les séries animées anglophones
-      // sont classées dans l'univers « Animé occidental », pas « Séries ».
-      const isWesternAnimation = (x.genre_ids ?? []).includes(16) && x.original_language === "en";
+      // Rester cohérent avec le catalogue occidental : animation non japonaise,
+      // y compris les productions francophones et européennes.
+      const isWesternAnimation = (x.genre_ids ?? []).includes(16) && !(x.origin_country ?? []).includes("JP");
       if (isWesternAnimation && want("occidental")) {
         out.push(fromTmdb(x, "occidental", gTv));
       } else if (!isWesternAnimation && want("serie")) {
