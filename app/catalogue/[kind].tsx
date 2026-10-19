@@ -130,11 +130,13 @@ export default function CatalogueScreen() {
           <Text style={styles.filterSelectText}>{minNote ? 'Note ' + minNote + '+ / 10' : 'Toutes les notes'}</Text>
           <Ionicons name={ratingOptionsOpen ? 'chevron-up' : 'chevron-down'} size={14} color={colors.mutedForeground} />
         </Pressable>
-        <Pressable style={[styles.filterSelect, shortOnly && styles.filterSelectOn]} onPress={() => setShortOnly((v) => !v)}>
-          <Ionicons name="time-outline" size={15} color={colors.foreground} />
-          <Text style={styles.filterSelectText}>Moins de 105 min</Text>
-          {shortOnly ? <Ionicons name="checkmark-circle" size={14} color={colors.primary} /> : null}
-        </Pressable>
+        {kind === 'film' ? (
+          <Pressable style={[styles.filterSelect, shortOnly && styles.filterSelectOn]} onPress={() => setShortOnly((v) => !v)}>
+            <Ionicons name="time-outline" size={15} color={colors.foreground} />
+            <Text style={styles.filterSelectText}>Moins de 105 min</Text>
+            {shortOnly ? <Ionicons name="checkmark-circle" size={14} color={colors.primary} /> : null}
+          </Pressable>
+        ) : null}
         {(year !== null || minNote > 0 || genre !== null || shortOnly || sort !== 'popularity') ? <Pressable style={styles.resetFilter} onPress={() => { setYear(null); setMinNote(0); setGenre(null); setShortOnly(false); setSort('popularity'); setYearOptionsOpen(false); setRatingOptionsOpen(false); }}><Ionicons name="refresh-outline" size={15} color={colors.mutedForeground} /><Text style={styles.resetFilterText}>Réinitialiser</Text></Pressable> : null}
       </View>
       {yearOptionsOpen ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionRow}><Chip label="Toutes les années" on={year === null} onPress={() => { setYear(null); setYearOptionsOpen(false); }} />{years.map((y) => <Chip key={y} label={y} on={year === y} onPress={() => { setYear(y); setYearOptionsOpen(false); }} />)}</ScrollView> : null}
