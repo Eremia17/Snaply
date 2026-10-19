@@ -178,7 +178,7 @@ export default function TitreScreen() {
           headerShadowVisible: false,
         }}
       />
-      <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.root} contentContainerStyle={styles.content} removeClippedSubviews={false}>
         <View pointerEvents="none" style={styles.backdropHero}>
           {(detail?.backdrop || item.backdrop) ? <Image source={{ uri: detail?.backdrop || item.backdrop || undefined }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
           <View style={styles.backdropShade} />
@@ -362,8 +362,8 @@ function Btn({ label, icon, onPress, primary }: { label: string; icon: IconName;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { padding: 20, paddingBottom: 48 },
-  backdropHero: { position: 'absolute', top: 0, left: 0, right: 0, height: 640, overflow: 'hidden' },
+  content: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 24, gap: 0 },
+  backdropHero: { position: 'absolute', top: 0, left: 0, right: 0, height: 360, overflow: 'hidden' },
   backdropShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(10,11,16,0.72)' },
   posterWrap: { alignItems: 'center', marginBottom: 20 },
   poster: { width: 210, aspectRatio: 2 / 3, borderRadius: 16, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
@@ -379,17 +379,17 @@ const styles = StyleSheet.create({
   genres: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
   genre: { borderWidth: 1, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
   genreText: { color: colors.foreground, fontSize: 13 },
-  synopsis: { color: colors.foreground, lineHeight: 23, marginTop: 16, fontSize: 15 },
-  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 20 },
+  synopsis: { color: colors.foreground, lineHeight: 23, marginTop: 10, fontSize: 15 },
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
   btn: {
     flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: colors.border,
     borderRadius: 999, paddingHorizontal: 16, paddingVertical: 11,
   },
   btnPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
   btnText: { color: colors.foreground, fontWeight: '600' },
-  sectionLabel: { color: colors.mutedForeground, letterSpacing: 2, fontSize: 12, marginTop: 26 },
+  sectionLabel: { color: colors.mutedForeground, letterSpacing: 1.5, fontSize: 11, marginTop: 14, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border },
   stars: { flexDirection: 'row', gap: 6, marginTop: 10 },
-  playerSection: { marginTop: 28, paddingTop: 22, borderTopWidth: 1, borderTopColor: colors.border, gap: 12 },
+  playerSection: { marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.border, gap: 10 },
   playerTitle: { color: colors.foreground, fontSize: 23, fontWeight: '900' },
   playerNote: { color: colors.mutedForeground, fontSize: 13, lineHeight: 19 },
   playerControls: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
