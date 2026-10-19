@@ -64,6 +64,7 @@ export default function HomeScreen() {
     const pool = [...trending(), ...classics(), ...upcomingList()].filter((item, index, all) => all.findIndex((x) => x.kind === item.kind && x.id === item.id) === index);
     if (!pool.length) { router.push('/catalogue/film'); return; }
     setSurpriseItem(pool[Math.floor(Math.random() * pool.length)]);
+    if (prefs.animations) { setSurpriseVisible(true); return; }
     diceRotation.setValue(0);
     Animated.sequence([
       Animated.timing(diceRotation, { toValue: 1, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: true }),
