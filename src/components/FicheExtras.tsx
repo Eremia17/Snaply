@@ -8,6 +8,7 @@ import { PosterCard } from '@/components/PosterCard';
 import { openTitle } from '@/lib/navigation';
 import type { Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 const W = 320;
 const H = 320;
@@ -57,13 +58,15 @@ function Constellation({ name, items, poster, onPick }: { name: string; items: D
   );
 }
 
-export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; poster?: string | null }) {
+export function FicheExtras({ kind, id, poster, title }: { kind: Kind; id: string; poster?: string | null; title?: string }) {
   const router = useRouter();
   const [data, setData] = useState<Extras | null>(null);
   const [loading, setLoading] = useState(true);
   const [showTrailer, setShowTrailer] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [reviewSummary, setReviewSummary] = useState('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -79,6 +82,33 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
     });
     return () => { active = false; };
   }, [kind, id, retry]);
+
+  useEffect(() => {
+    let active = true;
+    setReviewSummary('');
+    if (!data?.reviews?.length || !isSupabaseConfigured) {
+      setSummaryLoading(false);
+      return () => { active = false; };
+    }
+    setSummaryLoading(true);
+    supabase.functions.invoke('gemini', {
+      body: {
+        action: 'summarize_reviews',
+        title: title ?? '',
+        reviews: data.reviews.slice(0, 8).map((review) => ({
+          rating: review.rating,
+          content: review.content.slice(0, 700),
+        })),
+      },
+    }).then(({ data: result, error }) => {
+      if (active && !error && typeof result?.summary === 'string') setReviewSummary(result.summary);
+    }).catch(() => {
+      // Le résumé IA est facultatif : les critiques originales restent accessibles.
+    }).finally(() => {
+      if (active) setSummaryLoading(false);
+    });
+    return () => { active = false; };
+  }, [data, title]);
 
   if (loading) {
     return (
@@ -210,6 +240,18 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
       {data.reviews.length ? (
         <>
           <Text style={styles.label}>CRITIQUES DES MEMBRES</Text>
+          {summaryLoading || reviewSummary ? (
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryHead}>
+                <Ionicons name="sparkles" size={17} color={colors.primary} />
+                <Text style={styles.summaryTitle}>Résumé des critiques par IA</Text>
+              </View>
+              {summaryLoading ? (
+                <View style={styles.summaryLoading}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.summaryBody}>Lecture des avis en cours…</Text></View>
+              ) : <Text style={styles.summaryBody}>{reviewSummary}</Text>}
+              <Text style={styles.summaryNote}>Synthèse automatique des avis affichés, à prendre comme un aperçu.</Text>
+            </View>
+          ) : null}
           {data.reviews.map((r, i) => (
             <View key={`${r.author}${i}`} style={styles.review}>
               <View style={styles.reviewHead}>
@@ -292,6 +334,12 @@ const styles = StyleSheet.create({
   castEmpty: { alignItems: 'center', justifyContent: 'center' },
   castName: { color: colors.foreground, fontSize: 13, fontWeight: '700' },
   castRole: { color: colors.mutedForeground, fontSize: 12 },
+  summaryCard: { borderRadius: 12, padding: 13, backgroundColor: colors.card, gap: 9, borderWidth: 1, borderColor: colors.border },
+  summaryHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  summaryTitle: { color: colors.foreground, fontWeight: '800', fontSize: 14 },
+  summaryLoading: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  summaryBody: { color: colors.foreground, lineHeight: 21 },
+  summaryNote: { color: colors.mutedForeground, fontSize: 10, lineHeight: 15 },
   review: { backgroundColor: colors.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: colors.border, gap: 8 },
   reviewHead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   reviewAuthor: { color: colors.foreground, fontWeight: '700' },
