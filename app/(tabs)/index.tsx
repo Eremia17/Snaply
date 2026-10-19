@@ -60,11 +60,23 @@ export default function HomeScreen() {
       browseKind('occidental', 1, { sort: 'recent' }), browseKind('occidental', 1, { sort: 'rating' }),
     ]).then((results) => {
       if (!active) return;
-      const pool = results.flatMap((result) => result.items).filter((item) => !!(item.backdrop || item.poster));
-      const unique = Array.from(new Map(pool.map((item) => [item.kind + ':' + item.id, item])).values());
-      // Intercaler les univers pour ne pas afficher une succession de titres du même type.
+      const [filmRecent, filmRated, serieRecent, serieRated, mangaRecent, mangaRated, westRecent, westRated] = results;
+      const candidates = [
+        ...(filmRecent?.items ?? []).slice(0, 3), ...(filmRated?.items ?? []).slice(0, 3),
+        ...(mangaRecent?.items ?? []).slice(0, 3), ...(mangaRated?.items ?? []).slice(0, 3),
+        ...(serieRecent?.items ?? []).slice(0, 3), ...(serieRated?.items ?? []).slice(0, 3),
+        ...(westRecent?.items ?? []).slice(0, 3), ...(westRated?.items ?? []).slice(0, 3),
+      ].filter((item) => !!(item.backdrop || item.poster));
+      const unique = Array.from(new Map(candidates.map((item) => [item.kind + ':' + item.id, item])).values());
+      // Les résultats récents et les mieux notés sont mélangés entre les quatre univers.
+      const balanced: Detail[] = [];
       const kinds: Kind[] = ['film', 'manga', 'serie', 'occidental'];
-      const balanced = kinds.flatMap((kind) => unique.filter((item) => item.kind === kind).slice(0, 3));
+      for (let round = 0; round < 6; round++) {
+        for (const kind of kinds) {
+          const matching = unique.filter((item) => item.kind === kind);
+          if (matching[round]) balanced.push(matching[round]);
+        }
+      }
       setSpotlights(balanced.length ? balanced : unique.slice(0, 12));
     }).catch(() => { if (active) setSpotlights([]); });
     return () => { active = false; };
