@@ -8,6 +8,7 @@ import { PosterCard } from '@/components/PosterCard';
 import { openTitle } from '@/lib/navigation';
 import type { Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
+import { MarkdownText } from '@/components/MarkdownText';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 const W = Math.min(Dimensions.get('window').width - 36, 360);
@@ -311,7 +312,7 @@ export function FicheExtras({ kind, id, poster, title }: { kind: Kind; id: strin
               </View>
               {summaryLoading ? (
                 <View style={styles.summaryLoading}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.summaryBody}>Lecture des avis en cours…</Text></View>
-              ) : <Text style={styles.summaryBody}>{reviewSummary}</Text>}
+              ) : <MarkdownText style={styles.summaryBody}>{reviewSummary}</MarkdownText>}
               <Text style={styles.summaryNote}>Synthèse automatique des avis affichés, à prendre comme un aperçu.</Text>
             </View>
           ) : null}
@@ -322,7 +323,7 @@ export function FicheExtras({ kind, id, poster, title }: { kind: Kind; id: strin
                 {r.rating ? <View style={styles.reviewRating}><Ionicons name="star" size={12} color="#000" /><Text style={styles.reviewRatingText}>{r.rating}/10</Text></View> : null}
                 <Text style={styles.reviewDate}>{r.date}</Text>
               </View>
-              <Text style={styles.reviewText}>{r.content}</Text>
+              <MarkdownText style={styles.reviewText}>{r.content}</MarkdownText>
             </View>
           ))}
           <Text style={styles.credit}>Critiques : TMDB, publiées par leurs auteurs.</Text>
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
   summaryHead: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   summaryTitle: { color: colors.foreground, fontWeight: '800', fontSize: 14 },
   summaryLoading: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  summaryBody: { color: colors.foreground, lineHeight: 21 },
+  summaryBody: { color: colors.foreground, lineHeight: 22, fontSize: 14 },
   summaryNote: { color: colors.mutedForeground, fontSize: 10, lineHeight: 15 },
   review: { backgroundColor: colors.card, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: colors.border, gap: 8 },
   reviewHead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
   reviewRating: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
   reviewRatingText: { color: '#000', fontWeight: '800', fontSize: 12 },
   reviewDate: { color: colors.mutedForeground, fontSize: 12 },
-  reviewText: { color: colors.foreground, lineHeight: 20 },
+  reviewText: { color: colors.foreground, lineHeight: 21, fontSize: 14 },
   constellationSub: { color: colors.mutedForeground, lineHeight: 20 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
