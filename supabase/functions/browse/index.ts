@@ -328,28 +328,75 @@ const LEAGUES = [
   { id: "4480", name: "Ligue des champions" },
 ];
 
-// Derniers résultats et prochains matchs, par championnat
+async function sportsRequest(path: string): Promise<any> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 9000);
+  try {
+    const r = await fetch(`${SDB}/${path}`, {
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    });
+    if (!r.ok) throw new Error(`TheSportsDB HTTP ${r.status}`);
+    return await r.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// Derniers résultats et prochains matchs, par championnat.
 async function sports() {
-  const items: any[] = [];
-  await Promise.all(
-    LEAGUES.map(async (l) => {
-      try {
-        const [past, next] = await Promise.all([
-          fetch(`${SDB}/eventspastleague.php?id=${l.id}`).then((r) => r.json()),
-          fetch(`${SDB}/eventsnextleague.php?id=${l.id}`).then((r) => r.json()),
-        ]);
-        for (const e of (past.events ?? []).slice(-3)) {
-          items.push({ league: l.name, home: e.strHomeTeam, away: e.strAwayTeam, homeScore: e.intHomeScore, awayScore: e.intAwayScore, date: e.dateEvent, time: e.strTime, status: "Terminé" });
-        }
-        for (const e of (next.events ?? []).slice(0, 4)) {
-          items.push({ league: l.name, home: e.strHomeTeam, away: e.strAwayTeam, homeScore: null, awayScore: null, date: e.dateEvent, time: e.strTime, status: "À venir" });
-        }
-      } catch {
-        // championnat indisponible : on continue avec les autres
+  const results = await Promise.all(LEAGUES.map(async (league) => {
+    try {
+      const [past, next] = await Promise.all([
+        sportsRequest(`eventspastleague.php?id=${league.id}`),
+        sportsRequest(`eventsnextleague.php?id=${league.id}`),
+      ]);
+      const items: any[] = [];
+      for (const e of (past.events ?? []).slice(0, 4)) {
+        if (!e.strHomeTeam || !e.strAwayTeam || !e.dateEvent) continue;
+        items.push({
+          league: league.name,
+          home: e.strHomeTeam,
+          away: e.strAwayTeam,
+          homeScore: e.intHomeScore == null ? null : Number(e.intHomeScore),
+          awayScore: e.intAwayScore == null ? null : Number(e.intAwayScore),
+          date: e.dateEvent,
+          time: e.strTime ?? "00:00:00",
+          status: "Terminé",
+        });
       }
-    }),
-  );
-  return { items: items.sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`)) };
+      for (const e of (next.events ?? []).slice(0, 5)) {
+        if (!e.strHomeTeam || !e.strAwayTeam || !e.dateEvent) continue;
+        items.push({
+          league: league.name,
+          home: e.strHomeTeam,
+          away: e.strAwayTeam,
+          homeScore: null,
+          awayScore: null,
+          date: e.dateEvent,
+          time: e.strTime ?? "00:00:00",
+          status: "À venir",
+        });
+      }
+      return { items, failed: false };
+    } catch {
+      return { items: [], failed: true };
+    }
+  }));
+
+  const items = results.flatMap((r) => r.items);
+  if (items.length === 0 && results.every((r) => r.failed)) {
+    throw new Error("La source sportive est inaccessible. Réessayez plus tard.");
+  }
+  items.sort((a, b) => {
+    const aTime = Date.parse(`${a.date}T${a.time || "00:00:00"}Z`);
+    const bTime = Date.parse(`${b.date}T${b.time || "00:00:00"}Z`);
+    const aUpcoming = a.status === "À venir";
+    const bUpcoming = b.status === "À venir";
+    if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
+    return aUpcoming ? aTime - bTime : bTime - aTime;
+  });
+  return { items };
 }
 
 Deno.serve(async (req) => {
