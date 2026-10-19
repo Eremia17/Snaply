@@ -34,6 +34,8 @@ export default function CatalogueScreen() {
   const [genre, setGenre] = useState<string | null>(null);
   const [year, setYear] = useState<string | null>(null);
   const [minNote, setMinNote] = useState(0);
+  const [yearOptionsOpen, setYearOptionsOpen] = useState(false);
+  const [ratingOptionsOpen, setRatingOptionsOpen] = useState(false);
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
@@ -60,8 +62,7 @@ export default function CatalogueScreen() {
   }, [kind, load]);
 
   const genres = GENRES[kind] ?? [];
-  const years = Array.from(new Set(items.map((i) => i.year).filter(Boolean) as string[]))
-    .sort().reverse().slice(0, 8);
+  const years = Array.from({ length: new Date().getFullYear() - 1979 }, (_, i) => String(new Date().getFullYear() - i));
   const shown = items.filter((i) =>
     (!genre || i.genres.some((g) => g.toLocaleLowerCase().includes(genre.toLocaleLowerCase())) || i.title.toLocaleLowerCase().includes(genre.toLocaleLowerCase())) &&
     (!year || i.year === year) &&
@@ -102,14 +103,21 @@ export default function CatalogueScreen() {
         {genres.map((g) => <Chip key={g} label={g} on={genre === g} onPress={() => setGenre(g)} />)}
       </ScrollView>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hscroll} contentContainerStyle={styles.row}>
-        <Chip label="Toutes les années" on={year === null} onPress={() => setYear(null)} />
-        {years.map((y) => <Chip key={y} label={y} on={year === y} onPress={() => setYear(y)} />)}
-      </ScrollView>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hscroll} contentContainerStyle={styles.row}>
-        {NOTES.map((n) => <Chip key={n} label={n === 0 ? 'Toutes les notes' : `★ ${n}+`} on={minNote === n} onPress={() => setMinNote(n)} />)}
-      </ScrollView>
+      <View style={styles.filtersBar}>
+        <Pressable style={[styles.filterSelect, year !== null && styles.filterSelectOn]} onPress={() => { setYearOptionsOpen((v) => !v); setRatingOptionsOpen(false); }}>
+          <Ionicons name="calendar-outline" size={15} color={colors.foreground} />
+          <Text style={styles.filterSelectText}>{year ?? 'Toutes les années'}</Text>
+          <Ionicons name={yearOptionsOpen ? 'chevron-up' : 'chevron-down'} size={14} color={colors.mutedForeground} />
+        </Pressable>
+        <Pressable style={[styles.filterSelect, minNote > 0 && styles.filterSelectOn]} onPress={() => { setRatingOptionsOpen((v) => !v); setYearOptionsOpen(false); }}>
+          <Ionicons name="star-outline" size={15} color={colors.foreground} />
+          <Text style={styles.filterSelectText}>{minNote ? 'Note ' + minNote + '+ / 10' : 'Toutes les notes'}</Text>
+          <Ionicons name={ratingOptionsOpen ? 'chevron-up' : 'chevron-down'} size={14} color={colors.mutedForeground} />
+        </Pressable>
+        {(year !== null || minNote > 0 || genre !== null) ? <Pressable style={styles.resetFilter} onPress={() => { setYear(null); setMinNote(0); setGenre(null); setYearOptionsOpen(false); setRatingOptionsOpen(false); }}><Ionicons name="refresh-outline" size={15} color={colors.mutedForeground} /><Text style={styles.resetFilterText}>Réinitialiser</Text></Pressable> : null}
+      </View>
+      {yearOptionsOpen ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionRow}><Chip label="Toutes les années" on={year === null} onPress={() => { setYear(null); setYearOptionsOpen(false); }} />{years.map((y) => <Chip key={y} label={y} on={year === y} onPress={() => { setYear(y); setYearOptionsOpen(false); }} />)}</ScrollView> : null}
+      {ratingOptionsOpen ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionRow}>{NOTES.map((n) => <Chip key={n} label={n === 0 ? 'Toutes les notes' : '★ ' + n + '+ / 10'} on={minNote === n} onPress={() => { setMinNote(n); setRatingOptionsOpen(false); }} />)}</ScrollView> : null}
 
       <View style={styles.actions}>
         <Pressable style={styles.surprise} onPress={surprise}>
@@ -161,6 +169,13 @@ const styles = StyleSheet.create({
   chipOn: { borderColor: colors.primary, backgroundColor: '#211318' },
   chipText: { color: '#D2D4DB', fontSize: 13, fontWeight: '500' },
   chipTextOn: { color: '#FFFFFF', fontWeight: '800' },
+  filtersBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8 },
+  filterSelect: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, paddingHorizontal: 11 },
+  filterSelectOn: { borderColor: colors.primary, backgroundColor: '#211318' },
+  filterSelectText: { color: colors.foreground, fontSize: 12, fontWeight: '600' },
+  resetFilter: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: 6 },
+  resetFilterText: { color: colors.mutedForeground, fontSize: 12 },
+  optionRow: { paddingHorizontal: 16, paddingVertical: 5, gap: 8, alignItems: 'center' },
   actions: { alignItems: 'flex-end', paddingHorizontal: 16, marginTop: 4 },
   surprise: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10 },
   surpriseText: { color: '#fff', fontWeight: '700' },
