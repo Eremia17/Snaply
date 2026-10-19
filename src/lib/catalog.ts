@@ -43,11 +43,17 @@ function emit() {
 // Charge la liste principale depuis la fonction serveur. Renvoie un message d'erreur, ou null.
 export async function loadCatalog(): Promise<string | null> {
   if (!isSupabaseConfigured) { DATA = []; emit(); return null; }
-  const { data, error } = await supabase.functions.invoke('catalog', { body: { action: 'list' } });
-  if (error) return error.message;
-  DATA = (data?.items ?? []) as Detail[];
-  emit();
-  return null;
+  try {
+    const { data, error } = await supabase.functions.invoke('catalog', { body: { action: 'list' } });
+    if (error) return error.message;
+    if (!data || !Array.isArray(data.items)) return 'Le catalogue a renvoyé une réponse invalide.';
+    DATA = data.items as Detail[];
+    emit();
+    return null;
+  } catch (error) {
+    // Une panne réseau ne doit pas provoquer de rejet non géré au démarrage de l'application.
+    return error instanceof Error ? error.message : 'Impossible de charger le catalogue.';
+  }
 }
 
 export async function fetchDetail(kind: Kind, id: string): Promise<Detail | null> {
