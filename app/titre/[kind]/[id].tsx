@@ -190,7 +190,7 @@ export default function TitreScreen() {
         {item.kind !== 'manga' ? (
           <View style={styles.playerSection}>
             <Text style={styles.playerTitle}>Lecteur vidéo</Text>
-            <Text style={styles.playerNote}>Choisissez la langue souhaitée. Les options réellement disponibles dépendent du lecteur vidéo externe.</Text>
+            <Text style={styles.playerNote}>Sélectionnez une préférence de langue. Ce lecteur externe ne garantit pas que ce choix change la piste audio ou les sous-titres ; vérifiez les options proposées dans la vidéo.</Text>
             <View style={styles.playerControls}>
               {([
                 ['fr', 'VF — Français'],
