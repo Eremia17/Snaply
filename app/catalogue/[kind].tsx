@@ -40,7 +40,7 @@ export default function CatalogueScreen() {
   const load = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const r = await browseKind(kind, p, { genre: genre ?? undefined, year: year ?? undefined, minRating: minNote || undefined });
+      const r = await browseKind(kind, p, { genre: genre ?? undefined, year: year ?? undefined, minRating: minNote || undefined, family: prefs.famille });
       setItems((prev) => {
         if (p === 1) return r.items;
         const ids = new Set(prev.map((x) => x.id));
@@ -51,7 +51,7 @@ export default function CatalogueScreen() {
     } finally {
       setLoading(false);
     }
-  }, [kind, genre, year, minNote]);
+  }, [kind, genre, year, minNote, prefs.famille]);
 
   useEffect(() => {
     setGenre(null);
@@ -66,12 +66,12 @@ export default function CatalogueScreen() {
     setPage(1);
     setHasMore(true);
     load(1);
-  }, [kind, genre, year, minNote, load]);
+  }, [kind, genre, year, minNote, prefs.famille, load]);
 
   const genres = GENRES[kind] ?? [];
   const years = Array.from({ length: new Date().getFullYear() - 1979 }, (_, i) => String(new Date().getFullYear() - i));
-  // Genre, année et note sont appliqués côté serveur pour parcourir tout le catalogue ; le mode famille reste local.
-  const shown = items.filter((i) => !prefs.famille || isFamilySafe(i));
+  // Tous les filtres sont appliqués côté serveur pour parcourir le catalogue complet.
+  const shown = items;
   const cols = prefs.taille === 'Grand' ? 1 : prefs.taille === 'Normal' ? 2 : 3;
   const cardW = (Dimensions.get('window').width - 32 - (cols - 1) * 12) / cols;
   const surprise = () => {
