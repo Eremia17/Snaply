@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,12 +39,16 @@ export default function CatalogueScreen() {
   const [sort, setSort] = useState<'popularity' | 'rating' | 'recent'>('popularity');
   const [yearOptionsOpen, setYearOptionsOpen] = useState(false);
   const [ratingOptionsOpen, setRatingOptionsOpen] = useState(false);
+  const requestId = useRef(0);
 
   const load = useCallback(async (p: number) => {
+    const request = ++requestId.current;
     setLoading(true);
     setLoadError(null);
     try {
       const r = await browseKind(kind, p, { genre: genre ?? undefined, year: year ?? undefined, minRating: minNote || undefined, family: prefs.famille, short: shortOnly || undefined, sort });
+      // Ignore une réponse arrivée après un changement de catégorie ou de filtre.
+      if (request !== requestId.current) return;
       setItems((prev) => {
         if (p === 1) return r.items;
         const ids = new Set(prev.map((x) => x.id));
@@ -53,9 +57,11 @@ export default function CatalogueScreen() {
       setPage(p);
       setHasMore(r.hasMore);
     } catch (e) {
-      setLoadError(e instanceof Error ? e.message : 'Impossible de charger le catalogue.');
+      if (request === requestId.current) {
+        setLoadError(e instanceof Error ? e.message : 'Impossible de charger le catalogue.');
+      }
     } finally {
-      setLoading(false);
+      if (request === requestId.current) setLoading(false);
     }
   }, [kind, genre, year, minNote, prefs.famille, shortOnly, sort]);
 
