@@ -4,6 +4,7 @@ import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { fetchExtras, type Extras, type Detail } from '@/lib/catalog';
+import { PosterCard } from '@/components/PosterCard';
 import { openTitle } from '@/lib/navigation';
 import type { Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
@@ -99,7 +100,7 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
       </View>
     );
   }
-  if (!data.trailer && !data.providers.length && !data.cast.length && !data.reviews.length && !data.constellation.items.length) {
+  if (!data.trailer && !data.providers.length && !data.cast.length && !data.reviews.length && !data.constellation.items.length && !data.similar.length) {
     return (
       <View style={styles.wrap}>
         <Text style={styles.label}>INFORMATIONS COMPLÉMENTAIRES</Text>
@@ -204,6 +205,21 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
             </View>
           ))}
           <Text style={styles.credit}>Critiques : TMDB, publiées par leurs auteurs.</Text>
+        </>
+      ) : null}
+
+      {data.similar.length ? (
+        <>
+          <Text style={styles.label}>TITRES SIMILAIRES</Text>
+          <Text style={styles.constellationSub}>Des films et séries à découvrir dans le même esprit.</Text>
+          <FlatList
+            horizontal
+            data={data.similar}
+            keyExtractor={(it) => `similar:${it.kind}:${it.id}`}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 2 }}
+            renderItem={({ item }) => <PosterCard item={item} width={112} />}
+          />
         </>
       ) : null}
 
