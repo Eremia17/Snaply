@@ -54,28 +54,38 @@ export default function HomeScreen() {
 
   // Carrousel d'accueil : titres récents et bien notés, répartis entre films, séries et animés.
   useEffect(() => {
-    if (!isSupabaseConfigured || prefs.economiseur) { setSpotlights([]); return; }
     let active = true;
+    // Afficher immédiatement ce qui est déjà en cache; le carrousel ne doit pas disparaître si une API échoue.
+    const cached = trending().filter((item) => !!(item.backdrop || item.poster));
+    if (cached.length) setSpotlights(cached as Detail[]);
+    if (!isSupabaseConfigured || prefs.economiseur) {
+      setFreshPicks(cached as Detail[]);
+      setRatedPicks(cached.slice().sort((a, b) => Number((b as Detail).rating ?? 0) - Number((a as Detail).rating ?? 0)) as Detail[]);
+      return () => { active = false; };
+    }
+    const safeBrowse = (kind: Kind, sort: 'recent' | 'rating') =>
+      browseKind(kind, 1, { sort }).catch(() => ({ items: [] as Detail[], hasMore: false }));
     Promise.all([
-      browseKind('film', 1, { sort: 'recent' }), browseKind('film', 1, { sort: 'rating' }),
-      browseKind('serie', 1, { sort: 'recent' }), browseKind('serie', 1, { sort: 'rating' }),
-      browseKind('manga', 1, { sort: 'recent' }), browseKind('manga', 1, { sort: 'rating' }),
-      browseKind('occidental', 1, { sort: 'recent' }), browseKind('occidental', 1, { sort: 'rating' }),
+      safeBrowse('film', 'recent'), safeBrowse('film', 'rating'),
+      safeBrowse('serie', 'recent'), safeBrowse('serie', 'rating'),
+      safeBrowse('manga', 'recent'), safeBrowse('manga', 'rating'),
+      safeBrowse('occidental', 'recent'), safeBrowse('occidental', 'rating'),
     ]).then((results) => {
       if (!active) return;
       const [filmRecent, filmRated, serieRecent, serieRated, mangaRecent, mangaRated, westRecent, westRated] = results;
-      const fresh = [filmRecent, serieRecent, mangaRecent, westRecent].flatMap((result) => result?.items ?? []);
-      const rated = [filmRated, serieRated, mangaRated, westRated].flatMap((result) => result?.items ?? []);
-      setFreshPicks(Array.from(new Map(fresh.filter((item) => !!(item.backdrop || item.poster)).map((item) => [item.kind + ':' + item.id, item])).values()).slice(0, 20));
-      setRatedPicks(Array.from(new Map(rated.filter((item) => !!(item.backdrop || item.poster)).map((item) => [item.kind + ':' + item.id, item])).values()).sort((a, b) => b.rating - a.rating).slice(0, 20));
+      const fresh = [filmRecent, serieRecent, mangaRecent, westRecent].flatMap((result) => result.items);
+      const rated = [filmRated, serieRated, mangaRated, westRated].flatMap((result) => result.items);
+      const uniqueFresh = Array.from(new Map(fresh.filter((item) => !!(item.backdrop || item.poster)).map((item) => [item.kind + ':' + item.id, item])).values());
+      const uniqueRated = Array.from(new Map(rated.filter((item) => !!(item.backdrop || item.poster)).map((item) => [item.kind + ':' + item.id, item])).values()).sort((a, b) => b.rating - a.rating);
+      if (uniqueFresh.length) setFreshPicks(uniqueFresh.slice(0, 20));
+      if (uniqueRated.length) setRatedPicks(uniqueRated.slice(0, 20));
       const candidates = [
-        ...(filmRecent?.items ?? []).slice(0, 3), ...(filmRated?.items ?? []).slice(0, 3),
-        ...(mangaRecent?.items ?? []).slice(0, 3), ...(mangaRated?.items ?? []).slice(0, 3),
-        ...(serieRecent?.items ?? []).slice(0, 3), ...(serieRated?.items ?? []).slice(0, 3),
-        ...(westRecent?.items ?? []).slice(0, 3), ...(westRated?.items ?? []).slice(0, 3),
+        ...filmRecent.items.slice(0, 3), ...filmRated.items.slice(0, 3),
+        ...mangaRecent.items.slice(0, 3), ...mangaRated.items.slice(0, 3),
+        ...serieRecent.items.slice(0, 3), ...serieRated.items.slice(0, 3),
+        ...westRecent.items.slice(0, 3), ...westRated.items.slice(0, 3),
       ].filter((item) => !!(item.backdrop || item.poster));
       const unique = Array.from(new Map(candidates.map((item) => [item.kind + ':' + item.id, item])).values());
-      // Les résultats récents et les mieux notés sont mélangés entre les quatre univers.
       const balanced: Detail[] = [];
       const kinds: Kind[] = ['film', 'manga', 'serie', 'occidental'];
       for (let round = 0; round < 6; round++) {
@@ -84,8 +94,9 @@ export default function HomeScreen() {
           if (matching[round]) balanced.push(matching[round]);
         }
       }
-      setSpotlights(balanced.length ? balanced : unique.slice(0, 12));
-    }).catch(() => { if (active) setSpotlights([]); });
+      if (balanced.length) setSpotlights(balanced);
+      else if (cached.length) setSpotlights(cached as Detail[]);
+    }).catch(() => { if (active && cached.length) setSpotlights(cached as Detail[]); });
     return () => { active = false; };
   }, [prefs.economiseur]);
 
@@ -243,9 +254,10 @@ export default function HomeScreen() {
         <Section title="Animation occidentale" empty="Aucune animation occidentale disponible pour le moment.">
           {listByKind('occidental').length ? <Row data={listByKind('occidental')} cardWidth={cardWidth} /> : null}
         </Section>
-        <Section title="Films malagasy" empty="Aucun film en langue malgache n’a été trouvé dans TMDB pour le moment.">
-          {malagasyFilms.length ? <Row data={malagasyFilms} cardWidth={cardWidth} /> : null}
-        </Section>
+        <View style={styles.malagasySection}>
+          <View style={styles.malagasyHeading}><Text style={styles.h2}>🇲🇬 Films malagasy</Text><Text style={styles.malagasySub}>Cinéma de Madagascar</Text></View>
+          {malagasyFilms.length ? <Row data={malagasyFilms} cardWidth={cardWidth} /> : <View style={styles.malagasyEmpty}><Ionicons name="film-outline" size={22} color="#70F0C0" /><Text style={styles.malagasyEmptyText}>On cherche les films répertoriés en langue malgache. La source actuelle n’en a pas encore renvoyé.</Text></View>}
+        </View>
         <Section title="Films à découvrir" empty="Les films du catalogue apparaîtront ici.">
           {listByKind('film').length ? <Row data={listByKind('film')} cardWidth={cardWidth} /> : null}
         </Section>
@@ -365,6 +377,11 @@ function Row({ data, cardWidth }: { data: Item[]; cardWidth: number }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#08090D' },
+  malagasySection: { gap: 4 },
+  malagasyHeading: { gap: 0 },
+  malagasySub: { color: '#70F0C0', fontSize: 11, marginTop: -8, marginBottom: 8 },
+  malagasyEmpty: { minHeight: 84, borderRadius: 14, borderWidth: 1, borderColor: '#24493F', backgroundColor: '#101A19', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  malagasyEmptyText: { color: '#D1D8D5', flex: 1, fontSize: 12, lineHeight: 18 },
   spotlightBanner: { height: 258, marginHorizontal: 12, marginTop: 10, marginBottom: 12, borderRadius: 20, overflow: 'hidden', backgroundColor: '#19151F', justifyContent: 'space-between' },
   spotlightShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(5,5,10,0.40)' },
   spotlightTopline: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 13 },
