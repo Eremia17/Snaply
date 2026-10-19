@@ -121,7 +121,7 @@ export default function TitreScreen() {
       />
       <ScrollView style={styles.root} contentContainerStyle={styles.content}>
         <View pointerEvents="none" style={styles.backdropHero}>
-          {item.backdrop ? <Image source={{ uri: item.backdrop }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+          {(detail?.backdrop || item.backdrop) ? <Image source={{ uri: detail?.backdrop || item.backdrop || undefined }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
           <View style={styles.backdropShade} />
         </View>
         <View style={styles.posterWrap}>
