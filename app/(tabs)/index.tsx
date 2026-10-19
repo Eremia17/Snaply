@@ -46,7 +46,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (prefs.animations || heroItems.length < 2) return;
-    const timer = setInterval(() => setHeroIndex((index) => (index + 1) % heroItems.length), 10000);
+    const timer = setInterval(() => setHeroIndex((index) => (index + 1) % heroItems.length), 8000);
     return () => clearInterval(timer);
   }, [prefs.animations, heroItems.length]);
 
