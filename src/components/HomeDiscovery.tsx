@@ -81,12 +81,24 @@ export function HomeDiscovery({ cardWidth, economyMode }: { cardWidth: number; e
         const batch = FEEDS.slice(start, start + 4);
         const result = await Promise.all(batch.map(async (feed) => {
           try {
-            const response = await browseKind(feed.kind, 1, feed.filters);
+            const first = await browseKind(feed.kind, 1, feed.filters);
+            const collected = [...first.items];
+            let hasMore = first.hasMore;
+            // Charge jusqu'à 3 pages si le premier lot contient trop peu de fiches.
+            for (let page = 2; page <= 3 && collected.length < 10 && hasMore; page++) {
+              const next = await browseKind(feed.kind, page, feed.filters);
+              collected.push(...next.items);
+              hasMore = next.hasMore;
+            }
             const unique = new Map<string, Detail>();
-            for (const item of response.items) {
+            for (const item of collected) {
               if (item.poster && !unique.has(`${item.kind}:${item.id}`)) unique.set(`${item.kind}:${item.id}`, item);
             }
-            const items = [...unique.values()].sort((a, b) => String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating);
+            const items = [...unique.values()].sort((a, b) => {
+              if (feed.filters.sort === 'rating') return b.rating - a.rating || String(b.year ?? '').localeCompare(String(a.year ?? ''));
+              if (feed.filters.sort === 'recent') return String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating;
+              return b.rating - a.rating || String(b.year ?? '').localeCompare(String(a.year ?? ''));
+            });
             return [feed.key, items.slice(0, 12)] as const;
           } catch {
             return [feed.key, [] as Detail[]] as const;
@@ -101,7 +113,10 @@ export function HomeDiscovery({ cardWidth, economyMode }: { cardWidth: number; e
             else if (!next[key]) {
               const feed = FEEDS.find((entry) => entry.key === key)!;
               const local = feed.kind === 'manga' ? [] : listByKind(feed.kind).filter((item) => !!item.poster);
-              next[key] = local.slice().sort((a, b) => String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating).slice(0, 12);
+              next[key] = local.slice().sort((a, b) => {
+                if (feed.filters.sort === 'rating') return b.rating - a.rating || String(b.year ?? '').localeCompare(String(a.year ?? ''));
+                return String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating;
+              }).slice(0, 12);
             }
           }
           return next;
