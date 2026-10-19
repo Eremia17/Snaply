@@ -99,9 +99,13 @@ export function classics(): Detail[] {
 }
 
 // Une page de titres pour une catégorie (défilement infini)
-export async function browseKind(kind: Kind, page: number): Promise<{ items: Detail[]; hasMore: boolean }> {
+export async function browseKind(
+  kind: Kind,
+  page: number,
+  filters: { genre?: string; year?: string; minRating?: number } = {},
+): Promise<{ items: Detail[]; hasMore: boolean }> {
   if (!isSupabaseConfigured) return { items: [], hasMore: false };
-  const { data, error } = await supabase.functions.invoke('browse', { body: { kind, page } });
+  const { data, error } = await supabase.functions.invoke('browse', { body: { kind, page, ...filters } });
   if (error || !data) return { items: [], hasMore: false };
   return { items: (data.items ?? []) as Detail[], hasMore: !!data.hasMore };
 }
