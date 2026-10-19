@@ -246,35 +246,6 @@ export function FicheExtras({ kind, id, poster, title }: { kind: Kind; id: strin
         </>
       ) : null}
 
-      {data.reviews.length ? (
-        <>
-          <Text style={styles.label}>CRITIQUES DES MEMBRES</Text>
-          {summaryLoading || reviewSummary ? (
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryHead}>
-                <Ionicons name="sparkles" size={17} color={colors.primary} />
-                <Text style={styles.summaryTitle}>Résumé des critiques par IA</Text>
-              </View>
-              {summaryLoading ? (
-                <View style={styles.summaryLoading}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.summaryBody}>Lecture des avis en cours…</Text></View>
-              ) : <Text style={styles.summaryBody}>{reviewSummary}</Text>}
-              <Text style={styles.summaryNote}>Synthèse automatique des avis affichés, à prendre comme un aperçu.</Text>
-            </View>
-          ) : null}
-          {data.reviews.map((r, i) => (
-            <View key={`${r.author}${i}`} style={styles.review}>
-              <View style={styles.reviewHead}>
-                <Text style={styles.reviewAuthor}>{r.author}</Text>
-                {r.rating ? <View style={styles.reviewRating}><Ionicons name="star" size={12} color="#000" /><Text style={styles.reviewRatingText}>{r.rating}/10</Text></View> : null}
-                <Text style={styles.reviewDate}>{r.date}</Text>
-              </View>
-              <Text style={styles.reviewText}>{r.content}</Text>
-            </View>
-          ))}
-          <Text style={styles.credit}>Critiques : TMDB, publiées par leurs auteurs.</Text>
-        </>
-      ) : null}
-
       {data.similar.length ? (
         <>
           <Text style={styles.label}>TITRES SIMILAIRES</Text>
@@ -302,6 +273,34 @@ export function FicheExtras({ kind, id, poster, title }: { kind: Kind; id: strin
           <Constellation name={data.constellation.name} items={data.constellation.items} poster={poster ?? null}
             onPick={(it) => openTitle(router, it)} />
           <Text style={styles.credit}>{data.constellation.name}</Text>
+        </>
+      ) : null}
+      {data.reviews.length ? (
+        <>
+          <Text style={styles.label}>CRITIQUES DES MEMBRES</Text>
+          {summaryLoading || reviewSummary ? (
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryHead}>
+                <Ionicons name="sparkles" size={17} color={colors.primary} />
+                <Text style={styles.summaryTitle}>Résumé des critiques par IA</Text>
+              </View>
+              {summaryLoading ? (
+                <View style={styles.summaryLoading}><ActivityIndicator size="small" color={colors.primary} /><Text style={styles.summaryBody}>Lecture des avis en cours…</Text></View>
+              ) : <Text style={styles.summaryBody}>{reviewSummary}</Text>}
+              <Text style={styles.summaryNote}>Synthèse automatique des avis affichés, à prendre comme un aperçu.</Text>
+            </View>
+          ) : null}
+          {data.reviews.map((r, i) => (
+            <View key={`${r.author}${i}`} style={styles.review}>
+              <View style={styles.reviewHead}>
+                <Text style={styles.reviewAuthor}>{r.author}</Text>
+                {r.rating ? <View style={styles.reviewRating}><Ionicons name="star" size={12} color="#000" /><Text style={styles.reviewRatingText}>{r.rating}/10</Text></View> : null}
+                <Text style={styles.reviewDate}>{r.date}</Text>
+              </View>
+              <Text style={styles.reviewText}>{r.content}</Text>
+            </View>
+          ))}
+          <Text style={styles.credit}>Critiques : TMDB, publiées par leurs auteurs.</Text>
         </>
       ) : null}
     </View>
