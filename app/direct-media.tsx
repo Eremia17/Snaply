@@ -9,7 +9,7 @@ function getDirectFileExtension(value: string): string | null {
   try {
     const url = new URL(value.trim());
     if (url.protocol !== 'https:') return null;
-    const match = url.pathname.toLowerCase().match(/\\.(mp4|m4v|mov)$/);
+    const match = url.pathname.toLowerCase().match(/\.(mp4|m4v|mov)$/);
     return match?.[1] ?? null;
   } catch {
     return null;
