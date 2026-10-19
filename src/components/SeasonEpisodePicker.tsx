@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { fetchSeriesEpisodes, fetchSeriesMetadata, type SeriesEpisode, type SeriesSeason } from '@/lib/catalog';
 import type { Kind } from '@/lib/types';
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function SeasonEpisodePicker({ id, kind, title, onSelect }: Props) {
-  const [seasons, setSeasons] = useState<SeriesSeason[]>([]);
+  const onSelectRef = useRef(onSelect);\n  onSelectRef.current = onSelect;\n  const [seasons, setSeasons] = useState<SeriesSeason[]>([]);
   const [episodes, setEpisodes] = useState<SeriesEpisode[]>([]);
   const [season, setSeason] = useState<number | null>(null);
   const [episode, setEpisode] = useState<number | null>(null);
@@ -62,7 +62,7 @@ export function SeasonEpisodePicker({ id, kind, title, onSelect }: Props) {
         else {
           setError(null);
           setEpisode(available[0].number);
-          onSelect({ season, episode: available[0].number, episodeTitle: available[0].name });
+          onSelectRef.current({ season, episode: available[0].number, episodeTitle: available[0].name });
         }
       })
       .catch((cause) => {
@@ -70,7 +70,7 @@ export function SeasonEpisodePicker({ id, kind, title, onSelect }: Props) {
       })
       .finally(() => { if (active) setLoadingEpisodes(false); });
     return () => { active = false; };
-  }, [id, season, kind, title, onSelect]);
+  }, [id, season, kind, title]);
 
   const selectedSeason = seasons.find((item) => item.number === season);
 
@@ -95,7 +95,7 @@ export function SeasonEpisodePicker({ id, kind, title, onSelect }: Props) {
               key={item.number}
               onPress={() => {
                 setEpisode(item.number);
-                onSelect({ season: season ?? 1, episode: item.number, episodeTitle: item.name });
+                onSelectRef.current({ season: season ?? 1, episode: item.number, episodeTitle: item.name });
               }}
               style={[styles.episode, episode === item.number && styles.chipSelected]}
             >
