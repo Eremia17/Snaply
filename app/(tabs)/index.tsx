@@ -26,7 +26,7 @@ const UNIVERSES: { kind: Kind; title: string; copy: string; icon: IconName }[] =
 ];
 
 export default function HomeScreen() {
-  useCatalog();
+  const catalogVersion = useCatalog();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { favorites, history } = useStore();
@@ -43,8 +43,13 @@ export default function HomeScreen() {
   const [ratedPicks, setRatedPicks] = useState<Detail[]>([]);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [spotlightImageFailed, setSpotlightImageFailed] = useState(false);
+  const [heroImageFailed, setHeroImageFailed] = useState(false);
   const [visits, setVisits] = useState<number | null>(null);
   const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    setHeroImageFailed(false);
+  }, [hero?.id, hero?.backdrop, hero?.poster]);
 
   useEffect(() => {
     if (prefs.animations || heroItems.length < 2) return;
@@ -98,7 +103,7 @@ export default function HomeScreen() {
       else if (cached.length) setSpotlights(cached as Detail[]);
     }).catch(() => { if (active && cached.length) setSpotlights(cached as Detail[]); });
     return () => { active = false; };
-  }, [prefs.economiseur]);
+  }, [prefs.economiseur, catalogVersion]);
 
   useEffect(() => {
     setSpotlightImageFailed(false);
@@ -207,7 +212,8 @@ export default function HomeScreen() {
 
       {/* Héros */}
       <View style={styles.hero}>
-        {(hero?.backdrop || hero?.poster) ? <Image key={hero.id} source={{ uri: hero.backdrop || hero.poster || undefined }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+        {(hero?.backdrop || hero?.poster) && !heroImageFailed ? <Image key={hero.id} source={{ uri: hero.backdrop || hero.poster || undefined }} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => setHeroImageFailed(true)} /> : null}
+        {heroImageFailed || !(hero?.backdrop || hero?.poster) ? <View style={styles.heroFallback}><Ionicons name="film-outline" size={54} color="#70F0C0" /><Text style={styles.heroFallbackText}>TON PROCHAIN COUP DE CŒUR</Text></View> : null}
         <View style={styles.heroShadeA} />
         <View style={styles.heroShadeB} />
         <View style={styles.heroContent}>
@@ -382,6 +388,8 @@ const styles = StyleSheet.create({
   malagasySub: { color: '#70F0C0', fontSize: 11, marginTop: -8, marginBottom: 8 },
   malagasyEmpty: { minHeight: 84, borderRadius: 14, borderWidth: 1, borderColor: '#24493F', backgroundColor: '#101A19', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   malagasyEmptyText: { color: '#D1D8D5', flex: 1, fontSize: 12, lineHeight: 18 },
+  heroFallback: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: '#151820' },
+  heroFallbackText: { color: '#70F0C0', fontSize: 11, fontWeight: '900', letterSpacing: 2 },
   spotlightBanner: { height: 258, marginHorizontal: 12, marginTop: 10, marginBottom: 12, borderRadius: 20, overflow: 'hidden', backgroundColor: '#19151F', justifyContent: 'space-between' },
   spotlightShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(5,5,10,0.40)' },
   spotlightTopline: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 13 },
