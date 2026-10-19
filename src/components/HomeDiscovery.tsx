@@ -95,8 +95,8 @@ export function HomeDiscovery({ cardWidth, economyMode }: { cardWidth: number; e
               if (item.poster && !unique.has(`${item.kind}:${item.id}`)) unique.set(`${item.kind}:${item.id}`, item);
             }
             const items = [...unique.values()].sort((a, b) => {
-              if (feed.filters.sort === 'rating') return b.rating - a.rating || String(b.year ?? '').localeCompare(String(a.year ?? ''));
-              if (feed.filters.sort === 'recent') return String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating;
+              if ((feed.filters?.sort ?? 'recent') === 'rating') return b.rating - a.rating || String(b.year ?? '').localeCompare(String(a.year ?? ''));
+              if ((feed.filters?.sort ?? 'recent') === 'recent') return String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating;
               return b.rating - a.rating || String(b.year ?? '').localeCompare(String(a.year ?? ''));
             });
             return [feed.key, items.slice(0, 12)] as const;
@@ -114,7 +114,7 @@ export function HomeDiscovery({ cardWidth, economyMode }: { cardWidth: number; e
               const feed = FEEDS.find((entry) => entry.key === key)!;
               const local = feed.kind === 'manga' ? [] : listByKind(feed.kind).filter((item) => !!item.poster);
               next[key] = local.slice().sort((a, b) => {
-                if (feed.filters.sort === 'rating') return b.rating - a.rating || String(b.year ?? '').localeCompare(String(a.year ?? ''));
+                if ((feed.filters?.sort ?? 'recent') === 'rating') return b.rating - a.rating || String(b.year ?? '').localeCompare(String(a.year ?? ''));
                 return String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating;
               }).slice(0, 12);
             }
