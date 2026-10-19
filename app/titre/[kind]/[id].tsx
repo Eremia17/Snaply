@@ -326,6 +326,9 @@ export default function TitreScreen() {
             <Btn label="Lire les scans" icon="book-outline" primary onPress={() => router.push({ pathname: '/chapitres/[id]', params: { id: item.id, title: item.title } })} />
           ) : null}
           <Btn label="Comparer" icon="git-compare-outline" onPress={() => router.push('/comparer')} />
+          {__DEV__ ? (
+            <Btn label="Tester lecteur natif (URL directe)" icon="videocam-outline" onPress={() => router.push('/direct-media')} />
+          ) : null}
         </View>
 
         <Text style={styles.sectionLabel}>MA NOTE · {myRating}/10</Text>
