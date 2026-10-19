@@ -44,11 +44,24 @@ export default function TitreScreen() {
   }, [p.kind, p.id]);
 
   useEffect(() => {
-    if (!getDetail(item.kind, item.id)) fetchDetail(item.kind, item.id).then(setRemote);
+    let active = true;
+    const cached = getDetail(item.kind, item.id);
+    setRemote(cached ?? null);
+    if (!cached) {
+      fetchDetail(item.kind, item.id).then((result) => {
+        if (active) setRemote(result);
+      }).catch(() => {
+        if (active) setRemote(null);
+      });
+    }
     AsyncStorage.getItem('mv:ratings').then((v) => {
+      if (!active) return;
       const all = v ? JSON.parse(v) : {};
       setMyRating(all[`${item.kind}:${item.id}`] ?? 0);
+    }).catch(() => {
+      if (active) setMyRating(0);
     });
+    return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.kind, item.id]);
 
