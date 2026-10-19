@@ -175,7 +175,7 @@ export function FicheExtras({ kind, id, poster }: { kind: Kind; id: string; post
 
       {data.cast.length ? (
         <>
-          <Text style={styles.label}>PERSONNAGES</Text>
+          <Text style={styles.label}>{kind === 'manga' ? 'PERSONNAGES' : 'CASTING PRINCIPAL'}</Text>
           <FlatList horizontal showsHorizontalScrollIndicator={false} data={data.cast}
             keyExtractor={(c, i) => `${c.name}${i}`} contentContainerStyle={{ gap: 14 }}
             renderItem={({ item }) => (
