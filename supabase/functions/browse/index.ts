@@ -468,6 +468,7 @@ Deno.serve(async (req) => {
       genre: typeof body.genre === 'string' && body.genre ? body.genre : undefined,
       year: typeof body.year === 'string' && body.year ? body.year : undefined,
       minRating: Number(body.minRating) > 0 ? Number(body.minRating) : undefined,
+      family: body.family === true,
     };
     return json(await list(kind, page, filters));
   } catch (e) {
