@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openTitle } from '@/lib/navigation';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
@@ -26,6 +27,7 @@ const UNIVERSES: { kind: Kind; title: string; copy: string; icon: IconName }[] =
 export default function HomeScreen() {
   useCatalog();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { favorites, history } = useStore();
   const hero = featured();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -79,7 +81,7 @@ export default function HomeScreen() {
   return (
     <ScrollView removeClippedSubviews={false} style={styles.root} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* En-tête : menu à gauche, profil et réglages à droite */}
-      <View style={styles.topbar}>
+      <View style={[styles.topbar, { paddingTop: Math.max(insets.top, 8) + 8 }]}>
         <Pressable style={styles.iconBtn} onPress={() => router.navigate('/menu')}>
           <Ionicons name="menu" size={22} color={colors.foreground} />
         </Pressable>
@@ -310,11 +312,11 @@ const styles = StyleSheet.create({
   tonightCopy: { flex: 1, gap: 6 },
   tonightTitle: { color: '#FFF', fontSize: 20, lineHeight: 24, fontWeight: '900' },
   tonightLink: { alignSelf: 'flex-start', color: '#FFF', fontSize: 11, fontWeight: '900', backgroundColor: '#B9192F', borderRadius: 999, paddingHorizontal: 13, paddingVertical: 8, marginTop: 4 },
-  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 48, paddingBottom: 8 },
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10 },
   iconBtn: { backgroundColor: colors.muted, borderRadius: 999, padding: 9 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   logoTile: { width: 28, height: 28, borderRadius: 8, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  brand: { color: colors.foreground, fontSize: 20, fontWeight: '900' },
+  brand: { color: colors.foreground, fontSize: 21, fontWeight: '900', fontFamily: 'sans-serif-black', includeFontPadding: false },
   right: { flexDirection: 'row', gap: 8 },
   searchBox: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginBottom: 12,
