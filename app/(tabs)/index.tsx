@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { openTitle } from '@/lib/navigation';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
 import { classics, featured, fetchSports, trending, upcomingList, useCatalog, type SportMatch } from '@/lib/catalog';
@@ -31,6 +32,32 @@ export default function HomeScreen() {
   const [sports, setSports] = useState<SportMatch[]>([]);
   const [visits, setVisits] = useState<number | null>(null);
   const [query, setQuery] = useState('');
+  const [surpriseVisible, setSurpriseVisible] = useState(false);
+  const [surpriseItem, setSurpriseItem] = useState<ReturnType<typeof trending>[number] | null>(null);
+  const diceRotation = useRef(new Animated.Value(0)).current;
+  const dicePulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(Animated.sequence([
+      Animated.timing(dicePulse, { toValue: 1.06, duration: 950, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      Animated.timing(dicePulse, { toValue: 1, duration: 950, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+    ]));
+    pulse.start();
+    return () => pulse.stop();
+  }, [dicePulse]);
+
+  const launchSurprise = () => {
+    const pool = [...trending(), ...classics(), ...upcomingList()].filter((item, index, all) => all.findIndex((x) => x.kind === item.kind && x.id === item.id) === index);
+    if (!pool.length) { router.push('/catalogue/film'); return; }
+    setSurpriseItem(pool[Math.floor(Math.random() * pool.length)]);
+    diceRotation.setValue(0);
+    Animated.sequence([
+      Animated.timing(diceRotation, { toValue: 1, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(diceRotation, { toValue: -1, duration: 180, useNativeDriver: true }),
+      Animated.timing(diceRotation, { toValue: 0.7, duration: 150, useNativeDriver: true }),
+      Animated.timing(diceRotation, { toValue: 0, duration: 160, useNativeDriver: true }),
+    ]).start(() => setSurpriseVisible(true));
+  };
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -145,7 +172,7 @@ export default function HomeScreen() {
 
       {/* Cartes cinéma : surprise et sélection du soir */}
       <View style={styles.featureStack}>
-        <Pressable accessibilityRole="button" style={styles.surpriseCard} onPress={() => router.push('/catalogue/film')}>
+        <Pressable accessibilityRole="button" style={styles.surpriseCard} onPress={launchSurprise}>
           <View style={styles.surpriseGlow} />
           <View style={styles.featureCopy}>
             <Text style={styles.featureEyebrow}>LA SÉLECTION ERËMĪA</Text>
@@ -153,7 +180,7 @@ export default function HomeScreen() {
             <Text style={styles.featureBody}>Laisse le hasard choisir ta prochaine histoire.</Text>
             <View style={styles.featureButton}><Text style={styles.featureButtonText}>LANCER LA SURPRISE</Text><Ionicons name="shuffle" size={17} color="#fff" /></View>
           </View>
-          <View style={styles.dice}><Ionicons name="shuffle" size={42} color="#fff" /></View>
+          <Animated.View style={[styles.dice, { transform: [{ rotate: diceRotation.interpolate({ inputRange: [-1, 1], outputRange: ['-28deg', '28deg'] }) }, { scale: dicePulse }] }]}><Ionicons name="shuffle" size={42} color="#fff" /></Animated.View>
         </Pressable>
         <Pressable accessibilityRole="button" style={styles.tonightCard} onPress={() => router.push('/ce-soir')}>
           <View style={styles.tonightArt}><Ionicons name="film" size={46} color="#F7C66A" /><Ionicons name="sparkles" size={19} color="#fff" /></View>
@@ -165,6 +192,21 @@ export default function HomeScreen() {
           </View>
         </Pressable>
       </View>
+
+      <Modal visible={surpriseVisible} transparent animationType="fade" onRequestClose={() => setSurpriseVisible(false)}>
+        <View style={styles.surpriseBackdrop}>
+          <View style={styles.surpriseReveal}>
+            <Pressable style={styles.modalClose} onPress={() => setSurpriseVisible(false)}><Ionicons name="close" size={22} color="#fff" /></Pressable>
+            <Ionicons name="sparkles" size={24} color="#FF5368" />
+            <Text style={styles.revealKicker}>LE HASARD A CHOISI</Text>
+            {surpriseItem?.poster ? <Image source={{ uri: surpriseItem.poster }} style={styles.revealPoster} resizeMode="cover" /> : null}
+            <Text style={styles.revealTitle} numberOfLines={2}>{surpriseItem?.title ?? 'Une surprise vous attend'}</Text>
+            <Text style={styles.revealMeta}>{surpriseItem?.year ?? 'À découvrir'}  ·  ★ {surpriseItem?.rating?.toFixed?.(1) ?? '—'}</Text>
+            <Pressable style={styles.revealButton} onPress={() => { if (surpriseItem) openTitle(router, surpriseItem); setSurpriseVisible(false); }}><Text style={styles.revealButtonText}>DÉCOUVRIR LE TITRE</Text><Ionicons name="arrow-forward" size={17} color="#fff" /></Pressable>
+            <Pressable onPress={launchSurprise} style={styles.revealAgain}><Text style={styles.revealAgainText}>Une autre surprise</Text></Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* Tendances et listes personnelles */}
       <View style={{ padding: 16, gap: 28 }}>
@@ -267,6 +309,17 @@ function Row({ data }: { data: Item[] }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#08090D' },
   featureStack: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8, gap: 14 },
+  surpriseBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.86)', justifyContent: 'center', alignItems: 'center', padding: 22 },
+  surpriseReveal: { width: '100%', maxWidth: 360, alignItems: 'center', backgroundColor: '#100D14', borderRadius: 26, borderWidth: 1, borderColor: '#8C2035', padding: 22, gap: 9, overflow: 'hidden' },
+  modalClose: { alignSelf: 'flex-end', padding: 4 },
+  revealKicker: { color: '#FF5368', fontSize: 10, letterSpacing: 2, fontWeight: '900' },
+  revealPoster: { width: 148, height: 210, borderRadius: 14, marginVertical: 8, borderWidth: 1, borderColor: '#5E2937' },
+  revealTitle: { color: '#FFF', fontSize: 22, fontWeight: '900', textAlign: 'center' },
+  revealMeta: { color: '#B9B4BE', fontSize: 13 },
+  revealButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#C71935', borderRadius: 999, paddingHorizontal: 18, paddingVertical: 13, marginTop: 8, width: '100%' },
+  revealButtonText: { color: '#FFF', fontWeight: '900', fontSize: 12, letterSpacing: 0.5 },
+  revealAgain: { padding: 8 },
+  revealAgainText: { color: '#F36A7B', fontWeight: '700' },
   surpriseCard: { minHeight: 188, borderRadius: 22, borderWidth: 1, borderColor: '#57212D', backgroundColor: '#170D15', overflow: 'hidden', flexDirection: 'row', alignItems: 'center', padding: 18, gap: 8 },
   surpriseGlow: { position: 'absolute', width: 210, height: 210, borderRadius: 105, right: 5, top: -10, backgroundColor: '#49101D', opacity: 0.6 },
   featureCopy: { flex: 1, gap: 7, zIndex: 1 },
