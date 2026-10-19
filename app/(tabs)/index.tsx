@@ -38,6 +38,8 @@ export default function HomeScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [sports, setSports] = useState<SportMatch[]>([]);
   const [malagasyFilms, setMalagasyFilms] = useState<Detail[]>([]);
+  const [spotlights, setSpotlights] = useState<Detail[]>([]);
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [visits, setVisits] = useState<number | null>(null);
   const [query, setQuery] = useState('');
 
@@ -46,6 +48,33 @@ export default function HomeScreen() {
     const timer = setInterval(() => setHeroIndex((index) => (index + 1) % heroItems.length), 8000);
     return () => clearInterval(timer);
   }, [prefs.animations, heroItems.length]);
+
+  // Carrousel d'accueil : titres récents et bien notés, répartis entre films, séries et animés.
+  useEffect(() => {
+    if (!isSupabaseConfigured || prefs.economiseur) { setSpotlights([]); return; }
+    let active = true;
+    Promise.all([
+      browseKind('film', 1, { sort: 'recent' }), browseKind('film', 1, { sort: 'rating' }),
+      browseKind('serie', 1, { sort: 'recent' }), browseKind('serie', 1, { sort: 'rating' }),
+      browseKind('manga', 1, { sort: 'recent' }), browseKind('manga', 1, { sort: 'rating' }),
+      browseKind('occidental', 1, { sort: 'recent' }), browseKind('occidental', 1, { sort: 'rating' }),
+    ]).then((results) => {
+      if (!active) return;
+      const pool = results.flatMap((result) => result.items).filter((item) => !!(item.backdrop || item.poster));
+      const unique = Array.from(new Map(pool.map((item) => [item.kind + ':' + item.id, item])).values());
+      // Intercaler les univers pour ne pas afficher une succession de titres du même type.
+      const kinds: Kind[] = ['film', 'manga', 'serie', 'occidental'];
+      const balanced = kinds.flatMap((kind) => unique.filter((item) => item.kind === kind).slice(0, 3));
+      setSpotlights(balanced.length ? balanced : unique.slice(0, 12));
+    }).catch(() => { if (active) setSpotlights([]); });
+    return () => { active = false; };
+  }, [prefs.economiseur]);
+
+  useEffect(() => {
+    if (spotlights.length < 2) return;
+    const timer = setInterval(() => setSpotlightIndex((index) => (index + 1) % spotlights.length), 3000);
+    return () => clearInterval(timer);
+  }, [spotlights.length]);
 
   useEffect(() => {
     if (!isSupabaseConfigured || prefs.economiseur) { setMalagasyFilms([]); return; }
@@ -116,6 +145,28 @@ export default function HomeScreen() {
           </Pressable>
         ))}
       </ScrollView>
+
+      {/* Bande de nouveautés et de titres très bien notés — uniquement sur l'accueil */}
+      {spotlights.length > 0 ? (() => {
+        const item = spotlights[spotlightIndex % spotlights.length];
+        const artwork = item.backdrop || item.poster;
+        return (
+          <Pressable accessibilityRole="button" style={styles.spotlightBanner} onPress={() => openTitle(router, item)}>
+            {artwork ? <Image key={item.id + ':' + artwork} source={{ uri: artwork }} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => {}} /> : null}
+            <View style={styles.spotlightShade} />
+            <View style={styles.spotlightTopline}>
+              <View style={styles.spotlightBadge}><Ionicons name="sparkles" size={12} color="#0B0B10" /><Text style={styles.spotlightBadgeText}>{Number(item.rating) >= 8 ? 'TRÈS BIEN NOTÉ' : 'À DÉCOUVRIR'}</Text></View>
+              <Text style={styles.spotlightCount}>{spotlightIndex + 1} / {spotlights.length}</Text>
+            </View>
+            <View style={styles.spotlightCopy}>
+              <Text style={styles.spotlightKind}>{item.kind === 'film' ? 'FILM' : item.kind === 'serie' ? 'SÉRIE' : item.kind === 'manga' ? 'ANIMÉ MANGA' : 'ANIMATION' } · {item.year || 'NOUVEAUTÉ'}</Text>
+              <Text style={styles.spotlightTitle} numberOfLines={2}>{item.title}</Text>
+              <View style={styles.spotlightBottom}><Text style={styles.spotlightHint}>{Number(item.rating) > 0 ? '★ ' + Number(item.rating).toFixed(1) + '  ·  ' : ''}Touchez pour découvrir</Text><View style={styles.spotlightPlay}><Ionicons name="play" size={17} color="#fff" /></View></View>
+            </View>
+            <View style={styles.spotlightDots}>{spotlights.slice(0, 12).map((entry, i) => <View key={entry.kind + ':' + entry.id} style={[styles.spotlightDot, i === spotlightIndex % 12 && styles.spotlightDotActive]} />)}</View>
+          </Pressable>
+        );
+      })() : null}
 
       {/* Héros */}
       <View style={styles.hero}>
@@ -288,6 +339,21 @@ function Row({ data, cardWidth }: { data: Item[]; cardWidth: number }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#08090D' },
+  spotlightBanner: { height: 258, marginHorizontal: 12, marginTop: 10, marginBottom: 12, borderRadius: 20, overflow: 'hidden', backgroundColor: '#19151F', justifyContent: 'space-between' },
+  spotlightShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(5,5,10,0.40)' },
+  spotlightTopline: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 13 },
+  spotlightBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#65F0BD', paddingHorizontal: 9, paddingVertical: 6, borderRadius: 999 },
+  spotlightBadgeText: { color: '#0B0B10', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
+  spotlightCount: { color: '#FFF', fontSize: 11, fontWeight: '800', backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999 },
+  spotlightCopy: { paddingHorizontal: 17, paddingBottom: 10, gap: 6 },
+  spotlightKind: { color: '#70F0C0', fontSize: 10, fontWeight: '900', letterSpacing: 1.4 },
+  spotlightTitle: { color: '#FFF', fontSize: 27, lineHeight: 31, fontWeight: '900', textShadowColor: '#000', textShadowRadius: 8 },
+  spotlightBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
+  spotlightHint: { color: '#FFF', fontSize: 12, fontWeight: '700', textShadowColor: '#000', textShadowRadius: 5 },
+  spotlightPlay: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#E72E63', alignItems: 'center', justifyContent: 'center' },
+  spotlightDots: { flexDirection: 'row', gap: 4, alignSelf: 'center', paddingBottom: 10 },
+  spotlightDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
+  spotlightDotActive: { width: 17, backgroundColor: '#70F0C0' },
   quickCategories: { paddingHorizontal: 12, paddingTop: 5, paddingBottom: 3, gap: 6 },
   quickCategory: { minHeight: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: '#2A2B35', backgroundColor: '#111219' },
   quickCategoryText: { color: '#F1F1F5', fontSize: 10, fontWeight: '700', maxWidth: 104 },
