@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openTitle } from '@/lib/navigation';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
+import { HomeDiscovery } from '@/components/HomeDiscovery';
 import { browseKind, classics, featured, fetchSports, listByKind, trending, upcomingList, useCatalog, type Detail, type SportMatch } from '@/lib/catalog';
 import { useStore } from '@/lib/store';
 import { fetchPosts, type Post } from '@/lib/community';
@@ -231,6 +232,8 @@ export default function HomeScreen() {
 
       {freshPicks.length > 0 ? <View style={styles.catalogRows}><Section title="Tout juste sorti"><Row data={freshPicks} cardWidth={cardWidth} /></Section></View> : null}
       {ratedPicks.length > 0 ? <View style={styles.catalogRows}><Section title="Les mieux notés"><Row data={ratedPicks} cardWidth={cardWidth} /></Section></View> : null}
+
+      <HomeDiscovery cardWidth={cardWidth} economyMode={prefs.economiseur} />
 
       {/* Héros */}
       <View style={styles.hero}>
