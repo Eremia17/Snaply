@@ -128,45 +128,10 @@ export default function HomeScreen() {
             <Ionicons name="play" size={18} color="#fff" />
             <Text style={styles.primaryText}>Explorer les catalogues</Text>
           </Pressable>
-          <Pressable style={styles.secondaryBtn} onPress={() => router.push('/sports')}>
-            <Ionicons name="trophy-outline" size={18} color={colors.foreground} />
-            <Text style={styles.secondaryText}>Sports en direct</Text>
-          </Pressable>
-          <Pressable style={styles.ghostBtn} onPress={() => router.push('/info/aide')}>
-            <Ionicons name="help-circle-outline" size={18} color={colors.foreground} />
-            <Text style={styles.secondaryText}>Aide</Text>
-          </Pressable>
-
           <View style={styles.live}>
             <View style={styles.dot} />
             <Text style={styles.liveText}>Données actualisées en direct</Text>
           </View>
-        </View>
-      </View>
-
-      {/* À propos */}
-      <View style={styles.section}>
-        <Text style={styles.kicker}>À PROPOS D’ERËMĪA</Text>
-        <Text style={styles.h2Big}>Une seule destination pour trouver votre prochaine histoire.</Text>
-        <Text style={styles.body}>
-          Erëmīa rassemble les tendances, nouveautés, bandes-annonces, distributions et recommandations. Parcourez librement, gardez vos coups de cœur et reprenez vos découvertes quand vous le souhaitez.
-        </Text>
-      </View>
-
-      {/* Catalogues */}
-      <View style={styles.section}>
-        <Text style={styles.kicker}>QUATRE UNIVERS</Text>
-        <Text style={styles.h2Big}>Choisissez votre catalogue</Text>
-        <Text style={styles.body}>Chaque univers possède ses propres genres, tendances et recommandations.</Text>
-        <View style={{ gap: 12, marginTop: 16 }}>
-          {UNIVERSES.map((u) => (
-            <Pressable key={u.kind} style={styles.universe} onPress={() => router.push(`/catalogue/${u.kind}`)}>
-              <Ionicons name={u.icon} size={30} color={colors.primary} />
-              <Text style={styles.uniTitle}>{u.title}</Text>
-              <Text style={styles.uniCopy}>{u.copy}</Text>
-              <Text style={styles.uniEnter}>Entrer  →</Text>
-            </Pressable>
-          ))}
         </View>
       </View>
 
@@ -225,6 +190,13 @@ export default function HomeScreen() {
         <Section title="Mes favoris" empty="Ajoutez des titres avec le cœur pour les retrouver ici.">
           {favorites.length ? <Row data={favorites} /> : null}
         </Section>
+      </View>
+
+      <View style={styles.universeStrip}>
+        <View style={styles.universeHeading}><Text style={styles.featureEyebrow}>EXPLORE PAR UNIVERS</Text><Text style={styles.universeTitle}>Quel monde tu explores ?</Text></View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.universeRow}>
+          {UNIVERSES.map((u) => <Pressable key={u.kind} style={styles.universeChip} onPress={() => router.push(`/catalogue/${u.kind}`)}><Ionicons name={u.icon} size={20} color={colors.primary} /><Text style={styles.universeChipText}>{u.title}</Text><Ionicons name="chevron-forward" size={14} color="#F06A7B" /></Pressable>)}
+        </ScrollView>
       </View>
 
       {/* Sports en direct — aperçu de la section LiveNow du site */}
@@ -308,7 +280,7 @@ function Row({ data }: { data: Item[] }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#08090D' },
-  featureStack: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8, gap: 14 },
+  featureStack: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 12, gap: 12 },
   surpriseBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.86)', justifyContent: 'center', alignItems: 'center', padding: 22 },
   surpriseReveal: { width: '100%', maxWidth: 360, alignItems: 'center', backgroundColor: '#100D14', borderRadius: 26, borderWidth: 1, borderColor: '#8C2035', padding: 22, gap: 9, overflow: 'hidden' },
   modalClose: { alignSelf: 'flex-end', padding: 4 },
@@ -345,13 +317,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border,
   },
   searchInput: { flex: 1, color: colors.foreground, paddingVertical: 12, fontSize: 15 },
-  hero: { height: 560, justifyContent: 'flex-end', overflow: 'hidden', backgroundColor: colors.card },
+  hero: { height: 330, justifyContent: 'flex-end', overflow: 'hidden', backgroundColor: colors.card, borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
   heroShadeA: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,15,19,0.6)' },
   heroShadeB: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(14,15,19,0.35)' },
-  heroContent: { padding: 22, gap: 12 },
+  heroContent: { padding: 18, gap: 9 },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   eyebrow: { color: colors.primary, fontSize: 13, fontWeight: '700' },
-  heroTitle: { color: colors.foreground, fontSize: 56, fontWeight: '900', lineHeight: 58 },
+  heroTitle: { color: colors.foreground, fontSize: 42, fontWeight: '900', lineHeight: 46 },
   heroMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10, marginBottom: 2 },
   heroMetaText: { color: '#F5F3EE', fontSize: 12, fontWeight: '700', backgroundColor: 'rgba(0,0,0,0.42)', overflow: 'hidden', paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999 },
   lead: { color: colors.foreground, fontSize: 16, lineHeight: 24, opacity: 0.9 },
@@ -363,11 +335,17 @@ const styles = StyleSheet.create({
   live: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
   liveText: { color: colors.mutedForeground, fontSize: 13 },
-  section: { paddingHorizontal: 18, paddingVertical: 28, gap: 10, borderTopWidth: 1, borderTopColor: colors.border },
+  section: { paddingHorizontal: 16, paddingVertical: 18, gap: 10, borderTopWidth: 1, borderTopColor: '#211820' },
   kicker: { color: colors.primary, fontWeight: '700', fontSize: 13 },
   h2Big: { color: colors.foreground, fontSize: 26, fontWeight: '800', lineHeight: 32 },
   body: { color: colors.mutedForeground, fontSize: 15, lineHeight: 23 },
   universe: { backgroundColor: colors.card, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: colors.border, gap: 8 },
+  universeStrip: { paddingVertical: 18, gap: 12, borderTopWidth: 1, borderTopColor: '#211820' },
+  universeHeading: { paddingHorizontal: 16, gap: 5 },
+  universeTitle: { color: '#FFF', fontSize: 20, fontWeight: '900' },
+  universeRow: { paddingHorizontal: 16, gap: 10 },
+  universeChip: { minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 13, borderRadius: 15, borderWidth: 1, borderColor: '#38202B', backgroundColor: '#131118' },
+  universeChipText: { color: '#F3F0F4', fontSize: 12, fontWeight: '800' },
   uniTitle: { color: colors.foreground, fontSize: 20, fontWeight: '800', marginTop: 6 },
   uniCopy: { color: colors.mutedForeground, lineHeight: 21 },
   uniEnter: { color: colors.primary, fontWeight: '700', marginTop: 6 },
