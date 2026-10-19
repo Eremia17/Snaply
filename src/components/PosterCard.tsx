@@ -13,7 +13,7 @@ export function PosterCard({ item, width, rating }: { item: Item; width?: number
 
   return (
     <Pressable
-      style={[styles.card, width ? { width } : null]}
+      style={[styles.card, width ? { width, flex: 0 } : null]}
       onPress={() =>
         router.push({
           pathname: '/titre/[kind]/[id]',
