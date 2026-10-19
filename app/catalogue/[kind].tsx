@@ -15,7 +15,13 @@ const TABS: { kind: Kind; label: string }[] = [
   { kind: 'occidental', label: 'Animé Occidental' },
   { kind: 'serie', label: 'Séries' },
 ];
-const NOTES = [0, 6, 7, 8];
+const NOTES = [0, 5, 6, 7, 8];
+const GENRES: Record<Kind, string[]> = {
+  film: ['Romance', 'Action', 'Horreur', 'Zombie', 'Comédie', 'Thriller', 'Science-fiction', 'Drame', 'Aventure', 'Fantastique', 'Documentaire', 'Animation', 'Guerre', 'Policier'],
+  manga: ['Shonen', 'Shojo', 'Seinen', 'Isekai / Réincarnation', 'Mecha', 'Tranche de vie', 'Horreur', 'Sport', 'Fantastique', 'Comédie'],
+  occidental: ['Action', 'Comédie', 'Aventure', 'Super-héros', 'Science-fiction', 'Famille'],
+  serie: ['Action & Aventure', 'Comédie', 'Drame', 'Crime', 'Mystère', 'Science-fiction & Fantastique', 'Famille', 'Guerre & Politique', 'Western', 'Documentaire', 'Téléréalité'],
+};
 
 export default function CatalogueScreen() {
   const router = useRouter();
@@ -53,11 +59,11 @@ export default function CatalogueScreen() {
     load(1);
   }, [kind, load]);
 
-  const genres = Array.from(new Set(items.flatMap((i) => i.genres))).slice(0, 10);
+  const genres = GENRES[kind] ?? [];
   const years = Array.from(new Set(items.map((i) => i.year).filter(Boolean) as string[]))
     .sort().reverse().slice(0, 8);
   const shown = items.filter((i) =>
-    (!genre || i.genres.includes(genre)) &&
+    (!genre || i.genres.some((g) => g.toLocaleLowerCase().includes(genre.toLocaleLowerCase())) || i.title.toLocaleLowerCase().includes(genre.toLocaleLowerCase())) &&
     (!year || i.year === year) &&
     i.rating >= minNote &&
     (!prefs.famille || isFamilySafe(i)),
