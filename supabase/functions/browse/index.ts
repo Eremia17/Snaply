@@ -302,7 +302,7 @@ async function pages(chapterId: string) {
   return { pages: files.map((f: string) => `${s.baseUrl}/${folder}/${s.chapter.hash}/${f}`) };
 }
 
-type BrowseFilters = { genre?: string; year?: string; minRating?: number; family?: boolean; short?: boolean };
+type BrowseFilters = { genre?: string; year?: string; minRating?: number; family?: boolean; short?: boolean; sort?: 'popularity' | 'rating' | 'recent' };
 
 const FILM_GENRES: Record<string, { genre?: number; keyword?: number }> = {
   Romance: { genre: 10749 }, Action: { genre: 28 }, Horreur: { genre: 27 }, Zombie: { keyword: 12377 },
@@ -330,13 +330,13 @@ async function list(kind: string, page: number, filters: BrowseFilters = {}) {
   if (kind === "manga") {
     const g = MANGA_GENRES[filters.genre ?? ''];
     const d = await anilist(
-      `query ($page: Int, $genre: String, $tag: String, $year: Int, $score: Int, $notGenres: [String]) { Page(page: $page, perPage: 40) { pageInfo { hasNextPage } media(type: ANIME, countryOfOrigin: "JP", sort: POPULARITY_DESC, isAdult: false, genre: $genre, tag: $tag, seasonYear: $year, averageScore_greater: $score, genre_not_in: $notGenres) { ${ANI_FIELDS} } } }`,
-      { page, genre: g?.genre, tag: g?.tag, year: filters.year ? Number(filters.year) : undefined, score: filters.minRating ? Math.max(0, Math.round(filters.minRating * 10) - 1) : undefined, notGenres: filters.family ? ['Horror', 'Ecchi', 'Hentai'] : undefined },
+      `query ($page: Int, $genre: String, $tag: String, $year: Int, $score: Int, $notGenres: [String], $sort: [MediaSort]) { Page(page: $page, perPage: 40) { pageInfo { hasNextPage } media(type: ANIME, countryOfOrigin: "JP", sort: $sort, isAdult: false, genre: $genre, tag: $tag, seasonYear: $year, averageScore_greater: $score, genre_not_in: $notGenres) { ${ANI_FIELDS} } } }`,
+      { page, genre: g?.genre, tag: g?.tag, year: filters.year ? Number(filters.year) : undefined, score: filters.minRating ? Math.max(0, Math.round(filters.minRating * 10) - 1) : undefined, notGenres: filters.family ? ['Horror', 'Ecchi', 'Hentai'] : undefined, sort: filters.sort === 'rating' ? ['SCORE_DESC'] : filters.sort === 'recent' ? ['START_DATE_DESC'] : ['POPULARITY_DESC'] },
     );
     return { items: d.Page.media.map(fromAni), hasMore: d.Page.pageInfo.hasNextPage };
   }
 
-  const params: Record<string, string> = { include_adult: 'false', sort_by: 'popularity.desc', 'vote_count.gte': '20' };
+  const params: Record<string, string> = { include_adult: 'false', sort_by: filters.sort === 'rating' ? 'vote_average.desc' : filters.sort === 'recent' ? 'primary_release_date.desc' : 'popularity.desc', 'vote_count.gte': filters.sort === 'rating' ? '300' : filters.sort === 'recent' ? '50' : '20' };
   if (filters.minRating) params['vote_average.gte'] = String(filters.minRating);
   if (kind === 'film') {
     const g = FILM_GENRES[filters.genre ?? ''];
@@ -353,6 +353,7 @@ async function list(kind: string, page: number, filters: BrowseFilters = {}) {
   }
 
   if (filters.year) params.first_air_date_year = filters.year;
+  if (filters.sort === 'recent') params.first_air_date_lte = new Date().toISOString().slice(0, 10);
   if (kind === 'serie') {
     const g = SERIES_GENRES[filters.genre ?? ''];
     if (g?.genre) params.with_genres = String(g.genre);
@@ -469,6 +470,7 @@ Deno.serve(async (req) => {
       genre: typeof body.genre === 'string' && body.genre ? body.genre : undefined,
       year: typeof body.year === 'string' && body.year ? body.year : undefined,
       minRating: Number(body.minRating) > 0 ? Number(body.minRating) : undefined,
+      sort: ['popularity', 'rating', 'recent'].includes(body.sort) ? body.sort : 'popularity',
       family: body.family === true,
       short: body.short === true,
     };
