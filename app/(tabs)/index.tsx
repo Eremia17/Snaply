@@ -77,7 +77,7 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView removeClippedSubviews={false} style={styles.root} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* En-tête : menu à gauche, profil et réglages à droite */}
       <View style={styles.topbar}>
         <Pressable style={styles.iconBtn} onPress={() => router.navigate('/menu')}>
