@@ -207,6 +207,28 @@ export default function HomeScreen() {
         );
       })() : null}
 
+      {sports.length > 0 ? (
+        <View style={styles.liveSportsStrip}>
+          <View style={styles.liveSportsHeading}>
+            <View style={styles.liveSportsTitleLine}><Ionicons name="football-outline" size={20} color="#70F0C0" /><Text style={styles.liveSportsTitle}>Le sport à suivre</Text></View>
+            <Pressable onPress={() => router.push('/sports')}><Text style={styles.liveSportsAll}>Tous les matchs ›</Text></Pressable>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.liveSportsRow}>
+            {sports.map((match, index) => (
+              <Pressable key={match.league + match.home + match.away + index} style={styles.liveSportsCard} onPress={() => router.push('/sports')}>
+                <Text style={styles.liveSportsLeague} numberOfLines={1}>{match.league}</Text>
+                <View style={styles.liveSportsTeams}>
+                  <Text style={styles.liveSportsTeam} numberOfLines={2}>{match.home}</Text>
+                  <Text style={styles.liveSportsVs}>{match.homeScore != null && match.awayScore != null ? String(match.homeScore) + '–' + String(match.awayScore) : 'VS'}</Text>
+                  <Text style={styles.liveSportsTeam} numberOfLines={2}>{match.away}</Text>
+                </View>
+                <Text style={styles.liveSportsMeta}>{match.status === 'À venir' ? 'À VENIR' : 'RÉSULTAT'} · {match.date}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
+
       {freshPicks.length > 0 ? <View style={styles.catalogRows}><Section title="Tout juste sorti"><Row data={freshPicks} cardWidth={cardWidth} /></Section></View> : null}
       {ratedPicks.length > 0 ? <View style={styles.catalogRows}><Section title="Les mieux notés"><Row data={ratedPicks} cardWidth={cardWidth} /></Section></View> : null}
 
@@ -388,6 +410,18 @@ const styles = StyleSheet.create({
   malagasySub: { color: '#70F0C0', fontSize: 11, marginTop: -8, marginBottom: 8 },
   malagasyEmpty: { minHeight: 84, borderRadius: 14, borderWidth: 1, borderColor: '#24493F', backgroundColor: '#101A19', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   malagasyEmptyText: { color: '#D1D8D5', flex: 1, fontSize: 12, lineHeight: 18 },
+  liveSportsStrip: { paddingTop: 12, paddingBottom: 6, gap: 10 },
+  liveSportsHeading: { paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  liveSportsTitleLine: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  liveSportsTitle: { color: '#FFF', fontSize: 17, fontWeight: '900' },
+  liveSportsAll: { color: '#A8AAB5', fontSize: 12, fontWeight: '700' },
+  liveSportsRow: { paddingHorizontal: 12, gap: 10 },
+  liveSportsCard: { width: 220, borderRadius: 14, padding: 12, backgroundColor: '#111827', borderWidth: 1, borderColor: '#26374A', gap: 12 },
+  liveSportsLeague: { color: '#70F0C0', fontSize: 10, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' },
+  liveSportsTeams: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  liveSportsTeam: { flex: 1, color: '#FFF', fontSize: 12, fontWeight: '800', textAlign: 'center' },
+  liveSportsVs: { color: '#70F0C0', fontSize: 12, fontWeight: '900' },
+  liveSportsMeta: { color: '#A9B2C3', fontSize: 9, fontWeight: '800' },
   heroFallback: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: '#151820' },
   heroFallbackText: { color: '#70F0C0', fontSize: 11, fontWeight: '900', letterSpacing: 2 },
   spotlightBanner: { height: 258, marginHorizontal: 12, marginTop: 10, marginBottom: 12, borderRadius: 20, overflow: 'hidden', backgroundColor: '#19151F', justifyContent: 'space-between' },
