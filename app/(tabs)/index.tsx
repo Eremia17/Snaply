@@ -41,9 +41,12 @@ export default function HomeScreen() {
     }
     fetchPosts().then((p) => setPosts(p.slice(0, 5))).catch(() => setPosts([]));
     fetchSports().then((items) => setSports(items.slice(0, 4))).catch(() => setSports([]));
-    supabase.from('site_stats').select('visits').eq('id', 1).maybeSingle().then(({ data }) => {
-      if (data) setVisits(Number((data as { visits: number }).visits));
-    }).catch(() => setVisits(null));
+    supabase.from('site_stats').select('visits').eq('id', 1).maybeSingle().then(
+      ({ data }) => {
+        if (data) setVisits(Number((data as { visits: number }).visits));
+      },
+      () => setVisits(null),
+    );
   }, []);
 
   return (
