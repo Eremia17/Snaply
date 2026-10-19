@@ -45,10 +45,10 @@ export default function HomeScreen() {
   const dicePulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (prefs.economiseur || prefs.animations || heroItems.length < 2) return;
+    if (prefs.animations || heroItems.length < 2) return;
     const timer = setInterval(() => setHeroIndex((index) => (index + 1) % heroItems.length), 10000);
     return () => clearInterval(timer);
-  }, [prefs.economiseur, prefs.animations, heroItems.length]);
+  }, [prefs.animations, heroItems.length]);
 
   useEffect(() => {
     if (prefs.animations) { dicePulse.setValue(1); return; }
