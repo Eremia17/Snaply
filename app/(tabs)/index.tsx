@@ -85,31 +85,14 @@ export default function HomeScreen() {
             <Ionicons name="sparkles-outline" size={16} color={colors.primary} />
             <Text style={styles.eyebrow}>VOTRE UNIVERS CINÉMA & ANIMATION</Text>
           </View>
-          <Text style={styles.heroTitle} numberOfLines={2}>
-            {hero?.title ?? 'Erëmīa'}
-          </Text>
-          {hero ? (
-            <View style={styles.heroMeta}>
-              {hero.year ? <Text style={styles.heroMetaText}>{hero.year}</Text> : null}
-              {hero.rating > 0 ? <Text style={styles.heroMetaText}>★ {hero.rating.toFixed(1)}/10</Text> : null}
-              {hero.genres.slice(0, 2).map((g) => <Text key={g} style={styles.heroMetaText}>{g}</Text>)}
-            </View>
-          ) : null}
+          <Text style={styles.heroTitle} numberOfLines={2}>Erëmīa</Text>
           <Text style={styles.lead} numberOfLines={4}>
-            {hero?.synopsis || 'Découvrez films, séries, animés manga et créations occidentales dans un catalogue vivant, enrichi en temps réel.'}
+            Découvrez films, séries, animés manga et créations occidentales dans un catalogue vivant, enrichi en temps réel.
           </Text>
-
-          {hero ? (
-            <Pressable style={styles.primaryBtn} onPress={() => openTitle(router, hero)}>
-              <Ionicons name="play" size={18} color="#fff" />
-              <Text style={styles.primaryText}>Découvrir ce titre</Text>
-            </Pressable>
-          ) : (
-            <Pressable style={styles.primaryBtn} onPress={() => router.push('/catalogue/film')}>
-              <Ionicons name="play" size={18} color="#fff" />
-              <Text style={styles.primaryText}>Explorer les catalogues</Text>
-            </Pressable>
-          )}
+          <Pressable style={styles.primaryBtn} onPress={() => router.push('/catalogue/film')}>
+            <Ionicons name="play" size={18} color="#fff" />
+            <Text style={styles.primaryText}>Explorer les catalogues</Text>
+          </Pressable>
           <Pressable style={styles.secondaryBtn} onPress={() => router.push('/sports')}>
             <Ionicons name="trophy-outline" size={18} color={colors.foreground} />
             <Text style={styles.secondaryText}>Sports en direct</Text>
