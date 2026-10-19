@@ -53,6 +53,13 @@ function fromTmdb(x: any, kind: string, names: Record<number, string>) {
 
 const ANI_FIELDS = `id title { romaji english } coverImage { large } startDate { year } genres averageScore description(asHtml: false)`;
 
+const ANI_GENRES_FR: Record<string, string> = {
+  Action: 'Action', Adventure: 'Aventure', Comedy: 'Comédie', Drama: 'Drame', Ecchi: 'Ecchi', Fantasy: 'Fantastique',
+  Horror: 'Horreur', MahouShoujo: 'Magical girl', Mecha: 'Mecha', Music: 'Musique', Mystery: 'Mystère',
+  Psychological: 'Psychologique', Romance: 'Romance', SciFi: 'Science-fiction', SliceOfLife: 'Tranche de vie',
+  Sports: 'Sport', Supernatural: 'Surnaturel', Thriller: 'Thriller',
+};
+
 function fromAni(m: any) {
   const desc = String(m.description ?? "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
   return {
@@ -61,7 +68,7 @@ function fromAni(m: any) {
     title: m.title?.english ?? m.title?.romaji ?? "",
     poster: m.coverImage?.large ?? null,
     year: m.startDate?.year ? String(m.startDate.year) : null,
-    genres: (m.genres ?? []).slice(0, 4),
+    genres: (m.genres ?? []).slice(0, 4).map((g: string) => ANI_GENRES_FR[g.replaceAll(' ', '')] ?? g),
     rating: m.averageScore ? Math.round(m.averageScore) / 10 : 0,
     synopsis: desc,
   };
@@ -360,7 +367,6 @@ async function list(kind: string, page: number, filters: BrowseFilters = {}) {
     if (g?.keyword) params.with_keywords = String(g.keyword);
     params.with_origin_country = 'US|GB|FR|CA|BE|IE|AU|DE|ES|IT';
     params.without_genres = '10762';
-    params.with_original_language = 'en';
     const d = await tmdbPair('/discover/tv', params, page);
     const names = await genreNames('tv');
     const items = d.results.filter((x: any) => x.genre_ids?.includes(16) && !(x.origin_country ?? []).includes('JP'));
