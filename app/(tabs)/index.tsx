@@ -233,7 +233,6 @@ export default function HomeScreen() {
       {freshPicks.length > 0 ? <View style={styles.catalogRows}><Section title="Tout juste sorti"><Row data={freshPicks} cardWidth={cardWidth} /></Section></View> : null}
       {ratedPicks.length > 0 ? <View style={styles.catalogRows}><Section title="Les mieux notés"><Row data={ratedPicks} cardWidth={cardWidth} /></Section></View> : null}
 
-      <HomeDiscovery cardWidth={cardWidth} economyMode={prefs.economiseur} />
 
       {/* Héros */}
       <View style={styles.hero}>
@@ -273,6 +272,8 @@ export default function HomeScreen() {
           </View>
         </Pressable>
       </View>
+
+      <HomeDiscovery cardWidth={cardWidth} economyMode={prefs.economiseur} />
 
       {/* Rangées issues du catalogue complet, pas seulement des huit tendances */}
       <View style={styles.catalogRows}>
