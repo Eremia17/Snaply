@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   downloadButtonTitle: { color: '#fff', fontSize: 17, fontWeight: '900' },
   downloadButtonSub: { color: 'rgba(255,255,255,0.82)', fontSize: 11, lineHeight: 16 },
   downloadModalRoot: { flex: 1, justifyContent: 'flex-end' },
-  downloadBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.68)' },
+  downloadBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.68)' },
   downloadSheet: { maxHeight: '90%', backgroundColor: '#111216', borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingTop: 8, paddingHorizontal: 14, paddingBottom: 14, borderWidth: 1, borderColor: colors.border, gap: 10 },
   sheetHandle: { alignSelf: 'center', width: 42, height: 4, borderRadius: 999, backgroundColor: colors.muted, marginBottom: 2 },
   downloadHeading: { flexDirection: 'row', alignItems: 'center', gap: 12 },
