@@ -298,8 +298,8 @@ async function chapters(mangaId: string, title: string) {
     group.push(chapter);
     grouped.set(key, group);
   }
-  const items = [...grouped.values()].flatMap((group) =>
-    group.sort((a, b) => languagePriority(a.lang) - languagePriority(b.lang) || String(b.publishedAt).localeCompare(String(a.publishedAt)))
+  const items = [...grouped.values()].map((group) =>
+    group.sort((a, b) => languagePriority(a.lang) - languagePriority(b.lang) || String(b.publishedAt).localeCompare(String(a.publishedAt)))[0]
   );
   return { items };
 }
