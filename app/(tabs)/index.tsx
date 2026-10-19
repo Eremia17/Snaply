@@ -42,6 +42,7 @@ export default function HomeScreen() {
   const [freshPicks, setFreshPicks] = useState<Detail[]>([]);
   const [ratedPicks, setRatedPicks] = useState<Detail[]>([]);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [spotlightImageFailed, setSpotlightImageFailed] = useState(false);
   const [visits, setVisits] = useState<number | null>(null);
   const [query, setQuery] = useState('');
 
@@ -87,6 +88,10 @@ export default function HomeScreen() {
     }).catch(() => { if (active) setSpotlights([]); });
     return () => { active = false; };
   }, [prefs.economiseur]);
+
+  useEffect(() => {
+    setSpotlightImageFailed(false);
+  }, [spotlightIndex]);
 
   useEffect(() => {
     if (spotlights.length < 2) return;
@@ -170,7 +175,7 @@ export default function HomeScreen() {
         const artwork = item.backdrop || item.poster;
         return (
           <Pressable accessibilityRole="button" style={styles.spotlightBanner} onPress={() => openTitle(router, item)}>
-            {artwork ? <Image key={item.id + ':' + artwork} source={{ uri: artwork }} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => {}} /> : null}
+            {artwork && !spotlightImageFailed ? <Image key={item.id + ':' + artwork} source={{ uri: artwork }} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => setSpotlightImageFailed(true)} /> : null}
             <View style={styles.spotlightShade} />
             <View style={styles.spotlightTopline}>
               <View style={styles.spotlightBadge}><Ionicons name="sparkles" size={12} color="#0B0B10" /><Text style={styles.spotlightBadgeText}>{Number(item.rating) >= 8 ? 'TRÈS BIEN NOTÉ' : 'À DÉCOUVRIR'}</Text></View>
