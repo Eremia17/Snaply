@@ -49,7 +49,7 @@ export function HomeDiscovery({ cardWidth, economyMode }: { cardWidth: number; e
     if (economyMode || prefs.economiseur || !isSupabaseConfigured) {
       const cached: Record<string, Detail[]> = {};
       for (const feed of FEEDS) {
-        const all = listByKind(feed.kind).slice().sort((a, b) => String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating);
+        const all = (feed.kind === 'manga' ? [] : listByKind(feed.kind)).slice().sort((a, b) => String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating);
         const genre = feed.filters?.genre;
         cached[feed.key] = all.filter((item) => {
           if (!item.poster) return false;
@@ -100,7 +100,7 @@ export function HomeDiscovery({ cardWidth, economyMode }: { cardWidth: number; e
             if (items.length) next[key] = items;
             else if (!next[key]) {
               const feed = FEEDS.find((entry) => entry.key === key)!;
-              const local = listByKind(feed.kind).filter((item) => !!item.poster);
+              const local = feed.kind === 'manga' ? [] : listByKind(feed.kind).filter((item) => !!item.poster);
               next[key] = local.slice().sort((a, b) => String(b.year ?? '').localeCompare(String(a.year ?? '')) || b.rating - a.rating).slice(0, 12);
             }
           }
