@@ -1,6 +1,7 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/auth';
 import { colors } from '@/lib/theme';
 
@@ -66,6 +67,7 @@ const ADMIN: Section = { title: 'Administration', items: [
 
 export default function MenuScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
 
   const open = (e: Entry) => {
@@ -78,7 +80,7 @@ export default function MenuScreen() {
   };
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={{ paddingBottom: 48 }}>
+    <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: Math.max(insets.top, 8) + 8, paddingBottom: 48 }}>
       <View style={styles.head}>
         <View style={styles.logoTile}><Ionicons name="film-outline" size={18} color="#fff" /></View>
         <Text style={styles.brand}>Erëmīa</Text>
@@ -126,19 +128,19 @@ export default function MenuScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background, paddingTop: 48 },
-  head: { alignItems: 'center', paddingHorizontal: 20, gap: 6, paddingVertical: 10 },
-  logoTile: { width: 44, height: 44, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  brand: { color: colors.foreground, fontSize: 22, fontWeight: '900' },
+  root: { flex: 1, backgroundColor: colors.background },
+  head: { alignItems: 'center', paddingHorizontal: 20, gap: 8, paddingVertical: 18, marginHorizontal: 16, borderRadius: 22, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  logoTile: { width: 48, height: 48, borderRadius: 15, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  brand: { color: colors.foreground, fontSize: 24, fontWeight: '900', fontFamily: 'sans-serif-black', includeFontPadding: false },
   mail: { color: colors.mutedForeground, fontSize: 13 },
   quick: { paddingHorizontal: 16, marginTop: 8 },
   quickBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.card, borderRadius: 14, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.border },
   quickInput: { flex: 1, color: colors.foreground, paddingVertical: 12 },
-  section: { paddingHorizontal: 16, marginTop: 22 },
-  sectionTitle: { color: colors.mutedForeground, letterSpacing: 2, fontSize: 12, fontWeight: '600', marginBottom: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12 },
-  rowText: { color: colors.foreground, fontSize: 15 },
-  hint: { color: colors.mutedForeground, fontSize: 12, marginTop: 2 },
+  section: { paddingHorizontal: 16, marginTop: 20 },
+  sectionTitle: { color: colors.primary, letterSpacing: 1.5, fontSize: 11, fontWeight: '900', marginBottom: 8, paddingHorizontal: 4, includeFontPadding: false },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingHorizontal: 13, paddingVertical: 13, marginBottom: 6, borderRadius: 14, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  rowText: { color: colors.foreground, fontSize: 14, fontWeight: '700', fontFamily: 'sans-serif-medium', includeFontPadding: false },
+  hint: { color: colors.mutedForeground, fontSize: 11, lineHeight: 16, marginTop: 4, fontFamily: 'sans-serif' },
   logout: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 28, marginHorizontal: 16, paddingVertical: 12 },
   logoutText: { color: colors.primary, fontWeight: '700', fontSize: 15 },
 });
