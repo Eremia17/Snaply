@@ -302,7 +302,7 @@ async function pages(chapterId: string) {
   return { pages: files.map((f: string) => `${s.baseUrl}/${folder}/${s.chapter.hash}/${f}`) };
 }
 
-type BrowseFilters = { genre?: string; year?: string; minRating?: number };
+type BrowseFilters = { genre?: string; year?: string; minRating?: number; family?: boolean };
 
 const FILM_GENRES: Record<string, { genre?: number; keyword?: number }> = {
   Romance: { genre: 10749 }, Action: { genre: 28 }, Horreur: { genre: 27 }, Zombie: { keyword: 12377 },
@@ -330,22 +330,22 @@ async function list(kind: string, page: number, filters: BrowseFilters = {}) {
   if (kind === "manga") {
     const g = MANGA_GENRES[filters.genre ?? ''];
     const d = await anilist(
-      `query ($page: Int, $genre: String, $tag: String, $year: Int, $score: Int) { Page(page: $page, perPage: 40) { pageInfo { hasNextPage } media(type: ANIME, countryOfOrigin: "JP", sort: POPULARITY_DESC, isAdult: false, genre: $genre, tag: $tag, seasonYear: $year, averageScore_greater: $score) { ${ANI_FIELDS} } } }`,
-      { page, genre: g?.genre, tag: g?.tag, year: filters.year ? Number(filters.year) : undefined, score: filters.minRating ? Math.max(0, Math.round(filters.minRating * 10) - 1) : undefined },
+      `query ($page: Int, $genre: String, $tag: String, $year: Int, $score: Int, $notGenres: [String]) { Page(page: $page, perPage: 40) { pageInfo { hasNextPage } media(type: ANIME, countryOfOrigin: "JP", sort: POPULARITY_DESC, isAdult: false, genre: $genre, tag: $tag, seasonYear: $year, averageScore_greater: $score, genre_not_in: $notGenres) { ${ANI_FIELDS} } } }`,
+      { page, genre: g?.genre, tag: g?.tag, year: filters.year ? Number(filters.year) : undefined, score: filters.minRating ? Math.max(0, Math.round(filters.minRating * 10) - 1) : undefined, notGenres: filters.family ? ['Horror', 'Ecchi', 'Hentai'] : undefined },
     );
     return { items: d.Page.media.map(fromAni), hasMore: d.Page.pageInfo.hasNextPage };
   }
 
   const params: Record<string, string> = { include_adult: 'false', sort_by: 'popularity.desc', 'vote_count.gte': '20' };
   if (filters.minRating) params['vote_average.gte'] = String(filters.minRating);
-  const today = new Date().toISOString().slice(0, 10);
-
   if (kind === 'film') {
     const g = FILM_GENRES[filters.genre ?? ''];
     if (filters.year) params.primary_release_year = filters.year;
     if (g?.genre) params.with_genres = String(g.genre);
     if (g?.keyword) params.with_keywords = String(g.keyword);
-    if (g?.genre !== 16) params.without_genres = '16';
+    const excluded = g?.genre !== 16 ? ['16'] : [];
+    if (filters.family) excluded.push('27', '53', '80');
+    if (excluded.length) params.without_genres = excluded.join(',');
     const d = await tmdbPair('/discover/movie', params, page);
     const [names] = await Promise.all([genreNames('movie')]);
     return { items: d.results.map((x: any) => fromTmdb(x, 'film', names)), hasMore: page < d.total_pages };
@@ -355,7 +355,7 @@ async function list(kind: string, page: number, filters: BrowseFilters = {}) {
   if (kind === 'serie') {
     const g = SERIES_GENRES[filters.genre ?? ''];
     if (g?.genre) params.with_genres = String(g.genre);
-    params.without_genres = '16,10762';
+    params.without_genres = filters.family ? '16,10762,80,9648,10764' : '16,10762';
     const d = await tmdbPair('/discover/tv', params, page);
     const names = await genreNames('tv');
     return { items: d.results.filter((x: any) => !x.genre_ids?.includes(16)).map((x: any) => fromTmdb(x, 'serie', names)), hasMore: page < d.total_pages };
@@ -366,7 +366,7 @@ async function list(kind: string, page: number, filters: BrowseFilters = {}) {
     params.with_genres = g?.genre ? `16,${g.genre}` : '16';
     if (g?.keyword) params.with_keywords = String(g.keyword);
     params.with_origin_country = 'US|GB|FR|CA|BE|IE|AU|DE|ES|IT';
-    params.without_genres = '10762';
+    params.without_genres = filters.family ? '10762,80,9648' : '10762';
     const d = await tmdbPair('/discover/tv', params, page);
     const names = await genreNames('tv');
     const items = d.results.filter((x: any) => x.genre_ids?.includes(16) && !(x.origin_country ?? []).includes('JP'));
