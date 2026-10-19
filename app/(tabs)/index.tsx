@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { openTitle } from '@/lib/navigation';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
-import { classics, featured, fetchSports, listByKind, trending, upcomingList, useCatalog, type SportMatch } from '@/lib/catalog';
+import { browseKind, classics, featured, fetchSports, listByKind, trending, upcomingList, useCatalog, type Detail, type SportMatch } from '@/lib/catalog';
 import { useStore } from '@/lib/store';
 import { fetchPosts, type Post } from '@/lib/community';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
@@ -37,12 +37,9 @@ export default function HomeScreen() {
   const cardWidth = prefs.taille === 'Compact' ? 96 : prefs.taille === 'Grand' ? 132 : CARD_W;
   const [posts, setPosts] = useState<Post[]>([]);
   const [sports, setSports] = useState<SportMatch[]>([]);
+  const [malagasyFilms, setMalagasyFilms] = useState<Detail[]>([]);
   const [visits, setVisits] = useState<number | null>(null);
   const [query, setQuery] = useState('');
-  const [surpriseVisible, setSurpriseVisible] = useState(false);
-  const [surpriseItem, setSurpriseItem] = useState<ReturnType<typeof trending>[number] | null>(null);
-  const diceRotation = useRef(new Animated.Value(0)).current;
-  const dicePulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (prefs.animations || heroItems.length < 2) return;
@@ -73,6 +70,15 @@ export default function HomeScreen() {
       Animated.timing(diceRotation, { toValue: 0, duration: 160, useNativeDriver: true }),
     ]).start(() => setSurpriseVisible(true));
   };
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || prefs.economiseur) { setMalagasyFilms([]); return; }
+    let active = true;
+    browseKind('film', 1, { originalLanguage: 'mg', sort: 'rating' })
+      .then((result) => { if (active) setMalagasyFilms(result.items.filter((item) => !!item.poster)); })
+      .catch(() => { if (active) setMalagasyFilms([]); });
+    return () => { active = false; };
+  }, [prefs.economiseur]);
 
   useEffect(() => {
     if (!isSupabaseConfigured || prefs.economiseur) {
@@ -160,18 +166,8 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Cartes cinéma : surprise et sélection du soir */}
+      {/* Accès compact aux idées de soirée : le grand bloc Surprends-moi est supprimé */}
       <View style={styles.featureStack}>
-        <Pressable accessibilityRole="button" style={styles.surpriseCard} onPress={launchSurprise}>
-          <View style={styles.surpriseGlow} />
-          <View style={styles.featureCopy}>
-            <Text style={styles.featureEyebrow}>LA SÉLECTION ERËMĪA</Text>
-            <Text style={styles.featureTitle}>Surprends-moi ✨</Text>
-            <Text style={styles.featureBody}>Laisse le hasard choisir ta prochaine histoire.</Text>
-            <View style={styles.featureButton}><Text style={styles.featureButtonText}>LANCER LA SURPRISE</Text><Ionicons name="shuffle" size={17} color="#fff" /></View>
-          </View>
-          <Animated.View style={[styles.dice, { transform: [{ rotate: diceRotation.interpolate({ inputRange: [-1, 1], outputRange: ['-28deg', '28deg'] }) }, { scale: dicePulse }] }]}><Ionicons name="shuffle" size={42} color="#fff" /></Animated.View>
-        </Pressable>
         <Pressable accessibilityRole="button" style={styles.tonightCard} onPress={() => router.push('/ce-soir')}>
           <View style={styles.tonightArt}><Ionicons name="film" size={46} color="#F7C66A" /><Ionicons name="sparkles" size={19} color="#fff" /></View>
           <View style={styles.tonightCopy}>
@@ -183,21 +179,6 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      <Modal visible={surpriseVisible} transparent animationType="fade" onRequestClose={() => setSurpriseVisible(false)}>
-        <View style={styles.surpriseBackdrop}>
-          <View style={styles.surpriseReveal}>
-            <Pressable style={styles.modalClose} onPress={() => setSurpriseVisible(false)}><Ionicons name="close" size={22} color="#fff" /></Pressable>
-            <Ionicons name="sparkles" size={24} color="#FF5368" />
-            <Text style={styles.revealKicker}>LE HASARD A CHOISI</Text>
-            {surpriseItem?.poster ? <Image source={{ uri: surpriseItem.poster }} style={styles.revealPoster} resizeMode="cover" /> : null}
-            <Text style={styles.revealTitle} numberOfLines={2}>{surpriseItem?.title ?? 'Une surprise vous attend'}</Text>
-            <Text style={styles.revealMeta}>{surpriseItem?.year ?? 'À découvrir'}  ·  ★ {surpriseItem?.rating?.toFixed?.(1) ?? '—'}</Text>
-            <Pressable style={styles.revealButton} onPress={() => { if (surpriseItem) openTitle(router, surpriseItem); setSurpriseVisible(false); }}><Text style={styles.revealButtonText}>DÉCOUVRIR LE TITRE</Text><Ionicons name="arrow-forward" size={17} color="#fff" /></Pressable>
-            <Pressable onPress={launchSurprise} style={styles.revealAgain}><Text style={styles.revealAgainText}>Une autre surprise</Text></Pressable>
-          </View>
-        </View>
-      </Modal>
-
       {/* Rangées issues du catalogue complet, pas seulement des huit tendances */}
       <View style={styles.catalogRows}>
         <Section title="Animés récents" empty="Les animés datés apparaîtront ici quand le catalogue sera chargé.">
@@ -208,6 +189,9 @@ export default function HomeScreen() {
         </Section>
         <Section title="Animation occidentale" empty="Aucune animation occidentale disponible pour le moment.">
           {listByKind('occidental').length ? <Row data={listByKind('occidental')} cardWidth={cardWidth} /> : null}
+        </Section>
+        <Section title="Films malagasy" empty="Aucun film en langue malgache n’a été trouvé dans TMDB pour le moment.">
+          {malagasyFilms.length ? <Row data={malagasyFilms} cardWidth={cardWidth} /> : null}
         </Section>
         <Section title="Films à découvrir" empty="Les films du catalogue apparaîtront ici.">
           {listByKind('film').length ? <Row data={listByKind('film')} cardWidth={cardWidth} /> : null}
