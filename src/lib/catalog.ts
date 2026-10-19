@@ -116,7 +116,7 @@ export function classics(): Detail[] {
 export async function browseKind(
   kind: Kind,
   page: number,
-  filters: { genre?: string; year?: string; minRating?: number; family?: boolean; short?: boolean; sort?: 'popularity' | 'rating' | 'recent' } = {},
+  filters: { genre?: string; year?: string; minRating?: number; family?: boolean; short?: boolean; originalLanguage?: string; sort?: 'popularity' | 'rating' | 'recent' } = {},
 ): Promise<{ items: Detail[]; hasMore: boolean }> {
   if (!isSupabaseConfigured) throw new Error('Supabase n’est pas configuré.');
   const { data, error } = await supabase.functions.invoke('browse', { body: { kind, page, ...filters } });
