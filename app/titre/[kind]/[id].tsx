@@ -242,7 +242,7 @@ export default function TitreScreen() {
               <View style={styles.playerControls}>
                 <View style={styles.stepper}>
                   <Text style={styles.stepLabel}>Saison</Text>
-                  <Pressable accessibilityLabel="Saison précédente" onPress={() => setSeason((v) => Math.max(1, v - 1))} style={styles.stepButton}><Ionicons name="remove" size={18} color={colors.foreground} /></Pressable>
+                  <Pressable accessibilityLabel="Saison précédente" onPress={() => { setSeason((v) => Math.max(1, v - 1)); setEpisode(1); }} style={styles.stepButton}><Ionicons name="remove" size={18} color={colors.foreground} /></Pressable>
                   <Text style={styles.stepValue}>{season}</Text>
                   <Pressable accessibilityLabel="Saison suivante" onPress={() => { setSeason((v) => Math.min(20, v + 1)); setEpisode(1); }} style={styles.stepButton}><Ionicons name="add" size={18} color={colors.foreground} /></Pressable>
                 </View>
