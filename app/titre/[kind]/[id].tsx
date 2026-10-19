@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WebView } from 'react-native-webview';
 import { useStore } from '@/lib/store';
 import { addToList, fetchLists, type UserList } from '@/lib/lists';
-import { KIND_LABEL, fetchDetail, fetchSeriesSeasons, getDetail, useCatalog, type Detail, type SeriesSeason } from '@/lib/catalog';
+import { KIND_LABEL, fetchDetail, fetchSeriesEpisodes, fetchSeriesMetadata, getDetail, useCatalog, type Detail, type SeriesEpisode, type SeriesSeason } from '@/lib/catalog';
 import type { Item, Kind } from '@/lib/types';
 import { colors } from '@/lib/theme';
 import { FicheExtras } from '@/components/FicheExtras';
@@ -41,6 +41,11 @@ export default function TitreScreen() {
   const [seasonsLoading, setSeasonsLoading] = useState(false);
   const [language, setLanguage] = useState<'fr' | 'vostfr' | 'en' | 'original'>('fr');
   const [playerOpen, setPlayerOpen] = useState(false);
+  const [downloadPickerOpen, setDownloadPickerOpen] = useState(false);
+  const [episodes, setEpisodes] = useState<SeriesEpisode[]>([]);
+  const [episodesLoading, setEpisodesLoading] = useState(false);
+  const [seriesSourceId, setSeriesSourceId] = useState<string | null>(null);
+  const [seasonUnavailable, setSeasonUnavailable] = useState(false);
 
   useEffect(() => {
     pushHistory(item);
@@ -50,6 +55,10 @@ export default function TitreScreen() {
   useEffect(() => {
     let active = true;
     setPlayerOpen(false);
+    setDownloadPickerOpen(false);
+    setEpisodes([]);
+    setSeriesSourceId(null);
+    setSeasonUnavailable(false);
     setSeason(1);
     setEpisode(1);
     setLanguage('fr');
@@ -75,23 +84,50 @@ export default function TitreScreen() {
   useEffect(() => {
     let active = true;
     setSeasons([]);
+    setSeriesSourceId(null);
+    setSeasonUnavailable(false);
     setSeasonsLoading(false);
-    if (item.kind === 'film' || item.kind === 'manga') return () => { active = false; };
+    if (item.kind === 'film') return () => { active = false; };
     setSeasonsLoading(true);
-    fetchSeriesSeasons(item.id).then((result) => {
+    fetchSeriesMetadata(item.id, item.kind, item.title).then((result) => {
       if (!active) return;
-      setSeasons(result);
-      if (result.length) {
-        setSeason(result[0].number);
+      setSeasons(result.seasons);
+      setSeriesSourceId(result.sourceId);
+      setSeasonUnavailable(result.unavailable || result.seasons.length === 0);
+      if (result.seasons.length) {
+        setSeason(result.seasons[0].number);
         setEpisode(1);
       }
     }).catch(() => {
-      if (active) setSeasons([]);
+      if (active) {
+        setSeasons([]);
+        setSeriesSourceId(null);
+        setSeasonUnavailable(true);
+      }
     }).finally(() => {
       if (active) setSeasonsLoading(false);
     });
     return () => { active = false; };
-  }, [item.kind, item.id]);
+  }, [item.kind, item.id, item.title]);
+
+  useEffect(() => {
+    let active = true;
+    if (!downloadPickerOpen || item.kind === 'film' || !seriesSourceId || !seasons.some((s) => s.number === season)) {
+      setEpisodes([]);
+      return () => { active = false; };
+    }
+    setEpisodesLoading(true);
+    fetchSeriesEpisodes(item.id, season, item.kind, item.title).then((result) => {
+      if (!active) return;
+      setEpisodes(result);
+      if (result.length) setEpisode(result[0].number);
+    }).catch(() => {
+      if (active) setEpisodes([]);
+    }).finally(() => {
+      if (active) setEpisodesLoading(false);
+    });
+    return () => { active = false; };
+  }, [downloadPickerOpen, item.kind, item.id, item.title, season, seriesSourceId, seasons]);
 
   const [seen, setSeen] = useState(false);
   useEffect(() => {
@@ -155,9 +191,10 @@ export default function TitreScreen() {
 
   const meta = [detail?.year ?? item.year, detail?.runtime].filter(Boolean).join(' · ');
 
+  const playbackId = seriesSourceId ?? item.id;
   const playbackUrl = item.kind === 'film'
     ? `https://vidsrc.to/embed/movie/${encodeURIComponent(item.id)}`
-    : `https://vidsrc.to/embed/tv/${encodeURIComponent(item.id)}/${season}/${episode}`;
+    : `https://vidsrc.to/embed/tv/${encodeURIComponent(playbackId)}/${season}/${episode}`;
 
   const openPlaybackSource = async () => {
     try {
@@ -246,88 +283,126 @@ export default function TitreScreen() {
           ))}
         </View>
 
-        {item.kind !== 'manga' ? (
-          <View style={styles.playerSection}>
-            <Text style={styles.playerTitle}>Lecteur vidéo</Text>
-            <Text style={styles.playerNote}>Sélectionnez une préférence de langue. Ce lecteur externe ne garantit pas que ce choix change la piste audio ou les sous-titres ; vérifiez les options proposées dans la vidéo.</Text>
-            <View style={styles.playerControls}>
-              {([
-                ['fr', 'VF — Français'],
-                ['vostfr', 'VOSTFR'],
-                ['en', 'VO — Anglais'],
-                ['original', 'Langue originale'],
-              ] as const).map(([value, label]) => (
-                <Pressable key={value} onPress={() => setLanguage(value)} style={[styles.playerChip, language === value && styles.playerChipOn]}>
-                  <Text style={[styles.playerChipText, language === value && styles.playerChipTextOn]}>{label}</Text>
-                </Pressable>
-              ))}
+        <View style={styles.downloadEntry}>
+          <Pressable style={styles.downloadButton} onPress={() => setDownloadPickerOpen(true)}>
+            <Ionicons name="download-outline" size={22} color="#fff" />
+            <View style={styles.downloadButtonCopy}>
+              <Text style={styles.downloadButtonTitle}>Télécharger</Text>
+              <Text style={styles.downloadButtonSub}>Choisir la langue, la saison et l’épisode</Text>
             </View>
-            {item.kind !== 'film' ? (
-              <View style={styles.playerControls}>
-                <View style={styles.stepper}>
-                  <Text style={styles.stepLabel}>Saison</Text>
-                  <Pressable accessibilityLabel="Saison précédente" onPress={() => {
-                    if (seasons.length) {
-                      const index = seasons.findIndex((s) => s.number === season);
-                      if (index > 0) setSeason(seasons[index - 1].number);
-                    } else setSeason((v) => Math.max(1, v - 1));
-                    setEpisode(1);
-                  }} style={styles.stepButton} disabled={seasons.length > 0 && seasons.findIndex((s) => s.number === season) <= 0}><Ionicons name="remove" size={18} color={colors.foreground} /></Pressable>
-                  <Text style={styles.stepValue}>{seasonsLoading ? '…' : season}</Text>
-                  <Pressable accessibilityLabel="Saison suivante" onPress={() => {
-                    if (seasons.length) {
-                      const index = seasons.findIndex((s) => s.number === season);
-                      if (index >= 0 && index < seasons.length - 1) setSeason(seasons[index + 1].number);
-                    } else setSeason((v) => Math.min(20, v + 1));
-                    setEpisode(1);
-                  }} style={styles.stepButton} disabled={seasons.length > 0 && seasons.findIndex((s) => s.number === season) >= seasons.length - 1}><Ionicons name="add" size={18} color={colors.foreground} /></Pressable>
-                </View>
-                <View style={styles.stepper}>
-                  <Text style={styles.stepLabel}>Épisode</Text>
-                  <Pressable accessibilityLabel="Épisode précédent" onPress={() => setEpisode((v) => Math.max(1, v - 1))} style={styles.stepButton}><Ionicons name="remove" size={18} color={colors.foreground} /></Pressable>
-                  <Text style={styles.stepValue}>{episode}</Text>
-                  <Pressable accessibilityLabel="Épisode suivant" onPress={() => setEpisode((v) => Math.min(seasons.find((s) => s.number === season)?.episodeCount ?? 100, v + 1))} style={styles.stepButton} disabled={episode >= (seasons.find((s) => s.number === season)?.episodeCount ?? 100)}><Ionicons name="add" size={18} color={colors.foreground} /></Pressable>
-                </View>
-                {seasonsLoading ? <Text style={styles.playerNote}>Chargement des saisons réelles…</Text> : null}
-                {!seasonsLoading && seasons.length > 0 ? <Text style={styles.playerNote}>{seasons.find((s) => s.number === season)?.name ?? `Saison ${season}`} · {seasons.find((s) => s.number === season)?.episodeCount ?? 0} épisodes</Text> : null}
-              </View>
-            ) : null}
-            <View style={styles.playerActions}>
-              <Pressable style={[styles.playerToggle, styles.playerActionButton]} onPress={() => setPlayerOpen((v) => !v)}>
-                <Ionicons name={playerOpen ? 'close-circle-outline' : 'play-circle-outline'} size={20} color="#fff" />
-                <Text style={styles.playerToggleText}>{playerOpen ? 'Fermer le lecteur' : 'Lire ici'}</Text>
-              </Pressable>
-              <Pressable style={[styles.playerToggle, styles.playerExternalButton]} onPress={openPlaybackSource}>
-                <Ionicons name="open-outline" size={18} color={colors.foreground} />
-                <Text style={styles.playerExternalText}>Ouvrir la source</Text>
-              </Pressable>
+            <Ionicons name="chevron-forward" size={20} color="#fff" />
+          </Pressable>
+          {playerOpen ? (
+            <View style={styles.playerFrame}>
+              <WebView
+                key={`${item.kind}-${playbackId}-${season}-${episode}-${language}`}
+                source={{ uri: playbackUrl }}
+                style={styles.playerWebView}
+                javaScriptEnabled
+                domStorageEnabled
+                allowsFullscreenVideo
+                allowsInlineMediaPlayback
+                mediaPlaybackRequiresUserAction
+                originWhitelist={['https://*']}
+                setSupportMultipleWindows={false}
+                startInLoadingState
+                renderLoading={() => <View style={styles.playerLoading}><ActivityIndicator color={colors.primary} /><Text style={styles.playerNote}>Chargement du lecteur…</Text></View>}
+              />
             </View>
-            {playerOpen ? (
-              <View style={styles.playerFrame}>
-                <WebView
-                  key={`${item.kind}-${item.id}-${season}-${episode}-${language}`}
-                  source={{ uri: playbackUrl }}
-                  style={styles.playerWebView}
-                  javaScriptEnabled
-                  domStorageEnabled
-                  allowsFullscreenVideo
-                  allowsInlineMediaPlayback
-                  mediaPlaybackRequiresUserAction
-                  originWhitelist={['https://*']}
-                  setSupportMultipleWindows={false}
-                  startInLoadingState
-                  renderLoading={() => <View style={styles.playerLoading}><ActivityIndicator color={colors.primary} /><Text style={styles.playerNote}>Chargement du lecteur…</Text></View>}
-                />
-              </View>
-            ) : null}
-          </View>
-        ) : null}
+          ) : null}
+        </View>
 
         <FicheExtras kind={item.kind} id={item.id} poster={item.poster} title={item.title} />
         <FicheAssistant title={item.title} kind={item.kind} year={detail?.year ?? item.year} synopsis={detail?.synopsis ?? ''} />
 
         {!detail ? <Text style={styles.note}>Chargement des informations…</Text> : null}
       </ScrollView>
+
+      <Modal visible={downloadPickerOpen} transparent animationType="slide" onRequestClose={() => setDownloadPickerOpen(false)}>
+        <View style={styles.downloadModalRoot}>
+          <Pressable style={styles.downloadBackdrop} onPress={() => setDownloadPickerOpen(false)} />
+          <View style={styles.downloadSheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.downloadHeading}>
+              <View style={styles.downloadHeadingIcon}><Ionicons name="download-outline" size={23} color="#fff" /></View>
+              <View style={{ flex: 1, gap: 3 }}>
+                <Text style={styles.downloadSheetTitle}>Préparer le téléchargement</Text>
+                <Text style={styles.downloadSheetSubtitle} numberOfLines={2}>{detail?.title || item.title}</Text>
+              </View>
+              <Pressable accessibilityLabel="Fermer" onPress={() => setDownloadPickerOpen(false)} style={styles.downloadClose}><Ionicons name="close" size={20} color={colors.foreground} /></Pressable>
+            </View>
+            <ScrollView style={styles.downloadOptionsScroll} contentContainerStyle={styles.downloadOptions} showsVerticalScrollIndicator={false}>
+              <Text style={styles.optionLabel}>LANGUE SOUHAITÉE</Text>
+              <View style={styles.optionChips}>
+                {([
+                  ['fr', 'VF · Français'],
+                  ['vostfr', 'VOSTFR'],
+                  ['en', 'VO · Anglais'],
+                  ['original', 'Langue originale'],
+                ] as const).map(([value, label]) => (
+                  <Pressable key={value} onPress={() => setLanguage(value)} style={[styles.playerChip, language === value && styles.playerChipOn]}>
+                    <Text style={[styles.playerChipText, language === value && styles.playerChipTextOn]}>{label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Text style={styles.languageNote}>La langue réellement disponible dépend de la source vidéo. Ce choix ne peut pas forcer une piste audio absente.</Text>
+              {item.kind !== 'film' ? (
+                <>
+                  <View style={styles.optionDivider} />
+                  <View style={styles.optionTitleRow}>
+                    <Text style={styles.optionLabel}>SAISON</Text>
+                    {seasonsLoading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+                  </View>
+                  {seasons.length > 0 ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionChips}>
+                      {seasons.map((s) => (
+                        <Pressable key={s.number} onPress={() => { setSeason(s.number); setEpisode(1); }} style={[styles.seasonChip, season === s.number && styles.playerChipOn]}>
+                          <Text style={[styles.playerChipText, season === s.number && styles.playerChipTextOn]}>{s.name}</Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  ) : (
+                    <Text style={styles.noEpisodes}>{seasonsLoading ? 'Récupération des saisons officielles…' : seasonUnavailable ? 'Les saisons officielles de ce titre ne sont pas disponibles. Aucune saison fictive ne sera proposée.' : 'Aucune saison disponible.'}</Text>
+                  )}
+                  {seasons.length > 0 ? (
+                    <>
+                      <View style={styles.optionTitleRow}>
+                        <Text style={styles.optionLabel}>ÉPISODE</Text>
+                        {episodesLoading ? <ActivityIndicator size="small" color={colors.primary} /> : <Text style={styles.episodeCount}>{episodes.length} disponible(s)</Text>}
+                      </View>
+                      {episodesLoading ? (
+                        <View style={styles.episodeLoading}><ActivityIndicator color={colors.primary} /><Text style={styles.noEpisodes}>Chargement des épisodes réels…</Text></View>
+                      ) : episodes.length ? (
+                        <View style={styles.episodeGrid}>
+                          {episodes.map((ep) => (
+                            <Pressable key={ep.number} onPress={() => setEpisode(ep.number)} style={[styles.episodeOption, episode === ep.number && styles.episodeOptionOn]}>
+                              <Text style={[styles.episodeNumber, episode === ep.number && styles.episodeNumberOn]}>E{String(ep.number).padStart(2, '0')}</Text>
+                              <Text style={[styles.episodeName, episode === ep.number && styles.episodeNameOn]} numberOfLines={2}>{ep.name}</Text>
+                              {ep.airDate ? <Text style={styles.episodeDate}>{ep.airDate}</Text> : null}
+                            </Pressable>
+                          ))}
+                        </View>
+                      ) : <Text style={styles.noEpisodes}>Aucun épisode trouvé pour cette saison.</Text>}
+                    </>
+                  ) : null}
+                </>
+              ) : null}
+              <View style={styles.downloadNotice}>
+                <Ionicons name="information-circle-outline" size={19} color={colors.primary} />
+                <Text style={styles.downloadNoticeText}>Le téléchargement hors ligne n’est pas encore disponible dans cette version. Vous pouvez choisir un épisode puis ouvrir le lecteur.</Text>
+              </View>
+            </ScrollView>
+            <Pressable
+              style={[styles.continueButton, item.kind !== 'film' && (!seriesSourceId || !episodes.some((ep) => ep.number === episode)) && styles.continueButtonDisabled]}
+              disabled={item.kind !== 'film' && (!seriesSourceId || !episodes.some((ep) => ep.number === episode))}
+              onPress={() => { setDownloadPickerOpen(false); setPlayerOpen(true); }}
+            >
+              <Ionicons name="play-circle-outline" size={21} color="#fff" />
+              <Text style={styles.continueButtonText}>Ouvrir la lecture</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
         <Pressable style={styles.backdrop} onPress={() => setPickerOpen(false)} />
@@ -389,6 +464,44 @@ const styles = StyleSheet.create({
   btnText: { color: colors.foreground, fontWeight: '600' },
   sectionLabel: { color: colors.mutedForeground, letterSpacing: 1.5, fontSize: 11, marginTop: 14, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border },
   stars: { flexDirection: 'row', gap: 6, marginTop: 10 },
+  downloadEntry: { marginTop: 18, marginBottom: 8, gap: 12 },
+  downloadButton: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 18, backgroundColor: colors.primary, borderWidth: 1, borderColor: colors.primary },
+  downloadButtonCopy: { flex: 1, gap: 3 },
+  downloadButtonTitle: { color: '#fff', fontSize: 17, fontWeight: '900' },
+  downloadButtonSub: { color: 'rgba(255,255,255,0.82)', fontSize: 11, lineHeight: 16 },
+  downloadModalRoot: { flex: 1, justifyContent: 'flex-end' },
+  downloadBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.68)' },
+  downloadSheet: { maxHeight: '88%', backgroundColor: colors.background, borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingTop: 10, paddingHorizontal: 18, paddingBottom: 22, borderWidth: 1, borderColor: colors.border, gap: 14 },
+  sheetHandle: { alignSelf: 'center', width: 42, height: 4, borderRadius: 999, backgroundColor: colors.muted, marginBottom: 2 },
+  downloadHeading: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  downloadHeadingIcon: { width: 46, height: 46, borderRadius: 15, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  downloadSheetTitle: { color: colors.foreground, fontSize: 18, fontWeight: '900' },
+  downloadSheetSubtitle: { color: colors.mutedForeground, fontSize: 13 },
+  downloadClose: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card },
+  downloadOptionsScroll: { flexShrink: 1 },
+  downloadOptions: { gap: 11, paddingBottom: 8 },
+  optionLabel: { color: colors.mutedForeground, fontSize: 10, letterSpacing: 1.5, fontWeight: '900' },
+  optionChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  languageNote: { color: colors.mutedForeground, fontSize: 11, lineHeight: 16 },
+  optionDivider: { height: 1, backgroundColor: colors.border, marginVertical: 2 },
+  optionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  seasonChip: { maxWidth: 210, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 12, paddingHorizontal: 13, paddingVertical: 10 },
+  noEpisodes: { color: colors.mutedForeground, fontSize: 12, lineHeight: 18 },
+  episodeCount: { color: colors.mutedForeground, fontSize: 11 },
+  episodeLoading: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+  episodeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  episodeOption: { width: '31%', minHeight: 74, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, padding: 9, gap: 4 },
+  episodeOptionOn: { borderColor: colors.primary, backgroundColor: 'rgba(210,55,92,0.16)' },
+  episodeNumber: { color: colors.mutedForeground, fontSize: 11, fontWeight: '900' },
+  episodeNumberOn: { color: colors.primary },
+  episodeName: { color: colors.foreground, fontSize: 10, fontWeight: '700' },
+  episodeNameOn: { color: colors.foreground },
+  episodeDate: { color: colors.mutedForeground, fontSize: 9 },
+  downloadNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, padding: 12, borderRadius: 13, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  downloadNoticeText: { flex: 1, color: colors.mutedForeground, fontSize: 11, lineHeight: 17 },
+  continueButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, backgroundColor: colors.primary, borderRadius: 15, paddingVertical: 14 },
+  continueButtonDisabled: { opacity: 0.4 },
+  continueButtonText: { color: '#fff', fontWeight: '900', fontSize: 14 },
   playerSection: { marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.border, gap: 10 },
   playerTitle: { color: colors.foreground, fontSize: 23, fontWeight: '900' },
   playerNote: { color: colors.mutedForeground, fontSize: 13, lineHeight: 19 },
