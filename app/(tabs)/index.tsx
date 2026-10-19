@@ -74,7 +74,7 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured || prefs.economiseur) {
       setPosts([]);
       setSports([]);
       setVisits(null);
