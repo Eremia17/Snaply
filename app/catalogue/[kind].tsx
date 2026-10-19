@@ -35,6 +35,7 @@ export default function CatalogueScreen() {
   const [genre, setGenre] = useState<string | null>(null);
   const [year, setYear] = useState<string | null>(null);
   const [minNote, setMinNote] = useState(0);
+  const [shortOnly, setShortOnly] = useState(false);
   const [yearOptionsOpen, setYearOptionsOpen] = useState(false);
   const [ratingOptionsOpen, setRatingOptionsOpen] = useState(false);
 
@@ -42,7 +43,7 @@ export default function CatalogueScreen() {
     setLoading(true);
     setLoadError(null);
     try {
-      const r = await browseKind(kind, p, { genre: genre ?? undefined, year: year ?? undefined, minRating: minNote || undefined, family: prefs.famille });
+      const r = await browseKind(kind, p, { genre: genre ?? undefined, year: year ?? undefined, minRating: minNote || undefined, family: prefs.famille, short: shortOnly || undefined });
       setItems((prev) => {
         if (p === 1) return r.items;
         const ids = new Set(prev.map((x) => x.id));
@@ -55,12 +56,13 @@ export default function CatalogueScreen() {
     } finally {
       setLoading(false);
     }
-  }, [kind, genre, year, minNote, prefs.famille]);
+  }, [kind, genre, year, minNote, prefs.famille, shortOnly]);
 
   useEffect(() => {
     setGenre(null);
     setYear(null);
     setMinNote(0);
+    setShortOnly(false);
     setYearOptionsOpen(false);
     setRatingOptionsOpen(false);
   }, [kind]);
@@ -70,7 +72,7 @@ export default function CatalogueScreen() {
     setPage(1);
     setHasMore(true);
     load(1);
-  }, [kind, genre, year, minNote, prefs.famille, load]);
+  }, [kind, genre, year, minNote, prefs.famille, shortOnly, load]);
 
   const genres = GENRES[kind] ?? [];
   const years = Array.from({ length: new Date().getFullYear() - 1979 }, (_, i) => String(new Date().getFullYear() - i));
@@ -121,7 +123,12 @@ export default function CatalogueScreen() {
           <Text style={styles.filterSelectText}>{minNote ? 'Note ' + minNote + '+ / 10' : 'Toutes les notes'}</Text>
           <Ionicons name={ratingOptionsOpen ? 'chevron-up' : 'chevron-down'} size={14} color={colors.mutedForeground} />
         </Pressable>
-        {(year !== null || minNote > 0 || genre !== null) ? <Pressable style={styles.resetFilter} onPress={() => { setYear(null); setMinNote(0); setGenre(null); setYearOptionsOpen(false); setRatingOptionsOpen(false); }}><Ionicons name="refresh-outline" size={15} color={colors.mutedForeground} /><Text style={styles.resetFilterText}>Réinitialiser</Text></Pressable> : null}
+        <Pressable style={[styles.filterSelect, shortOnly && styles.filterSelectOn]} onPress={() => setShortOnly((v) => !v)}>
+          <Ionicons name="time-outline" size={15} color={colors.foreground} />
+          <Text style={styles.filterSelectText}>Moins de 105 min</Text>
+          {shortOnly ? <Ionicons name="checkmark-circle" size={14} color={colors.primary} /> : null}
+        </Pressable>
+        {(year !== null || minNote > 0 || genre !== null || shortOnly) ? <Pressable style={styles.resetFilter} onPress={() => { setYear(null); setMinNote(0); setGenre(null); setShortOnly(false); setYearOptionsOpen(false); setRatingOptionsOpen(false); }}><Ionicons name="refresh-outline" size={15} color={colors.mutedForeground} /><Text style={styles.resetFilterText}>Réinitialiser</Text></Pressable> : null}
       </View>
       {yearOptionsOpen ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionRow}><Chip label="Toutes les années" on={year === null} onPress={() => { setYear(null); setYearOptionsOpen(false); }} />{years.map((y) => <Chip key={y} label={y} on={year === y} onPress={() => { setYear(y); setYearOptionsOpen(false); }} />)}</ScrollView> : null}
       {ratingOptionsOpen ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.optionRow}>{NOTES.map((n) => <Chip key={n} label={n === 0 ? 'Toutes les notes' : '★ ' + n + '+ / 10'} on={minNote === n} onPress={() => { setMinNote(n); setRatingOptionsOpen(false); }} />)}</ScrollView> : null}
