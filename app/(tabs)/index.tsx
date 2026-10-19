@@ -3,7 +3,7 @@ import { FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, Vi
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PosterCard } from '@/components/PosterCard';
-import { featured, fetchSports, trending, useCatalog, type SportMatch } from '@/lib/catalog';
+import { classics, featured, fetchSports, trending, upcomingList, useCatalog, type SportMatch } from '@/lib/catalog';
 import { openTitle } from '@/lib/navigation';
 import { useStore } from '@/lib/store';
 import { fetchPosts, type Post } from '@/lib/community';
@@ -142,6 +142,12 @@ export default function HomeScreen() {
       <View style={{ padding: 16, gap: 28 }}>
         <Section title="Tendances">
           <Row data={trending()} />
+        </Section>
+        <Section title="Classiques à redécouvrir" empty="Les classiques du catalogue apparaîtront ici lorsqu’ils seront identifiés.">
+          {classics().length ? <Row data={classics()} /> : null}
+        </Section>
+        <Section title="Prochainement" empty="Les prochaines sorties apparaîtront ici lorsqu’une date sera disponible.">
+          {upcomingList().length ? <Row data={upcomingList()} /> : null}
         </Section>
         <Section title="Vu récemment" empty="Les fiches que vous consultez apparaîtront ici.">
           {history.length ? <Row data={history} /> : null}
