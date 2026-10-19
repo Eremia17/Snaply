@@ -44,9 +44,17 @@ Cette clé doit rester côté serveur : ne la mettez pas dans `EXPO_PUBLIC_...`,
 
 ## 4. Vérifier le déploiement des fonctions Supabase
 
-Le dépôt contient le code des fonctions Edge `catalog` et `browse`, mais un commit GitHub ne les déploie pas automatiquement dans votre projet Supabase, sauf si une intégration de déploiement a déjà été configurée.
+Le dépôt contient les fonctions Edge `catalog` et `browse`. Le workflow GitHub `.github/workflows/deploy-supabase-browse.yml` peut les déployer automatiquement lorsqu'un fichier de ces fonctions ou `supabase/config.toml` change.
 
-Dans le tableau de bord Supabase, vérifiez que les fonctions `catalog` et `browse` existent et sont déployées dans le bon projet. Sinon, déployez-les avec Supabase CLI depuis un environnement compatible, après vous être connecté et avoir lié le projet. Ne collez jamais un token d'accès dans le chat ou dans GitHub.
+Pour activer ce déploiement automatique, ouvrez le dépôt GitHub :
+`Settings → Secrets and variables → Actions → New repository secret`
+et ajoutez ces deux secrets avec les noms exacts :
+- `SUPABASE_ACCESS_TOKEN` : votre token d'accès personnel Supabase ;
+- `SUPABASE_PROJECT_ID` : la référence du projet Supabase (Project Ref).
+
+Ces secrets restent dans les paramètres privés du dépôt ; ne les ajoutez jamais au code, à un fichier de configuration commité ou à un message de chat. Le workflow vérifie leur présence avant de déployer `catalog` et `browse`. Après le déploiement, vérifiez l'exécution dans l'onglet **Actions** de GitHub.
+
+Si vous ne souhaitez pas utiliser ce workflow, les fonctions peuvent aussi être déployées avec Supabase CLI depuis un environnement compatible, après connexion et liaison au bon projet.
 
 ## 5. Autres sources de données
 
