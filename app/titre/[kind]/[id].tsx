@@ -178,7 +178,7 @@ export default function TitreScreen() {
           headerShadowVisible: false,
         }}
       />
-      <ScrollView style={styles.root} contentContainerStyle={styles.content} removeClippedSubviews={false}>
+      <ScrollView removeClippedSubviews={false} style={styles.root} contentContainerStyle={styles.content} removeClippedSubviews={false}>
         <View pointerEvents="none" style={styles.backdropHero}>
           {(detail?.backdrop || item.backdrop) ? <Image source={{ uri: detail?.backdrop || item.backdrop || undefined }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
           <View style={styles.backdropShade} />
