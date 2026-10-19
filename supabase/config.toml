@@ -7,3 +7,6 @@ verify_jwt = false
 
 [functions.catalog]
 verify_jwt = false
+
+[functions.gemini]
+verify_jwt = false
