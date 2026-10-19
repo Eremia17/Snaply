@@ -170,7 +170,7 @@ async function detail(kind: Kind, id: string): Promise<Item> {
       year: m.startDate?.year ? String(m.startDate.year) : null,
       genres: (m.genres ?? []).slice(0, 4),
       rating: m.averageScore ? Math.round(m.averageScore) / 10 : 0,
-      synopsis: String(m.description ?? "").replace(/<[^>]+>/g, "").replace(/\\s+/g, " ").trim(),
+      synopsis: String(m.description ?? "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(),
     };
   }
   const x = await tmdb(kind === "film" ? `/movie/${id}` : `/tv/${id}`);
