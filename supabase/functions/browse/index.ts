@@ -109,7 +109,7 @@ async function animeExtras(id: string) {
     { id: Number(id) },
   );
   const m = data.Media;
-  if (!m) return { trailer: null, cast: [], providers: [], constellation: { name: "Animés liés", items: [] }, reviews: [] };
+  if (!m) return { trailer: null, cast: [], providers: [], constellation: { name: "Animés liés", items: [] }, similar: [], reviews: [] };
 
   let tmdbData: any = null;
   try {
@@ -174,7 +174,8 @@ async function animeExtras(id: string) {
       name: p.provider_name,
       logo: p.logo_path ? IMG + p.logo_path : null,
     })),
-    constellation: { name: related.length ? "Animés liés" : "Titres similaires", items: constellationItems },
+    constellation: { name: related.length ? "Animés liés" : "Titres liés", items: related },
+    similar: recommendations,
     reviews: (tmdbData?.reviews?.results ?? []).slice(0, 5).map((r: any) => ({
       author: r.author ?? "Anonyme",
       rating: r.author_details?.rating ?? null,
@@ -237,6 +238,7 @@ async function extras(kind: string, id: string) {
       logo: p.logo_path ? IMG + p.logo_path : null,
     })),
     constellation,
+    similar: (d.recommendations?.results ?? []).slice(0, 12).map((x: any) => fromTmdb(x, kind, names)),
     reviews: (d.reviews?.results ?? []).slice(0, 5).map((r: any) => ({
       author: r.author ?? "Anonyme",
       rating: r.author_details?.rating ?? null,
