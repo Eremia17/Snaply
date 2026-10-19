@@ -116,6 +116,7 @@ export type Extras = {
   cast: { name: string; character: string; photo: string | null }[];
   providers: { name: string; logo: string | null }[];
   constellation: { name: string; items: Detail[] };
+  similar: Detail[];
   reviews: { author: string; rating: number | null; date: string; content: string }[];
 };
 
