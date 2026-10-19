@@ -81,7 +81,7 @@ export function NativeVideoPlayer({
         style={styles.video}
         contentFit="contain"
         nativeControls
-        allowsFullscreen
+        fullscreenOptions={{ enable: true, orientation: 'landscape' }}
         allowsPictureInPicture
       />
       {!activeSource || playerError ? (
