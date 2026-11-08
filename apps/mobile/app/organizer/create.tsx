@@ -8,7 +8,7 @@ import { formatAriary } from '../../src/utils/currency';
 type TicketTier = { id: number; name: string; price: string; quantity: string };
 const categories = ['Musique', 'Festival', 'Culture', 'Sport', 'Conférence', 'Spectacle', 'Autre'];
 const steps = [{ title: 'Identité', caption: 'Informations générales' }, { title: 'Planning', caption: 'Lieu et calendrier' }, { title: 'Billetterie', caption: 'Tarifs et capacité' }, { title: 'Validation', caption: 'Contrôle final' }];
-const money = (value: string) => value && /^\d+$/.test(value) ? Number(value).toLocaleString('fr-FR') + ' Ar' : 'À définir';
+const money = (value: string) => value && /^\d+$/.test(value) ? formatAriary(Number(value)) : 'À définir';
 
 function Input({ label, value, onChangeText, placeholder, multiline = false, numeric = false }: { label: string; value: string; onChangeText: (v: string) => void; placeholder: string; multiline?: boolean; numeric?: boolean }) {
   return <View style={styles.field}><Text style={styles.fieldLabel}>{label}</Text><TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#778094" multiline={multiline} keyboardType={numeric ? 'numeric' : 'default'} style={[styles.input, multiline && styles.textarea]} /></View>;
@@ -31,7 +31,25 @@ export default function CreateEventScreen() {
   const [posterUri, setPosterUri] = useState<string | null>(null);
 
   const totalCapacity = tiers.reduce((sum, tier) => sum + (Number(tier.quantity) || 0), 0);
-  const hasValidDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(date)) && new Date(date + 'T23:59:59').getTime() > Date.now();
+  const dateParts = date.split('-').map(Number);
+  const dateIsReal = dateParts.length === 3 && dateParts[0] > 0 &&
+    new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2])).toISOString().slice(0, 10) === date;
+  const hasValidDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && dateIsReal &&
+    new Date(date + 'T23:59:59').getTime() > Date.now();
+
+  async function choosePoster() {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.82,
+      });
+      if (!result.canceled && result.assets[0]) setPosterUri(result.assets[0].uri);
+    } catch {
+      setError("Impossible d'ouvrir la galerie. Réessaie dans un instant.");
+    }
+  }
   function validateStep() {
     if (step === 0) {
       if (title.trim().length < 4) return 'Le nom doit contenir au moins 4 caractères.';
@@ -41,6 +59,7 @@ export default function CreateEventScreen() {
       if (!city.trim() || !venue.trim() || !address.trim()) return 'Complète la ville, le lieu et son adresse.';
       if (!hasValidDate || !/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)) return 'Vérifie la date et l’heure de début.';
       if (endTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(endTime)) return 'Le format de l’heure de fin doit être HH:MM.';
+      if (endTime && endTime <= startTime) return 'L’heure de fin doit être postérieure à l’heure de début.';
     }
     if (step === 2) {
       if (!tiers.length) return 'Ajoute au moins une catégorie de billet.';
