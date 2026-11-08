@@ -3,6 +3,7 @@ import { SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'rea
 import { colors } from '../../src/theme';
 
 const shortcuts = [
+  { icon: '▦', title: 'Mes événements', detail: 'Retrouver, modifier et suivre tes événements', route: '/organizer/events' as const },
   { icon: '+', title: 'Nouvel événement', detail: 'Créer une fiche et configurer la billetterie', route: '/organizer/create' as const },
   { icon: '▤', title: 'Billetterie', detail: 'Types de billets, quotas et tarifs', route: null },
   { icon: '⌁', title: 'Contrôle d’accès', detail: 'Scanner et valider les billets à l’entrée', route: null },
@@ -53,7 +54,7 @@ export default function OrganizerScreen() {
         <View style={styles.pipeline}>
           {pipeline.map((item, index) => <View key={item.number} style={styles.pipelineRow}><View style={styles.pipelineNumber}><Text style={styles.pipelineNumberText}>{item.number}</Text></View><View style={styles.pipelineCopy}><Text style={styles.pipelineTitle}>{item.title}</Text><Text style={styles.pipelineDetail}>{item.detail}</Text></View>{index < 2 ? <View style={styles.pipelineLine} /> : null}</View>)}
         </View>
-        <Text style={styles.footer}>TICKET MADA · ORGANIZER WORKSPACE · V 0.1</Text>
+        <Text style={styles.footer}>TICKET MADA · ORGANIZER WORKSPACE · V 0.2</Text>
       </ScrollView>
     </SafeAreaView>
   );
