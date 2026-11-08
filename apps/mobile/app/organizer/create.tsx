@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
+import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../../src/theme';
+import { formatAriary } from '../../src/utils/currency';
 
 type TicketTier = { id: number; name: string; price: string; quantity: string };
 const categories = ['Musique', 'Festival', 'Culture', 'Sport', 'Conférence', 'Spectacle', 'Autre'];
@@ -26,6 +28,7 @@ export default function CreateEventScreen() {
   const [nextId, setNextId] = useState(2);
   const [error, setError] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [posterUri, setPosterUri] = useState<string | null>(null);
 
   const totalCapacity = tiers.reduce((sum, tier) => sum + (Number(tier.quantity) || 0), 0);
   const hasValidDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(date)) && new Date(date + 'T23:59:59').getTime() > Date.now();
@@ -71,7 +74,15 @@ export default function CreateEventScreen() {
         <Text style={styles.subheading}>{steps[step].caption}. Les informations seront utilisées sur la page publique de l’événement.</Text>
 
         {step === 0 ? <>
-          <View style={styles.coverPlaceholder}><View style={styles.coverIcon}><Text style={styles.coverIconText}>＋</Text></View><Text style={styles.coverTitle}>Visuel de couverture</Text><Text style={styles.coverHint}>Le téléversement d’affiche sera disponible dans la prochaine version.</Text><View style={styles.coverRecommended}><Text style={styles.coverRecommendedText}>FORMAT RECOMMANDÉ · 16:9</Text></View></View>
+          <Pressable onPress={choosePoster} style={styles.coverPlaceholder}>
+            {posterUri ? <Image source={{ uri: posterUri }} style={styles.coverImage} /> : null}
+            <View style={[styles.coverOverlay, posterUri && styles.coverOverlayOnImage]}>
+              <View style={styles.coverIcon}><Text style={styles.coverIconText}>{posterUri ? '↻' : '＋'}</Text></View>
+              <Text style={styles.coverTitle}>{posterUri ? 'Remplacer le visuel' : 'Ajouter une affiche'}</Text>
+              <Text style={styles.coverHint}>Sélectionne une image dans ta galerie et recadre-la au format paysage.</Text>
+              <View style={styles.coverRecommended}><Text style={styles.coverRecommendedText}>AFFICHE ÉVÉNEMENT · 16:9</Text></View>
+            </View>
+          </Pressable>
           <Input label="NOM DE L’ÉVÉNEMENT" value={title} onChangeText={setTitle} placeholder="Ex. Mada Urban Festival 2027" />
           <Text style={styles.fieldLabel}>CATÉGORIE</Text>
           <View style={styles.categoryGrid}>{categories.map(item => <Pressable key={item} onPress={() => setCategory(item)} style={[styles.category, category === item && styles.categoryActive]}><Text style={[styles.categoryText, category === item && styles.categoryTextActive]}>{item}</Text></Pressable>)}</View>
@@ -103,7 +114,7 @@ export default function CreateEventScreen() {
         </> : null}
 
         {step === 3 ? <>
-          <View style={styles.reviewHero}><Text style={styles.reviewEyebrow}>PRÊT POUR LA VÉRIFICATION</Text><Text style={styles.reviewTitle}>{title || 'Événement sans titre'}</Text><Text style={styles.reviewMeta}>{category}  ·  {city || 'Ville à préciser'}</Text></View>
+          <View style={styles.reviewHero}>{posterUri ? <Image source={{ uri: posterUri }} style={styles.reviewPoster} /> : null}<Text style={styles.reviewEyebrow}>PRÊT POUR LA VÉRIFICATION</Text><Text style={styles.reviewTitle}>{title || 'Événement sans titre'}</Text><Text style={styles.reviewMeta}>{category}  ·  {city || 'Ville à préciser'}</Text></View>
           <View style={styles.reviewSection}><Text style={styles.reviewSectionTitle}>ÉVÉNEMENT</Text><ReviewLine label="Lieu" value={venue + (address ? ' · ' + address : '')} /><ReviewLine label="Date" value={date + ' · ' + startTime + (endTime ? ' – ' + endTime : '')} /><ReviewLine label="Description" value={description} /></View>
           <View style={styles.reviewSection}><Text style={styles.reviewSectionTitle}>BILLETTERIE</Text>{tiers.map(t => <ReviewLine key={t.id} label={t.name} value={money(t.price) + '  ·  ' + t.quantity + ' billets'} />)}<View style={styles.reviewTotal}><Text style={styles.reviewTotalLabel}>CAPACITÉ TOTALE</Text><Text style={styles.reviewTotalValue}>{totalCapacity.toLocaleString('fr-FR')} billets</Text></View></View>
           <View style={styles.infoNote}><Text style={styles.infoNoteTitle}>Étape suivante : connexion et validation</Text><Text style={styles.infoNoteBody}>Le dossier est prêt à être relu. L’enregistrement, l’envoi des justificatifs organisateur et la publication seront activés après mise en place de l’authentification et des services serveur.</Text></View>
@@ -145,7 +156,10 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.primary, fontSize: 9, letterSpacing: 2, fontWeight: '900' },
   heading: { color: colors.text, fontSize: 27, fontWeight: '900', marginTop: 7 },
   subheading: { color: colors.muted, fontSize: 11, lineHeight: 18, marginTop: 6, marginBottom: 22 },
-  coverPlaceholder: { minHeight: 145, borderRadius: 15, borderWidth: 1, borderColor: '#465064', borderStyle: 'dashed', backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', padding: 14, marginBottom: 21 },
+  coverPlaceholder: { minHeight: 175, borderRadius: 15, borderWidth: 1, borderColor: '#465064', borderStyle: 'dashed', backgroundColor: colors.surface, overflow: 'hidden', marginBottom: 21 },
+  coverImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', resizeMode: 'cover' },
+  coverOverlay: { minHeight: 175, alignItems: 'center', justifyContent: 'center', padding: 14, backgroundColor: '#171C28' },
+  coverOverlayOnImage: { backgroundColor: 'rgba(8, 10, 16, 0.48)' },
   coverIcon: { width: 31, height: 31, borderRadius: 10, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
   coverIconText: { color: colors.primary, fontSize: 20 },
   coverTitle: { color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 8 },
@@ -183,6 +197,7 @@ const styles = StyleSheet.create({
   infoNoteTitle: { color: colors.text, fontSize: 10, fontWeight: '900' },
   infoNoteBody: { color: '#AEBFC0', fontSize: 9, lineHeight: 15 },
   reviewHero: { backgroundColor: '#28202C', borderRadius: 15, borderWidth: 1, borderColor: '#4B3447', padding: 17, marginBottom: 13 },
+  reviewPoster: { width: '100%', height: 150, borderRadius: 10, marginBottom: 14 },
   reviewEyebrow: { color: '#D98D9B', fontSize: 8, letterSpacing: 1.5, fontWeight: '900' },
   reviewTitle: { color: colors.text, fontSize: 22, fontWeight: '900', marginTop: 9 },
   reviewMeta: { color: colors.muted, fontSize: 10, marginTop: 6 },
