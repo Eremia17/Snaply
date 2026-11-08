@@ -1,18 +1,19 @@
 import { useMemo, useState } from 'react';
 import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
+import { router } from 'expo-router';
 import { demoEvents } from '../src/data/events';
 import type { EventItem } from '../src/data/events';
 import { colors } from '../src/theme';
 
 type Language = 'fr' | 'mg';
 const copy = {
-  fr: { location: 'MADAGASCAR', title: 'Tes sorties,\ntout simplement.', subtitle: 'Découvre les événements près de chez toi.', search: 'Rechercher un événement ou une ville', featured: 'À découvrir', all: 'Tout voir', categories: ['Tout', 'Musique', 'Culture', 'Conférence'], city: 'Lieu à confirmer', empty: 'Aucun événement dans cette catégorie.' },
-  mg: { location: 'MADAGASIKARA', title: 'Ny hetsika,\nakaiky anao.', subtitle: 'Fantaro ireo hetsika manodidina anao.', search: 'Mitadiava hetsika na tanàna', featured: 'Hojerena', all: 'Jereo daholo', categories: ['Rehetra', 'Mozika', 'Kolontsaina', 'Fihaonambe'], city: 'Toerana hohamafisina', empty: 'Tsy mbola misy hetsika eto.' }
+  fr: { location: 'MADAGASCAR', title: 'Tes sorties,\ntout simplement.', subtitle: 'Découvre les événements près de chez toi.', search: 'Rechercher un événement ou une ville', featured: 'À découvrir', all: 'Tout voir', categories: ['Tout', 'Musique', 'Culture', 'Conférence'], empty: 'Aucun événement dans cette catégorie.' },
+  mg: { location: 'MADAGASIKARA', title: 'Ny hetsika,\nakaiky anao.', subtitle: 'Fantaro ireo hetsika manodidina anao.', search: 'Mitadiava hetsika na tanàna', featured: 'Hojerena', all: 'Jereo daholo', categories: ['Rehetra', 'Mozika', 'Kolontsaina', 'Fihaonambe'], empty: 'Tsy mbola misy hetsika eto.' }
 };
 
-function EventCard({ item, language }: { item: EventItem; language: Language }) {
+function EventCard({ item }: { item: EventItem }) {
   return (
-    <Pressable accessibilityRole="button" style={styles.eventCard} onPress={() => {}}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Ouvrir ${item.title}`} style={styles.eventCard} onPress={() => router.push({ pathname: '/event/[id]', params: { id: item.id } })}>
       <View style={[styles.eventArtwork, { backgroundColor: item.accent }]}>
         <Text style={styles.artworkSymbol}>{item.symbol}</Text>
         <Text style={styles.artworkTag}>{item.category.toUpperCase()}</Text>
@@ -49,9 +50,12 @@ export default function HomeScreen() {
             <View style={styles.brandMark}><Text style={styles.brandMarkText}>T</Text></View>
             <Text style={styles.brand}>TICKET <Text style={styles.brandAccent}>MADA</Text></Text>
           </View>
-          <View style={styles.languageSwitch}>
-            <Pressable onPress={() => setLanguage('fr')} style={[styles.languageButton, language === 'fr' && styles.languageActive]}><Text style={[styles.languageText, language === 'fr' && styles.languageTextActive]}>FR</Text></Pressable>
-            <Pressable onPress={() => setLanguage('mg')} style={[styles.languageButton, language === 'mg' && styles.languageActive]}><Text style={[styles.languageText, language === 'mg' && styles.languageTextActive]}>MG</Text></Pressable>
+          <View style={styles.topActions}>
+            <Pressable onPress={() => router.push('/organizer')} style={styles.organizerLink}><Text style={styles.organizerLinkText}>Organisateur</Text></Pressable>
+            <View style={styles.languageSwitch}>
+              <Pressable onPress={() => setLanguage('fr')} style={[styles.languageButton, language === 'fr' && styles.languageActive]}><Text style={[styles.languageText, language === 'fr' && styles.languageTextActive]}>FR</Text></Pressable>
+              <Pressable onPress={() => setLanguage('mg')} style={[styles.languageButton, language === 'mg' && styles.languageActive]}><Text style={[styles.languageText, language === 'mg' && styles.languageTextActive]}>MG</Text></Pressable>
+            </View>
           </View>
         </View>
 
@@ -78,9 +82,9 @@ export default function HomeScreen() {
         </ScrollView>
 
         <View style={styles.eventList}>
-          {filtered.length ? filtered.map((event) => <EventCard key={event.id} item={event} language={language} />) : <Text style={styles.empty}>{t.empty}</Text>}
+          {filtered.length ? filtered.map((event) => <EventCard key={event.id} item={event} />) : <Text style={styles.empty}>{t.empty}</Text>}
         </View>
-        <View style={styles.notice}><Text style={styles.noticeTitle}>Bientôt sur Ticket Mada</Text><Text style={styles.noticeText}>Réservation, paiement sécurisé et billets QR seront activés après les intégrations et tests nécessaires.</Text></View>
+        <View style={styles.notice}><Text style={styles.noticeTitle}>Bientôt sur Ticket Mada</Text><Text style={styles.noticeText}>Ces événements sont des exemples. Les réservations, paiements et billets QR seront activés après intégration et tests.</Text></View>
         <Text style={styles.footer}>FAIT AVEC ♥ À MADAGASCAR</Text>
       </ScrollView>
     </SafeAreaView>
@@ -90,14 +94,17 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 36 },
-  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  topActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  organizerLink: { paddingHorizontal: 9, paddingVertical: 8, borderRadius: 9, backgroundColor: colors.surface },
+  organizerLinkText: { color: colors.text, fontSize: 10, fontWeight: '700' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   brandMark: { width: 34, height: 34, borderRadius: 11, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   brandMarkText: { color: colors.white, fontWeight: '900', fontSize: 20 },
   brand: { color: colors.text, fontWeight: '900', letterSpacing: 1.4, fontSize: 14 },
   brandAccent: { color: colors.primary },
   languageSwitch: { flexDirection: 'row', backgroundColor: colors.surface, padding: 3, borderRadius: 10 },
-  languageButton: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  languageButton: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8 },
   languageActive: { backgroundColor: colors.surfaceRaised },
   languageText: { color: colors.muted, fontWeight: '700', fontSize: 11 },
   languageTextActive: { color: colors.text },
