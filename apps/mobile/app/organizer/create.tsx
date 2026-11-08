@@ -32,7 +32,7 @@ export default function CreateEventScreen() {
 
   const totalCapacity = tiers.reduce((sum, tier) => sum + (Number(tier.quantity) || 0), 0);
   const dateParts = date.split('-').map(Number);
-  const dateIsReal = dateParts.length === 3 && dateParts[0] > 0 &&
+  const dateIsReal = dateParts.length === 3 && dateParts.every(Number.isInteger) && dateParts[0] > 0 &&
     new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2])).toISOString().slice(0, 10) === date;
   const hasValidDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && dateIsReal &&
     new Date(date + 'T23:59:59').getTime() > Date.now();
