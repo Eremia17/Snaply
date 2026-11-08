@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { router } from 'expo-router';
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../../src/theme';
 import { formatAriary } from '../../src/utils/currency';
+import { getEventDraft, persistEventPoster, saveEventDraft } from '../../src/storage/eventDrafts';
 
 type TicketTier = { id: number; name: string; price: string; quantity: string };
 const categories = ['Musique', 'Festival', 'Culture', 'Sport', 'Conférence', 'Spectacle', 'Autre'];
@@ -14,6 +15,45 @@ function Input({ label, value, onChangeText, placeholder, multiline = false, num
   return <View style={styles.field}><Text style={styles.fieldLabel}>{label}</Text><TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#778094" multiline={multiline} keyboardType={numeric ? 'numeric' : 'default'} style={[styles.input, multiline && styles.textarea]} /></View>;
 }
 export default function CreateEventScreen() {
+  const { draftId } = useLocalSearchParams<{ draftId?: string }>();
+  const [saving, setSaving] = useState(false);
+  const [loadingDraft, setLoadingDraft] = useState(Boolean(draftId));
+  const [createdAt, setCreatedAt] = useState(new Date().toISOString());
+
+  useEffect(() => {
+    let active = true;
+    async function loadDraft() {
+      if (!draftId) { setLoadingDraft(false); return; }
+      try {
+        const draft = await getEventDraft(draftId);
+        if (!active) return;
+        if (!draft) {
+          Alert.alert('Brouillon introuvable', 'Ce brouillon a peut-être été supprimé.');
+          router.replace('/organizer/events');
+          return;
+        }
+        setTitle(draft.title);
+        setCategory(draft.category);
+        setDescription(draft.description);
+        setCity(draft.city);
+        setVenue(draft.venue);
+        setAddress(draft.address);
+        setDate(draft.date);
+        setStartTime(draft.startTime);
+        setEndTime(draft.endTime);
+        setTiers(draft.tiers);
+        setNextId(Math.max(1, ...draft.tiers.map(tier => tier.id)) + 1);
+        setPosterUri(draft.posterUri);
+        setCreatedAt(draft.createdAt);
+      } catch {
+        if (active) Alert.alert('Erreur', 'Impossible de charger ce brouillon.');
+      } finally {
+        if (active) setLoadingDraft(false);
+      }
+    }
+    loadDraft();
+    return () => { active = false; };
+  }, [draftId]);
   const [step, setStep] = useState(0);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Musique');
@@ -45,7 +85,10 @@ export default function CreateEventScreen() {
         aspect: [16, 9],
         quality: 0.82,
       });
-      if (!result.canceled && result.assets[0]) setPosterUri(result.assets[0].uri);
+      if (!result.canceled && result.assets[0]) {
+        const savedUri = await persistEventPoster(result.assets[0].uri);
+        setPosterUri(savedUri);
+      }
     } catch {
       setError("Impossible d'ouvrir la galerie. Réessaie dans un instant.");
     }
@@ -77,11 +120,43 @@ export default function CreateEventScreen() {
     setTiers(current => current.map(t => t.id === id ? { ...t, [key]: value } : t));
   }
 
+  async function saveDraft() {
+    if (saving || loadingDraft) return;
+    setSaving(true);
+    try {
+      const now = new Date().toISOString();
+      await saveEventDraft({
+        id: draftId || 'draft-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8),
+        title: title.trim(),
+        category,
+        description: description.trim(),
+        city: city.trim(),
+        venue: venue.trim(),
+        address: address.trim(),
+        date,
+        startTime,
+        endTime,
+        tiers,
+        posterUri,
+        status: 'draft',
+        createdAt,
+        updatedAt: now,
+      });
+      Alert.alert('Brouillon enregistré', 'Ton événement est sauvegardé sur cet appareil. Tu pourras le reprendre depuis « Mes événements ».', [
+        { text: 'Continuer', onPress: () => router.replace('/organizer/events') },
+      ]);
+    } catch {
+      Alert.alert('Enregistrement impossible', 'Vérifie l’espace disponible sur ton téléphone puis réessaie.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.topbar}>
         <Pressable onPress={() => step > 0 ? setStep(step - 1) : router.back()} style={styles.backButton}><Text style={styles.backText}>‹</Text></Pressable>
-        <View style={{ flex: 1 }}><Text style={styles.topTitle}>NOUVEL ÉVÉNEMENT</Text><Text style={styles.topSub}>CONFIGURATION DE LA BILLETTERIE</Text></View>
+        <View style={{ flex: 1 }}><Text style={styles.topTitle}>{draftId ? 'MODIFIER LE BROUILLON' : 'NOUVEL ÉVÉNEMENT'}</Text><Text style={styles.topSub}>CONFIGURATION DE LA BILLETTERIE</Text></View>
         <Text style={styles.stepCount}>{String(step + 1).padStart(2, '0')} / 04</Text>
       </View>
       <View style={styles.progressTrack}><View style={[styles.progressFill, { width: (((step + 1) * 25) + '%') as `${number}%` }]} /></View>
@@ -143,8 +218,11 @@ export default function CreateEventScreen() {
         {error ? <View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text></View> : null}
       </ScrollView>
       <View style={styles.bottomBar}>
-        <View style={{ flex: 1 }}><Text style={styles.bottomHint}>{step === 3 ? 'Aucune publication sans validation' : 'Informations conservées pendant la configuration'}</Text></View>
-        <Pressable onPress={() => step < 3 ? next() : router.replace('/organizer')} style={styles.nextButton}><Text style={styles.nextButtonText}>{step < 3 ? 'Continuer  →' : 'Terminer'}</Text></Pressable>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.bottomHint}>{loadingDraft ? 'Chargement du brouillon…' : 'Sauvegarde locale · disponible hors connexion'}</Text>
+          <Pressable onPress={saveDraft} disabled={saving || loadingDraft} style={styles.saveDraftLink}><Text style={styles.saveDraftText}>{saving ? 'Enregistrement…' : 'Enregistrer comme brouillon'}</Text></Pressable>
+        </View>
+        <Pressable disabled={loadingDraft || saving} onPress={() => step < 3 ? next() : saveDraft()} style={styles.nextButton}><Text style={styles.nextButtonText}>{step < 3 ? 'Continuer  →' : 'Enregistrer'}</Text></Pressable>
       </View>
     </SafeAreaView>
   );
@@ -239,6 +317,8 @@ const styles = StyleSheet.create({
   errorText: { color: '#FFADB4', fontSize: 10, lineHeight: 16 },
   bottomBar: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 17, paddingVertical: 12, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.background },
   bottomHint: { color: colors.muted, fontSize: 8, lineHeight: 13 },
+  saveDraftLink: { marginTop: 5, alignSelf: 'flex-start', paddingVertical: 3 },
+  saveDraftText: { color: colors.primary, fontSize: 9, fontWeight: '900' },
   nextButton: { minWidth: 125, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, paddingHorizontal: 17, paddingVertical: 13, borderRadius: 10 },
   nextButtonText: { color: colors.white, fontSize: 10, fontWeight: '900' }
 });

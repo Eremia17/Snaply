@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
-import { router } from 'expo-router';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
 import { colors } from '../../src/theme';
+import { deleteEventDraft, listEventDrafts, updateEventDraftStatus, type EventDraft } from '../../src/storage/eventDrafts';
+import { formatAriary } from '../../src/utils/currency';
 
 type Filter = 'Tous' | 'Brouillons' | 'Publiés' | 'Archivés';
 const filters: Filter[] = ['Tous', 'Brouillons', 'Publiés', 'Archivés'];
@@ -9,14 +11,47 @@ const filters: Filter[] = ['Tous', 'Brouillons', 'Publiés', 'Archivés'];
 export default function OrganizerEventsScreen() {
   const [filter, setFilter] = useState<Filter>('Tous');
   const [search, setSearch] = useState('');
-  const counts: Record<Filter, number> = { Tous: 0, Brouillons: 0, Publiés: 0, Archivés: 0 };
-  const emptyCopy = useMemo(() => {
-    if (search.trim()) return { title: 'Aucun résultat', body: 'Aucun événement ne correspond à cette recherche.' };
-    if (filter === 'Brouillons') return { title: 'Aucun brouillon', body: 'Les événements que tu enregistres en brouillon apparaîtront ici.' };
-    if (filter === 'Publiés') return { title: 'Aucun événement publié', body: 'Tes événements visibles par le public seront regroupés ici.' };
-    if (filter === 'Archivés') return { title: 'Aucune archive', body: 'Les événements archivés resteront accessibles depuis cet espace.' };
-    return { title: 'Ton espace événementiel est prêt', body: 'Crée ton premier événement pour commencer à organiser ta billetterie. Tu pourras ensuite retrouver ici tes brouillons, publications et archives.' };
-  }, [filter, search]);
+  const [events, setEvents] = useState<EventDraft[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    try { setEvents(await listEventDrafts()); }
+    catch { Alert.alert('Erreur', 'Impossible de lire les brouillons enregistrés sur cet appareil.'); }
+    finally { setLoading(false); }
+  }, []);
+
+  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
+
+  const counts: Record<Filter, number> = {
+    Tous: events.length,
+    Brouillons: events.filter(item => item.status === 'draft').length,
+    Publiés: 0,
+    Archivés: events.filter(item => item.status === 'archived').length,
+  };
+  const visibleEvents = useMemo(() => events.filter(item => {
+    const matchesFilter = filter === 'Tous' || (filter === 'Brouillons' && item.status === 'draft') || (filter === 'Archivés' && item.status === 'archived');
+    const term = search.trim().toLocaleLowerCase();
+    const matchesSearch = !term || [item.title, item.category, item.city, item.venue].some(value => value.toLocaleLowerCase().includes(term));
+    return matchesFilter && matchesSearch;
+  }), [events, filter, search]);
+
+  async function archiveDraft(item: EventDraft) {
+    const nextStatus = item.status === 'archived' ? 'draft' : 'archived';
+    try {
+      await updateEventDraftStatus(item.id, nextStatus);
+      await refresh();
+    } catch { Alert.alert('Erreur', 'Impossible de modifier le statut de ce brouillon.'); }
+  }
+
+  function confirmDelete(item: EventDraft) {
+    Alert.alert('Supprimer ce brouillon ?', 'Cette action supprimera aussi son affiche enregistrée sur cet appareil.', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Supprimer', style: 'destructive', onPress: async () => {
+        try { await deleteEventDraft(item.id); await refresh(); }
+        catch { Alert.alert('Erreur', 'La suppression a échoué.'); }
+      } },
+    ]);
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -24,13 +59,13 @@ export default function OrganizerEventsScreen() {
         <View style={styles.topbar}>
           <Pressable onPress={() => router.back()} style={styles.back}><Text style={styles.backText}>‹</Text></Pressable>
           <View style={{ flex: 1 }}><Text style={styles.kicker}>ESPACE ORGANISATEUR</Text><Text style={styles.topTitle}>Mes événements</Text></View>
-          <View style={styles.counter}><Text style={styles.counterValue}>00</Text><Text style={styles.counterLabel}>TOTAL</Text></View>
+          <View style={styles.counter}><Text style={styles.counterValue}>{String(events.length).padStart(2, '0')}</Text><Text style={styles.counterLabel}>TOTAL</Text></View>
         </View>
 
         <View style={styles.hero}>
           <View style={styles.heroTop}><View style={styles.liveDot} /><Text style={styles.heroEyebrow}>VOTRE PORTFOLIO</Text></View>
           <Text style={styles.heroTitle}>Tout votre programme, au même endroit.</Text>
-          <Text style={styles.heroBody}>Suivez chaque événement de sa préparation à son archivage.</Text>
+          <Text style={styles.heroBody}>Retrouve tes brouillons, reprends leur préparation et garde tes archives à portée de main.</Text>
           <Pressable onPress={() => router.push('/organizer/create')} style={styles.primaryButton}><Text style={styles.primaryButtonText}>＋  Créer un événement</Text></Pressable>
         </View>
 
@@ -43,19 +78,35 @@ export default function OrganizerEventsScreen() {
           </Pressable>)}
         </ScrollView>
 
-        <View style={styles.listHeader}><Text style={styles.listTitle}>{filter === 'Tous' ? 'Tous les événements' : filter}</Text><Text style={styles.listMeta}>0 ÉVÉNEMENT</Text></View>
-        <View style={styles.emptyCard}>
-          <View style={styles.emptyArtwork}>
-            <View style={styles.artBack} />
-            <View style={styles.artFront}><View style={styles.artLine} /><View style={styles.artLineShort} /><View style={styles.artPill} /></View>
-            <View style={styles.artPlus}>＋</View>
-          </View>
-          <Text style={styles.emptyTitle}>{emptyCopy.title}</Text>
-          <Text style={styles.emptyBody}>{emptyCopy.body}</Text>
-          {!search.trim() && filter !== 'Publiés' && filter !== 'Archivés' ? <Pressable onPress={() => router.push('/organizer/create')} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Préparer mon premier événement  →</Text></Pressable> : null}
-        </View>
+        <View style={styles.listHeader}><Text style={styles.listTitle}>{filter === 'Tous' ? 'Tous les événements' : filter}</Text><Text style={styles.listMeta}>{visibleEvents.length} ÉVÉNEMENT{visibleEvents.length > 1 ? 'S' : ''}</Text></View>
 
-        <View style={styles.note}><Text style={styles.noteTitle}>À propos de cet espace</Text><Text style={styles.noteBody}>La gestion est encore en mode préparation : les événements ne sont pas encore enregistrés sur un serveur. La sauvegarde sécurisée, la modification et la publication seront activées avec la connexion organisateur.</Text></View>
+        {loading ? <View style={styles.emptyCard}><Text style={styles.emptyTitle}>Chargement des événements…</Text></View> : visibleEvents.length ? visibleEvents.map(item => {
+          const cheapest = item.tiers.reduce((min, tier) => Math.min(min, Number(tier.price) || Infinity), Infinity);
+          const dateLabel = item.date ? item.date.split('-').reverse().join('/') : 'Date à définir';
+          return <View key={item.id} style={styles.eventCard}>
+            <View style={styles.eventTop}>
+              {item.posterUri ? <Image source={{ uri: item.posterUri }} style={styles.poster} /> : <View style={styles.posterFallback}><Text style={styles.posterFallbackText}>TM</Text></View>}
+              <View style={styles.eventCopy}>
+                <View style={styles.eventMetaRow}><Text style={styles.category}>{item.category.toUpperCase()}</Text><View style={[styles.statusPill, item.status === 'archived' && styles.archivedPill]}><Text style={styles.statusText}>{item.status === 'archived' ? 'ARCHIVÉ' : 'BROUILLON'}</Text></View></View>
+                <Text style={styles.eventTitle} numberOfLines={2}>{item.title || 'Événement sans titre'}</Text>
+                <Text style={styles.eventDetails}>{item.city || 'Ville à préciser'} · {dateLabel}</Text>
+                <Text style={styles.eventPrice}>{Number.isFinite(cheapest) ? 'Dès ' + formatAriary(cheapest) : 'Tarif à définir'}</Text>
+              </View>
+            </View>
+            <View style={styles.eventActions}>
+              <Pressable onPress={() => router.push({ pathname: '/organizer/create', params: { draftId: item.id } })} style={styles.editButton}><Text style={styles.editButtonText}>Modifier  →</Text></Pressable>
+              <Pressable onPress={() => archiveDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'archived' ? 'Restaurer' : 'Archiver'}</Text></Pressable>
+              <Pressable onPress={() => confirmDelete(item)} style={styles.deleteButton}><Text style={styles.deleteText}>Supprimer</Text></Pressable>
+            </View>
+          </View>;
+        }) : <View style={styles.emptyCard}>
+          <View style={styles.emptyArtwork}><View style={styles.artBack} /><View style={styles.artFront}><View style={styles.artLine} /><View style={styles.artLineShort} /><View style={styles.artPill} /></View><View style={styles.artPlus}>＋</View></View>
+          <Text style={styles.emptyTitle}>{search.trim() ? 'Aucun résultat' : filter === 'Brouillons' ? 'Aucun brouillon pour le moment' : filter === 'Archivés' ? 'Aucune archive' : filter === 'Publiés' ? 'Aucun événement publié' : 'Ton espace événementiel est prêt'}</Text>
+          <Text style={styles.emptyBody}>{search.trim() ? 'Aucun événement ne correspond à cette recherche.' : filter === 'Publiés' ? 'La publication sera activée après la connexion du compte organisateur et des services serveur.' : filter === 'Archivés' ? 'Les événements archivés resteront accessibles ici.' : 'Crée ton premier événement. Tu pourras l’enregistrer en brouillon, le modifier et le retrouver ici.'}</Text>
+          {!search.trim() && filter !== 'Publiés' && filter !== 'Archivés' ? <Pressable onPress={() => router.push('/organizer/create')} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Préparer mon premier événement  →</Text></Pressable> : null}
+        </View>}
+
+        <View style={styles.note}><Text style={styles.noteTitle}>Sauvegarde sur cet appareil</Text><Text style={styles.noteBody}>Les brouillons et leurs affiches sont conservés localement sur ce téléphone, même hors connexion. Ils ne sont pas encore synchronisés avec un compte ni disponibles sur un autre appareil. La publication reste désactivée.</Text></View>
         <Text style={styles.footer}>TICKET MADA  ·  GESTION DES ÉVÉNEMENTS</Text>
       </ScrollView>
     </SafeAreaView>
@@ -109,5 +160,26 @@ const styles = StyleSheet.create({
   note: { padding: 13, borderRadius: 11, backgroundColor: '#202A30', borderWidth: 1, borderColor: '#35464A', marginTop: 15, gap: 5 },
   noteTitle: { color: colors.text, fontSize: 10, fontWeight: '900' },
   noteBody: { color: '#AEBFC0', fontSize: 9, lineHeight: 15 },
+  eventCard: { borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, padding: 12, marginBottom: 11 },
+  eventTop: { flexDirection: 'row', gap: 11 },
+  poster: { width: 88, height: 88, borderRadius: 10, backgroundColor: colors.surfaceRaised },
+  posterFallback: { width: 88, height: 88, borderRadius: 10, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
+  posterFallbackText: { color: colors.primary, fontSize: 19, fontWeight: '900', letterSpacing: 2 },
+  eventCopy: { flex: 1, justifyContent: 'center', gap: 5 },
+  eventMetaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
+  category: { color: colors.primary, fontSize: 7, fontWeight: '900', letterSpacing: 1 },
+  statusPill: { backgroundColor: colors.primarySoft, paddingHorizontal: 7, paddingVertical: 4, borderRadius: 5 },
+  archivedPill: { backgroundColor: '#303849' },
+  statusText: { color: colors.text, fontSize: 7, fontWeight: '900', letterSpacing: 0.6 },
+  eventTitle: { color: colors.text, fontSize: 13, fontWeight: '900' },
+  eventDetails: { color: colors.muted, fontSize: 9 },
+  eventPrice: { color: colors.success, fontSize: 10, fontWeight: '900' },
+  eventActions: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
+  editButton: { backgroundColor: colors.primary, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 8 },
+  editButtonText: { color: colors.white, fontSize: 9, fontWeight: '900' },
+  actionButton: { paddingHorizontal: 9, paddingVertical: 9, borderRadius: 8, borderWidth: 1, borderColor: colors.border },
+  actionText: { color: colors.text, fontSize: 9, fontWeight: '800' },
+  deleteButton: { marginLeft: 'auto', paddingHorizontal: 7, paddingVertical: 9 },
+  deleteText: { color: '#F08B92', fontSize: 9, fontWeight: '800' },
   footer: { color: colors.muted, fontSize: 7, letterSpacing: 1.3, textAlign: 'center', marginTop: 24 }
 });
