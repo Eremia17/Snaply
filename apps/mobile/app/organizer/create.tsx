@@ -84,7 +84,7 @@ export default function CreateEventScreen() {
         <View style={{ flex: 1 }}><Text style={styles.topTitle}>NOUVEL ÉVÉNEMENT</Text><Text style={styles.topSub}>CONFIGURATION DE LA BILLETTERIE</Text></View>
         <Text style={styles.stepCount}>{String(step + 1).padStart(2, '0')} / 04</Text>
       </View>
-      <View style={styles.progressTrack}><View style={[styles.progressFill, { width: ((step + 1) * 25) + '%' }]} /></View>
+      <View style={styles.progressTrack}><View style={[styles.progressFill, { width: (((step + 1) * 25) + '%') as `${number}%` }]} /></View>
       <View style={styles.stepNav}>{steps.map((item, index) => <Pressable key={item.title} onPress={() => index < step && setStep(index)} style={styles.stepItem}><View style={[styles.stepBullet, index === step && styles.stepBulletActive, index < step && styles.stepBulletDone]}><Text style={[styles.stepBulletText, (index === step || index < step) && styles.stepBulletTextActive]}>{index < step ? '✓' : index + 1}</Text></View><Text style={[styles.stepLabel, index === step && styles.stepLabelActive]}>{item.title}</Text></Pressable>)}</View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   heading: { color: colors.text, fontSize: 27, fontWeight: '900', marginTop: 7 },
   subheading: { color: colors.muted, fontSize: 11, lineHeight: 18, marginTop: 6, marginBottom: 22 },
   coverPlaceholder: { minHeight: 175, borderRadius: 15, borderWidth: 1, borderColor: '#465064', borderStyle: 'dashed', backgroundColor: colors.surface, overflow: 'hidden', marginBottom: 21 },
-  coverImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', resizeMode: 'cover' },
+  coverImage: { ...StyleSheet.absoluteFill, width: '100%', height: '100%', resizeMode: 'cover' },
   coverOverlay: { minHeight: 175, alignItems: 'center', justifyContent: 'center', padding: 14, backgroundColor: '#171C28' },
   coverOverlayOnImage: { backgroundColor: 'rgba(8, 10, 16, 0.48)' },
   coverIcon: { width: 31, height: 31, borderRadius: 10, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
