@@ -113,7 +113,7 @@ export default function CreateEventScreen() {
         {error ? <View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text></View> : null}
       </ScrollView>
       <View style={styles.bottomBar}>
-        <View style={{ flex: 1 }}><Text style={styles.bottomHint}>{step === 3 ? 'Aucune publication sans validation' : 'Progression sauvegardée dans cette session'}</Text></View>
+        <View style={{ flex: 1 }}><Text style={styles.bottomHint}>{step === 3 ? 'Aucune publication sans validation' : 'Informations conservées pendant la configuration'}</Text></View>
         <Pressable onPress={() => step < 3 ? next() : router.replace('/organizer')} style={styles.nextButton}><Text style={styles.nextButtonText}>{step < 3 ? 'Continuer  →' : 'Terminer'}</Text></Pressable>
       </View>
     </SafeAreaView>
