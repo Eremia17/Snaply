@@ -184,10 +184,10 @@ begin
   loop
     update public.ticket_types tt
     set quantity_reserved = tt.quantity_reserved - v_inventory.quantity,
-        quantity_sold = tt.quantity_sold + v_existing_payment.quantity
+        quantity_sold = tt.quantity_sold + v_inventory.quantity
     where tt.id = v_inventory.ticket_type_id
-      and tt.quantity_reserved >= v_existing_payment.quantity
-      and tt.quantity_sold + v_existing_payment.quantity <= tt.quantity_total;
+      and tt.quantity_reserved >= v_inventory.quantity
+      and tt.quantity_sold + v_inventory.quantity <= tt.quantity_total;
 
     if not found then
       raise exception 'Le stock réservé ne correspond plus à cette commande.';
