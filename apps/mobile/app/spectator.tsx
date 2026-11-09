@@ -51,7 +51,7 @@ export default function HomeScreen() {
             <Text style={styles.brand}>TICKET <Text style={styles.brandAccent}>MADA</Text></Text>
           </View>
           <View style={styles.topActions}>
-            <Pressable onPress={() => router.replace('/')} style={styles.organizerLink}><Text style={styles.organizerLinkText} >Changer d'espace</Text></Pressable>
+            <Pressable onPress={() => router.push('/account')} style={styles.organizerLink}><Text style={styles.organizerLinkText}>Mon compte</Text></Pressable>
             <View style={styles.languageSwitch}>
               <Pressable onPress={() => setLanguage('fr')} style={[styles.languageButton, language === 'fr' && styles.languageActive]}><Text style={[styles.languageText, language === 'fr' && styles.languageTextActive]}>FR</Text></Pressable>
               <Pressable onPress={() => setLanguage('mg')} style={[styles.languageButton, language === 'mg' && styles.languageActive]}><Text style={[styles.languageText, language === 'mg' && styles.languageTextActive]}>MG</Text></Pressable>
