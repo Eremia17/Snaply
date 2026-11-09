@@ -2,7 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import { Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
 import { colors } from '../../src/theme';
-import { deleteEventDraft, listEventDrafts, updateEventDraftStatus, type EventDraft } from '../../src/storage/eventDrafts';
+import { deleteEventDraft, listEventDrafts, setEventDraftCloudId, updateEventDraftStatus, type EventDraft } from '../../src/storage/eventDrafts';
+import { syncEventDraft } from '../../src/data/organizerEvents';
 import { formatAriary } from '../../src/utils/currency';
 
 type Filter = 'Tous' | 'Brouillons' | 'Publiés' | 'Archivés';
@@ -35,7 +36,7 @@ export default function OrganizerEventsScreen() {
     return matchesFilter && matchesSearch;
   }), [events, filter, search]);
 
-  async function archiveDraft(item: EventDraft) {
+  async function synchronizeDraft(item: EventDraft) {\n    if (item.cloudEventId) { Alert.alert('Déjà synchronisé', 'Ce brouillon possède déjà une copie cloud.'); return; }\n    try {\n      const result = await syncEventDraft(item);\n      await setEventDraftCloudId(item.id, result.eventId);\n      await refresh();\n      Alert.alert('Synchronisation terminée', 'Le brouillon est maintenant enregistré dans ton espace Supabase. Il reste privé et n’est pas publié.');\n    } catch (error) {\n      Alert.alert('Synchronisation impossible', error instanceof Error ? error.message : 'Une erreur inattendue est survenue.');\n    }\n  }\n\n  async function archiveDraft(item: EventDraft) {
     const nextStatus = item.status === 'archived' ? 'draft' : 'archived';
     try {
       await updateEventDraftStatus(item.id, nextStatus);
@@ -65,7 +66,7 @@ export default function OrganizerEventsScreen() {
         <View style={styles.hero}>
           <View style={styles.heroTop}><View style={styles.liveDot} /><Text style={styles.heroEyebrow}>VOTRE PORTFOLIO</Text></View>
           <Text style={styles.heroTitle}>Tout votre programme, au même endroit.</Text>
-          <Text style={styles.heroBody}>Retrouve tes brouillons, reprends leur préparation et garde tes archives à portée de main.</Text>
+          <Text style={styles.heroBody}>Retrouve tes brouillons, synchronise-les dans ton espace cloud et garde tes archives à portée de main.</Text>
           <Pressable onPress={() => router.push('/organizer/create')} style={styles.primaryButton}><Text style={styles.primaryButtonText}>＋  Créer un événement</Text></Pressable>
         </View>
 
@@ -87,7 +88,7 @@ export default function OrganizerEventsScreen() {
             <View style={styles.eventTop}>
               {item.posterUri ? <Image source={{ uri: item.posterUri }} style={styles.poster} /> : <View style={styles.posterFallback}><Text style={styles.posterFallbackText}>TM</Text></View>}
               <View style={styles.eventCopy}>
-                <View style={styles.eventMetaRow}><Text style={styles.category}>{item.category.toUpperCase()}</Text><View style={[styles.statusPill, item.status === 'archived' && styles.archivedPill]}><Text style={styles.statusText}>{item.status === 'archived' ? 'ARCHIVÉ' : 'BROUILLON'}</Text></View></View>
+                <View style={styles.eventMetaRow}><Text style={styles.category}>{item.category.toUpperCase()}</Text><View style={[styles.statusPill, item.status === 'archived' && styles.archivedPill]}><Text style={styles.statusText}>{item.cloudEventId ? 'CLOUD' : item.status === 'archived' ? 'ARCHIVÉ' : 'BROUILLON'}</Text></View></View>
                 <Text style={styles.eventTitle} numberOfLines={2}>{item.title || 'Événement sans titre'}</Text>
                 <Text style={styles.eventDetails}>{item.city || 'Ville à préciser'} · {dateLabel}</Text>
                 <Text style={styles.eventPrice}>{Number.isFinite(cheapest) ? 'Dès ' + formatAriary(cheapest) : 'Tarif à définir'}</Text>
@@ -95,7 +96,7 @@ export default function OrganizerEventsScreen() {
             </View>
             <View style={styles.eventActions}>
               <Pressable onPress={() => router.push({ pathname: '/organizer/create', params: { draftId: item.id } })} style={styles.editButton}><Text style={styles.editButtonText}>Modifier  →</Text></Pressable>
-              <Pressable onPress={() => archiveDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'archived' ? 'Restaurer' : 'Archiver'}</Text></Pressable>
+              <Pressable onPress={() => synchronizeDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.cloudEventId ? 'Synchronisé' : 'Synchroniser'}</Text></Pressable>\n              <Pressable onPress={() => archiveDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'archived' ? 'Restaurer' : 'Archiver'}</Text></Pressable>
               <Pressable onPress={() => confirmDelete(item)} style={styles.deleteButton}><Text style={styles.deleteText}>Supprimer</Text></Pressable>
             </View>
           </View>;
@@ -106,7 +107,7 @@ export default function OrganizerEventsScreen() {
           {!search.trim() && filter !== 'Publiés' && filter !== 'Archivés' ? <Pressable onPress={() => router.push('/organizer/create')} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Préparer mon premier événement  →</Text></Pressable> : null}
         </View>}
 
-        <View style={styles.note}><Text style={styles.noteTitle}>Sauvegarde sur cet appareil</Text><Text style={styles.noteBody}>Les brouillons et leurs affiches sont conservés localement sur ce téléphone, même hors connexion. Ils ne sont pas encore synchronisés avec un compte ni disponibles sur un autre appareil. La publication reste désactivée.</Text></View>
+        <View style={styles.note}><Text style={styles.noteTitle}>Sauvegarde sur cet appareil</Text><Text style={styles.noteBody}>Les brouillons restent disponibles hors connexion. Utilise « Synchroniser » pour créer une copie privée dans Supabase. La synchronisation des affiches et la publication publique seront activées séparément.</Text></View>
         <Text style={styles.footer}>TICKET MADA  ·  GESTION DES ÉVÉNEMENTS</Text>
       </ScrollView>
     </SafeAreaView>
