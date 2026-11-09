@@ -63,6 +63,17 @@ function toLocalIso(date: string, time: string): string {
   return new Date(date + 'T' + time + ':00+03:00').toISOString();
 }
 
+export async function setOrganizerEventPublication(eventId: string, publish: boolean): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) throw new Error('Supabase n’est pas configuré sur cette application.');
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) throw new Error('Connecte-toi pour gérer la publication.');
+  const { error } = await supabase.rpc('set_organizer_event_publication', {
+    p_event_id: eventId,
+    p_publish: publish,
+  });
+  if (error) throw new Error(error.message || 'Impossible de modifier la publication de cet événement.');
+}
+
 export async function syncEventDraft(draft: EventDraft): Promise<DraftSyncResult> {
   if (!isSupabaseConfigured || !supabase) throw new Error('Supabase n’est pas configuré sur cette application.');
 
@@ -137,7 +148,7 @@ export async function refreshOrganizerCloudDrafts(): Promise<number> {
     .from('events')
     .select('id,title,description,category,city,venue,address,cover_path,starts_at,ends_at,status,created_at,updated_at,ticket_types(id,name,price_mga,quantity_total)')
     .eq('organizer_id', authData.user.id)
-    .eq('status', 'draft')
+    .in('status', ['draft', 'published'])
     .order('updated_at', { ascending: false });
   if (error) throw new Error('Impossible de récupérer les brouillons cloud : ' + error.message);
 
@@ -175,7 +186,7 @@ export async function refreshOrganizerCloudDrafts(): Promise<number> {
       tiers,
       posterUri: signedPoster?.data?.signedUrl ?? existing?.posterUri ?? null,
       cloudPosterPath: posterPath ?? existing?.cloudPosterPath,
-      status: 'draft',
+      status: remote.status === 'published' ? 'published' : 'draft',
       createdAt: String(remote.created_at ?? cloudUpdatedAt),
       updatedAt: cloudUpdatedAt,
     };
