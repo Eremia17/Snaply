@@ -45,14 +45,17 @@ export default function AccountScreen() {
         if (error) throw error;
       }
 
-      if (next === 'organizer') {
-        const { data: userData } = await supabase.auth.getUser();
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', userData.user?.id ?? '')
-          .single();
-        if (error) throw error;
+      const { data: userData } = await supabase.auth.getUser();
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user?.id ?? '')
+        .single();
+      if (profileError) throw profileError;
+
+      if (profile.role === 'admin') {
+        router.replace('/admin');
+      } else if (next === 'organizer') {
         router.replace(profile.role === 'organizer' ? '/organizer' : '/organizer/request');
       } else {
         router.replace('/spectator');
