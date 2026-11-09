@@ -17,6 +17,7 @@ export type EventDraft = {
   posterUri: string | null;
   status: 'draft' | 'archived';
   cloudEventId?: string;
+  cloudPosterPath?: string;
   createdAt: string;
   updatedAt: string;
 };
