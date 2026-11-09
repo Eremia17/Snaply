@@ -33,6 +33,7 @@ const accents: Record<string, { accent: string; symbol: string }> = {
 
 export async function fetchPublishedEvents(): Promise<EventItem[]> {
   if (!isSupabaseConfigured || !supabase) return demoEvents;
+  const client = supabase;
   try {
     const { data, error } = await supabase
       .from('events')
@@ -56,7 +57,7 @@ export async function fetchPublishedEvents(): Promise<EventItem[]> {
       };
       const prices = (event.ticket_types ?? []).map(ticket => Number(ticket.price_mga)).filter(price => Number.isFinite(price) && price >= 0);
       const minPrice = prices.length ? Math.min(...prices) : null;
-      const poster = event.cover_path ? await supabase.storage.from('event-posters').createSignedUrl(event.cover_path, 3600) : null;
+      const poster = event.cover_path ? await client.storage.from('event-posters').createSignedUrl(event.cover_path, 3600) : null;
       const visual = accents[event.category] ?? { accent: '#394052', symbol: '✦' };
       return {
         id: event.id,
