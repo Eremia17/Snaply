@@ -25,6 +25,7 @@ on storage.objects for select to authenticated
 using (
   bucket_id = 'event-posters'
   and (storage.foldername(name))[1] = (select auth.uid())::text
+  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'organizer')
 );
 
 create policy "Organizers update their own event posters"
@@ -32,10 +33,12 @@ on storage.objects for update to authenticated
 using (
   bucket_id = 'event-posters'
   and (storage.foldername(name))[1] = (select auth.uid())::text
+  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'organizer')
 )
 with check (
   bucket_id = 'event-posters'
   and (storage.foldername(name))[1] = (select auth.uid())::text
+  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'organizer')
 );
 
 create policy "Organizers delete their own event posters"
@@ -43,4 +46,5 @@ on storage.objects for delete to authenticated
 using (
   bucket_id = 'event-posters'
   and (storage.foldername(name))[1] = (select auth.uid())::text
+  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'organizer')
 );
