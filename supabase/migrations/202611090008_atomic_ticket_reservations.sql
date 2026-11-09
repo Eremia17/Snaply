@@ -85,11 +85,24 @@ begin
     return;
   end if;
 
-  -- Release expired pending reservations once, even if multiple buyers reserve concurrently.
+  -- Lock the event against unpublishing first, then lock its inventory row.
+  -- FOR SHARE allows concurrent reservations while blocking a status change.
+  select e.* into v_event
+  from public.events e
+  join public.ticket_types t on t.event_id = e.id
+  where t.id = p_ticket_type_id
+  for share of e;
+
+  if not found or v_event.status <> 'published' or v_event.starts_at <= now() then
+    raise exception 'Cet événement n’est plus disponible à la réservation';
+  end if;
+
+  -- Release only this event's expired holds after taking its shared lock.
   with expired_orders as (
     update public.orders o
     set status = 'cancelled'
-    where o.status = 'pending'
+    where o.event_id = v_event.id
+      and o.status = 'pending'
       and o.expires_at is not null
       and o.expires_at <= now()
     returning o.id
@@ -103,18 +116,6 @@ begin
   set quantity_reserved = greatest(0, tt.quantity_reserved - eq.quantity)
   from expired_quantities eq
   where tt.id = eq.ticket_type_id;
-
-  -- Lock the event against unpublishing first, then lock its inventory row.
-  -- FOR SHARE allows concurrent reservations while blocking a status change.
-  select e.* into v_event
-  from public.events e
-  join public.ticket_types t on t.event_id = e.id
-  where t.id = p_ticket_type_id
-  for share of e;
-
-  if not found or v_event.status <> 'published' or v_event.starts_at <= now() then
-    raise exception 'Cet événement n’est plus disponible à la réservation';
-  end if;
 
   -- Competing requests for the same ticket category serialize on this row.
   select * into v_ticket
