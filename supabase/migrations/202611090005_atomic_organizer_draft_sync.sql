@@ -8,6 +8,7 @@ create or replace function public.save_organizer_event_draft(
   p_city text,
   p_venue text,
   p_address text,
+  p_cover_path text,
   p_starts_at timestamptz,
   p_ends_at timestamptz,
   p_ticket_tiers jsonb
@@ -61,10 +62,10 @@ begin
 
   if p_event_id is null then
     insert into public.events (
-      organizer_id, title, description, category, city, venue, address, starts_at, ends_at, status
+      organizer_id, title, description, category, city, venue, address, cover_path, starts_at, ends_at, status
     ) values (
       v_user_id, trim(p_title), coalesce(p_description, ''), coalesce(p_category, 'Autre'),
-      trim(p_city), trim(p_venue), trim(coalesce(p_address, '')), p_starts_at, p_ends_at, 'draft'
+      trim(p_city), trim(p_venue), trim(coalesce(p_address, '')), nullif(trim(coalesce(p_cover_path, '')), ''), p_starts_at, p_ends_at, 'draft'
     ) returning id into v_event_id;
   else
     update public.events
@@ -74,6 +75,7 @@ begin
         city = trim(p_city),
         venue = trim(p_venue),
         address = trim(coalesce(p_address, '')),
+        cover_path = coalesce(nullif(trim(coalesce(p_cover_path, '')), ''), cover_path),
         starts_at = p_starts_at,
         ends_at = p_ends_at,
         updated_at = now()
@@ -101,5 +103,5 @@ begin
 end;
 $$;
 
-revoke all on function public.save_organizer_event_draft(uuid, text, text, text, text, text, text, timestamptz, timestamptz, jsonb) from public, anon;
+revoke all on function public.save_organizer_event_draft(uuid, text, text, text, text, text, text, text, timestamptz, timestamptz, jsonb) from public, anon;
 grant execute on function public.save_organizer_event_draft(uuid, text, text, text, text, text, text, timestamptz, timestamptz, jsonb) to authenticated;
