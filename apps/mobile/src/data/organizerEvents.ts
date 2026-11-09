@@ -34,7 +34,7 @@ async function uploadEventPoster(
     return draft.cloudPosterPath ?? null;
   }
 
-  const info = await FileSystem.getInfoAsync(uri, { size: true });
+  const info = await FileSystem.getInfoAsync(uri);
   if (!info.exists) throw new Error('Le fichier de l’affiche est introuvable sur cet appareil.');
   if (typeof info.size === 'number' && info.size > 5 * 1024 * 1024) {
     throw new Error('L’affiche dépasse la limite de 5 Mo. Choisis une image plus légère.');
