@@ -1,5 +1,5 @@
 -- Reusable cleanup for expired, unpaid reservations.
-create or replace function public.release_expired_ticket_reservations()
+create or replace function public.release_expired_ticket_reservations(p_event_id uuid)
 returns integer
 language plpgsql
 security definer
@@ -8,10 +8,15 @@ as $$
 declare
   v_updated integer := 0;
 begin
+  if p_event_id is null then
+    raise exception 'Event ID is required';
+  end if;
+
   with expired_orders as (
     update public.orders o
     set status = 'cancelled'
-    where o.status = 'pending'
+    where o.event_id = p_event_id
+      and o.status = 'pending'
       and o.expires_at is not null
       and o.expires_at <= now()
     returning o.id
@@ -31,7 +36,7 @@ begin
 end;
 $$;
 
-revoke all on function public.release_expired_ticket_reservations() from public, anon, authenticated;
+revoke all on function public.release_expired_ticket_reservations(uuid) from public, anon, authenticated;
 
 -- Event owners can now unpublish once expired unpaid holds have been released.
 create or replace function public.set_organizer_event_publication(
@@ -103,7 +108,7 @@ begin
       raise exception 'Only published events can be unpublished';
     end if;
 
-    perform public.release_expired_ticket_reservations();
+    perform public.release_expired_ticket_reservations(v_event.id);
 
     if exists (
       select 1 from public.orders o
