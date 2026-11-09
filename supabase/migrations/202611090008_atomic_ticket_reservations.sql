@@ -104,22 +104,26 @@ begin
   from expired_quantities eq
   where tt.id = eq.ticket_type_id;
 
-  -- Lock the inventory row: competing requests serialize on this ticket category.
+  -- Lock the event against unpublishing first, then lock its inventory row.
+  -- FOR SHARE allows concurrent reservations while blocking a status change.
+  select e.* into v_event
+  from public.events e
+  join public.ticket_types t on t.event_id = e.id
+  where t.id = p_ticket_type_id
+  for share of e;
+
+  if not found or v_event.status <> 'published' or v_event.starts_at <= now() then
+    raise exception 'Cet événement n’est plus disponible à la réservation';
+  end if;
+
+  -- Competing requests for the same ticket category serialize on this row.
   select * into v_ticket
   from public.ticket_types
   where id = p_ticket_type_id
   for update;
 
-  if not found then
+  if not found or v_ticket.event_id <> v_event.id then
     raise exception 'Catégorie de billet introuvable';
-  end if;
-
-  select * into v_event
-  from public.events
-  where id = v_ticket.event_id;
-
-  if not found or v_event.status <> 'published' or v_event.starts_at <= now() then
-    raise exception 'Cet événement n’est plus disponible à la réservation';
   end if;
 
   if (v_ticket.sales_start is not null and v_ticket.sales_start > now())
