@@ -3,7 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
 import { colors } from '../../src/theme';
 import { deleteEventDraft, listEventDrafts, setEventDraftCloudId, updateEventDraftStatus, type EventDraft } from '../../src/storage/eventDrafts';
-import { refreshOrganizerCloudDrafts, syncEventDraft } from '../../src/data/organizerEvents';
+import { refreshOrganizerCloudDrafts, setOrganizerEventPublication, syncEventDraft } from '../../src/data/organizerEvents';
 import { formatAriary } from '../../src/utils/currency';
 
 type Filter = 'Tous' | 'Brouillons' | 'Publiés' | 'Archivés';
@@ -28,11 +28,11 @@ export default function OrganizerEventsScreen() {
   const counts: Record<Filter, number> = {
     Tous: events.length,
     Brouillons: events.filter(item => item.status === 'draft').length,
-    Publiés: 0,
+    Publiés: events.filter(item => item.status === 'published').length,
     Archivés: events.filter(item => item.status === 'archived').length,
   };
   const visibleEvents = useMemo(() => events.filter(item => {
-    const matchesFilter = filter === 'Tous' || (filter === 'Brouillons' && item.status === 'draft') || (filter === 'Archivés' && item.status === 'archived');
+    const matchesFilter = filter === 'Tous' || (filter === 'Brouillons' && item.status === 'draft') || (filter === 'Publiés' && item.status === 'published') || (filter === 'Archivés' && item.status === 'archived');
     const term = search.trim().toLocaleLowerCase();
     const matchesSearch = !term || [item.title, item.category, item.city, item.venue].some(value => value.toLocaleLowerCase().includes(term));
     return matchesFilter && matchesSearch;
@@ -49,7 +49,20 @@ export default function OrganizerEventsScreen() {
     }
   }
 
+  async function togglePublication(item: EventDraft) {
+    if (!item.cloudEventId) return;
+    const publish = item.status !== 'published';
+    try {
+      await setOrganizerEventPublication(item.cloudEventId, publish);
+      await refresh();
+      Alert.alert(publish ? 'Événement publié' : 'Publication retirée', publish ? 'Ton événement est maintenant visible dans le catalogue public.' : 'Ton événement est de nouveau privé.');
+    } catch (error) {
+      Alert.alert(publish ? 'Publication impossible' : 'Retrait impossible', error instanceof Error ? error.message : 'Une erreur inattendue est survenue.');
+    }
+  }
+
   async function archiveDraft(item: EventDraft) {
+    if (item.status === 'published') return;
     const nextStatus = item.status === 'archived' ? 'draft' : 'archived';
     try {
       await updateEventDraftStatus(item.id, nextStatus);
@@ -101,16 +114,17 @@ export default function OrganizerEventsScreen() {
             <View style={styles.eventTop}>
               {item.posterUri ? <Image source={{ uri: item.posterUri }} style={styles.poster} /> : <View style={styles.posterFallback}><Text style={styles.posterFallbackText}>TM</Text></View>}
               <View style={styles.eventCopy}>
-                <View style={styles.eventMetaRow}><Text style={styles.category}>{item.category.toUpperCase()}</Text><View style={[styles.statusPill, item.status === 'archived' && styles.archivedPill]}><Text style={styles.statusText}>{item.cloudEventId ? 'CLOUD' : item.status === 'archived' ? 'ARCHIVÉ' : 'BROUILLON'}</Text></View></View>
+                <View style={styles.eventMetaRow}><Text style={styles.category}>{item.category.toUpperCase()}</Text><View style={[styles.statusPill, item.status === 'archived' && styles.archivedPill, item.status === 'published' && styles.publishedPill]}><Text style={styles.statusText}>{item.status === 'published' ? 'PUBLIÉ' : item.status === 'archived' ? 'ARCHIVÉ' : item.cloudEventId ? 'CLOUD' : 'BROUILLON'}</Text></View></View>
                 <Text style={styles.eventTitle} numberOfLines={2}>{item.title || 'Événement sans titre'}</Text>
                 <Text style={styles.eventDetails}>{item.city || 'Ville à préciser'} · {dateLabel}</Text>
                 <Text style={styles.eventPrice}>{Number.isFinite(cheapest) ? 'Dès ' + formatAriary(cheapest) : 'Tarif à définir'}</Text>
               </View>
             </View>
             <View style={styles.eventActions}>
-              <Pressable onPress={() => router.push({ pathname: '/organizer/create', params: { draftId: item.id } })} style={styles.editButton}><Text style={styles.editButtonText}>Modifier  →</Text></Pressable>
-              <Pressable onPress={() => synchronizeDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.cloudEventId ? 'Mettre à jour cloud' : 'Synchroniser'}</Text></Pressable>
-              <Pressable onPress={() => archiveDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'archived' ? 'Restaurer' : 'Archiver'}</Text></Pressable>
+              {item.status !== 'published' ? <Pressable onPress={() => router.push({ pathname: '/organizer/create', params: { draftId: item.id } })} style={styles.editButton}><Text style={styles.editButtonText}>Modifier  →</Text></Pressable> : null}
+              {item.status !== 'published' ? <Pressable onPress={() => synchronizeDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.cloudEventId ? 'Mettre à jour cloud' : 'Synchroniser'}</Text></Pressable> : null}
+              {item.cloudEventId && item.status !== 'archived' ? <Pressable onPress={() => togglePublication(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'published' ? 'Dépublier' : 'Publier'}</Text></Pressable> : null}
+              {item.status !== 'published' ? <Pressable onPress={() => archiveDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'archived' ? 'Restaurer' : 'Archiver'}</Text></Pressable> : null}
               <Pressable onPress={() => confirmDelete(item)} style={styles.deleteButton}><Text style={styles.deleteText}>Supprimer</Text></Pressable>
             </View>
           </View>;
@@ -121,7 +135,7 @@ export default function OrganizerEventsScreen() {
           {!search.trim() && filter !== 'Publiés' && filter !== 'Archivés' ? <Pressable onPress={() => router.push('/organizer/create')} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Préparer mon premier événement  →</Text></Pressable> : null}
         </View>}
 
-        <View style={styles.note}><Text style={styles.noteTitle}>Sauvegarde sur cet appareil</Text><Text style={styles.noteBody}>Les brouillons locaux restent disponibles hors connexion. À l’ouverture, Ticket Mada récupère aussi les brouillons privés du compte connecté. « Synchroniser » envoie les changements vers Supabase. Les affiches sont envoyées dans un espace privé ; la publication publique reste séparée.</Text></View>
+        <View style={styles.note}><Text style={styles.noteTitle}>Sauvegarde sur cet appareil</Text><Text style={styles.noteBody}>Les brouillons locaux restent disponibles hors connexion. À l’ouverture, Ticket Mada récupère aussi les brouillons privés du compte connecté. « Synchroniser » envoie les changements vers Supabase. Les affiches sont envoyées dans un espace privé. Une fois le brouillon synchronisé, tu peux le publier depuis cette liste. Les événements publiés deviennent visibles dans le catalogue.</Text></View>
         <Text style={styles.footer}>TICKET MADA  ·  GESTION DES ÉVÉNEMENTS</Text>
       </ScrollView>
     </SafeAreaView>
@@ -185,11 +199,12 @@ const styles = StyleSheet.create({
   category: { color: colors.primary, fontSize: 7, fontWeight: '900', letterSpacing: 1 },
   statusPill: { backgroundColor: colors.primarySoft, paddingHorizontal: 7, paddingVertical: 4, borderRadius: 5 },
   archivedPill: { backgroundColor: '#303849' },
+  publishedPill: { backgroundColor: '#245541' },
   statusText: { color: colors.text, fontSize: 7, fontWeight: '900', letterSpacing: 0.6 },
   eventTitle: { color: colors.text, fontSize: 13, fontWeight: '900' },
   eventDetails: { color: colors.muted, fontSize: 9 },
   eventPrice: { color: colors.success, fontSize: 10, fontWeight: '900' },
-  eventActions: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
+  eventActions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 7, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
   editButton: { backgroundColor: colors.primary, paddingHorizontal: 11, paddingVertical: 9, borderRadius: 8 },
   editButtonText: { color: colors.white, fontSize: 9, fontWeight: '900' },
   actionButton: { paddingHorizontal: 9, paddingVertical: 9, borderRadius: 8, borderWidth: 1, borderColor: colors.border },
