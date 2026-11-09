@@ -31,10 +31,11 @@ export default function ProfileScreen() {
 
   async function signOut() {
     if (!supabase) return;
+    const client = supabase;
     Alert.alert('Se déconnecter ?', 'Tu pourras te reconnecter à tout moment avec ton adresse e-mail.', [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Se déconnecter', style: 'destructive', onPress: async () => {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await client.auth.signOut();
         if (error) {
           Alert.alert('Déconnexion impossible', error.message);
           return;
