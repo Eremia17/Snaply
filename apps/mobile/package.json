@@ -19,7 +19,9 @@
     "react-native-screens": "~4.19.0",
     "expo-image-picker": "~57.0.21",
     "@react-native-async-storage/async-storage": "2.2.0",
-    "expo-file-system": "~57.0.7"
+    "expo-file-system": "~57.0.7",
+    "@supabase/supabase-js": "^2.57.4",
+    "react-native-url-polyfill": "^2.0.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
