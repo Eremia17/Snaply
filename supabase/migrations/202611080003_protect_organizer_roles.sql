@@ -6,7 +6,8 @@ security invoker
 set search_path = public
 as $$
 begin
-  if coalesce(auth.role(), '') <> 'service_role' then
+  if coalesce(auth.role(), '') <> 'service_role'
+     and current_user not in ('postgres', 'service_role') then
     if tg_op = 'INSERT' then
       new.role := 'customer';
     elsif new.role is distinct from old.role then
