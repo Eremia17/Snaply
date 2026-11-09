@@ -43,6 +43,8 @@ export default function EventDetailScreen() {
     setReserving(true);
     try {
       const reservation = await reserveEventTickets(selectedTier.id, quantity);
+      const refreshedEvent = await fetchEventById(id);
+      if (refreshedEvent) setEvent(refreshedEvent);
       const expiry = new Date(reservation.expiresAt).toLocaleTimeString('fr-FR', {
         hour: '2-digit',
         minute: '2-digit',
