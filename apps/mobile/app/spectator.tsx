@@ -83,6 +83,8 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        <Pressable onPress={() => router.push('/my-reservations')} style={styles.reservationsLink}><Text style={styles.reservationsLinkText}>Mes réservations  →</Text><Text style={styles.reservationsHint}>Retrouver mes pré-réservations</Text></Pressable>
+
         <View style={styles.sectionHeading}>
           <View><Text style={styles.sectionEyebrow}>TICKET MADA</Text><Text style={styles.sectionTitle}>{t.featured}</Text></View>
           <Text style={styles.allLink}>{t.all}  ↗</Text>
@@ -129,6 +131,9 @@ const styles = StyleSheet.create({
   searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 13, marginTop: 23, height: 52 },
   searchIcon: { color: colors.muted, fontSize: 25, marginRight: 8 },
   searchInput: { flex: 1, color: colors.text, fontSize: 13 },
+  reservationsLink: { alignSelf: 'flex-end', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 17 },
+  reservationsLinkText: { color: colors.primary, fontSize: 10, fontWeight: '900' },
+  reservationsHint: { color: colors.muted, fontSize: 8, marginTop: 3 },
   sectionHeading: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 12, marginBottom: 17 },
   sectionEyebrow: { color: colors.muted, fontSize: 9, letterSpacing: 2, fontWeight: '800' },
   sectionTitle: { color: colors.text, fontSize: 23, fontWeight: '900', marginTop: 4 },
