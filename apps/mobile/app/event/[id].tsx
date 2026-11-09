@@ -36,6 +36,31 @@ export default function EventDetailScreen() {
     return <SafeAreaView style={styles.safe}><View style={styles.notFound}><Text style={styles.title}>Événement introuvable</Text><Pressable onPress={() => router.back()}><Text style={styles.link}>Retour</Text></Pressable></View></SafeAreaView>;
   }
 
+  const selectedTier = event.ticketTiers?.find(tier => tier.id === selectedTierId);
+
+  async function handleReservation() {
+    if (!selectedTier || selectedTier.available < 1 || reserving) return;
+    setReserving(true);
+    try {
+      const reservation = await reserveEventTickets(selectedTier.id, quantity);
+      const expiry = new Date(reservation.expiresAt).toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Indian/Antananarivo',
+      });
+      Alert.alert(
+        'Pré-réservation créée',
+        quantity + ' billet(s) · ' + formatAriary(reservation.subtotalMGA) +
+          '\\nRéservation valable jusqu’à ' + expiry + ' (heure de Madagascar).' +
+          '\\n\\nAucun paiement n’a été effectué et aucun billet n’a encore été émis.',
+      );
+    } catch (error) {
+      Alert.alert('Réservation impossible', error instanceof Error ? error.message : 'Une erreur inattendue est survenue.');
+    } finally {
+      setReserving(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -50,7 +75,7 @@ export default function EventDetailScreen() {
         {event.isDemo ? (
           <View style={styles.disabled}><Text style={styles.disabledTitle}>Événement de démonstration</Text><Text style={styles.body}>Cette fiche sert à présenter l'expérience Ticket Mada. Elle ne correspond pas à une vraie manifestation et ne permet pas de réserver.</Text></View>
         ) : (
-          <View style={styles.disabled}><Text style={styles.disabledTitle}>Billetterie bientôt disponible</Text><Text style={styles.body}>Cet événement est publié dans le catalogue. La réservation et le paiement seront activés après mise en place des contrôles de stock et des intégrations de paiement.</Text></View>
+          <View style={styles.disabled}><Text style={styles.disabledTitle}>Pré-réservation disponible</Text><Text style={styles.body}>Tu peux bloquer temporairement des places pendant 15 minutes. Le paiement n’est pas encore disponible et aucun billet définitif n’est émis.</Text></View>
         )}
       </ScrollView>
     </SafeAreaView>
