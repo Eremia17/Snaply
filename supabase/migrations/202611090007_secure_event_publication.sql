@@ -82,7 +82,7 @@ begin
     if not exists (
       select 1 from public.ticket_types t
       where t.event_id = v_event.id
-        and t.quantity_total > 0
+        and t.quantity_total > t.quantity_sold
         and t.price_mga >= 0
         and char_length(trim(t.name)) > 0
     ) then
