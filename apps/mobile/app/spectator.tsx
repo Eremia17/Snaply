@@ -52,7 +52,7 @@ export default function HomeScreen() {
           </View>
           <View style={styles.topActions}>
             <Pressable onPress={() => router.replace('/account?next=organizer')} style={styles.organizerLink}><Text style={styles.organizerLinkText}>Organisateur</Text></Pressable>
-            <Pressable onPress={() => router.push('/account')} style={styles.organizerLink}><Text style={styles.organizerLinkText}>Compte</Text></Pressable>
+            <Pressable onPress={() => router.push('/profile')} style={styles.organizerLink}><Text style={styles.organizerLinkText}>Compte</Text></Pressable>
             <View style={styles.languageSwitch}>
               <Pressable onPress={() => setLanguage('fr')} style={[styles.languageButton, language === 'fr' && styles.languageActive]}><Text style={[styles.languageText, language === 'fr' && styles.languageTextActive]}>FR</Text></Pressable>
               <Pressable onPress={() => setLanguage('mg')} style={[styles.languageButton, language === 'mg' && styles.languageActive]}><Text style={[styles.languageText, language === 'mg' && styles.languageTextActive]}>MG</Text></Pressable>
