@@ -1,15 +1,32 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
-import { demoEvents } from '../../src/data/events';
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
+import { fetchEventById, type EventItem } from '../../src/data/events';
 import { colors } from '../../src/theme';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const event = useMemo(() => demoEvents.find((item) => item.id === id), [id]);
-  if (!event) {
-    return <SafeAreaView style={styles.safe}><Text style={styles.title}>Événement introuvable</Text><Pressable onPress={() => router.back()}><Text style={styles.link}>Retour</Text></Pressable></SafeAreaView>;
+  const [event, setEvent] = useState<EventItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    fetchEventById(id).then(item => {
+      if (active) setEvent(item);
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
+  }, [id]);
+
+  if (loading) {
+    return <SafeAreaView style={styles.safe}><ActivityIndicator color={colors.primary} style={{ flex: 1 }} /></SafeAreaView>;
   }
+  if (!event) {
+    return <SafeAreaView style={styles.safe}><View style={styles.notFound}><Text style={styles.title}>Événement introuvable</Text><Pressable onPress={() => router.back()}><Text style={styles.link}>Retour</Text></Pressable></View></SafeAreaView>;
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -19,8 +36,12 @@ export default function EventDetailScreen() {
         <Text style={styles.title}>{event.title}</Text>
         <Text style={styles.meta}>⌖  {event.city} · {event.venue}</Text>
         <View style={styles.infoCard}><Text style={styles.label}>DATE</Text><Text style={styles.value}>{event.dateLabel}</Text><Text style={styles.label}>TARIF INDICATIF</Text><Text style={styles.price}>{event.priceLabel}</Text></View>
-        <View style={styles.infoCard}><Text style={styles.label}>À PROPOS</Text><Text style={styles.body}>Cette fiche est une démonstration de l'expérience Ticket Mada. Les informations de cet événement sont fictives et ne permettent pas d'effectuer une réservation.</Text></View>
-        <View style={styles.disabled}><Text style={styles.disabledTitle}>Billetterie bientôt disponible</Text><Text style={styles.body}>La réservation et le paiement seront activés lorsque les intégrations et contrôles nécessaires seront terminés.</Text></View>
+        <View style={styles.infoCard}><Text style={styles.label}>À PROPOS</Text><Text style={styles.body}>{event.description || 'Informations complémentaires à venir.'}</Text></View>
+        {event.isDemo ? (
+          <View style={styles.disabled}><Text style={styles.disabledTitle}>Événement de démonstration</Text><Text style={styles.body}>Cette fiche sert à présenter l'expérience Ticket Mada. Elle ne correspond pas à une vraie manifestation et ne permet pas de réserver.</Text></View>
+        ) : (
+          <View style={styles.disabled}><Text style={styles.disabledTitle}>Billetterie bientôt disponible</Text><Text style={styles.body}>Cet événement est publié dans le catalogue. La réservation et le paiement seront activés après mise en place des contrôles de stock et des intégrations de paiement.</Text></View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -28,6 +49,7 @@ export default function EventDetailScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   content: { padding: 20, paddingBottom: 40 },
+  notFound: { flex: 1, justifyContent: 'center', padding: 22 },
   back: { paddingVertical: 12, marginBottom: 12 },
   link: { color: colors.primary, fontWeight: '800' },
   poster: { height: 210, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
