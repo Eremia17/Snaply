@@ -3,7 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
 import { colors } from '../../src/theme';
 import { deleteEventDraft, listEventDrafts, setEventDraftCloudId, updateEventDraftStatus, type EventDraft } from '../../src/storage/eventDrafts';
-import { syncEventDraft } from '../../src/data/organizerEvents';
+import { refreshOrganizerCloudDrafts, syncEventDraft } from '../../src/data/organizerEvents';
 import { formatAriary } from '../../src/utils/currency';
 
 type Filter = 'Tous' | 'Brouillons' | 'Publiés' | 'Archivés';
@@ -16,8 +16,10 @@ export default function OrganizerEventsScreen() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    try { setEvents(await listEventDrafts()); }
-    catch { Alert.alert('Erreur', 'Impossible de lire les brouillons enregistrés sur cet appareil.'); }
+    try {
+      await refreshOrganizerCloudDrafts().catch(() => 0);
+      setEvents(await listEventDrafts());
+    } catch { Alert.alert('Erreur', 'Impossible de lire les brouillons enregistrés sur cet appareil.'); }
     finally { setLoading(false); }
   }, []);
 
@@ -56,7 +58,7 @@ export default function OrganizerEventsScreen() {
   }
 
   function confirmDelete(item: EventDraft) {
-    Alert.alert('Supprimer ce brouillon ?', 'Cette action supprimera aussi son affiche enregistrée sur cet appareil.', [
+    Alert.alert('Supprimer ce brouillon ?', 'Cette action supprimera le brouillon local et son affiche. La copie cloud éventuelle restera dans ton compte.', [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Supprimer', style: 'destructive', onPress: async () => {
         try { await deleteEventDraft(item.id); await refresh(); }
@@ -119,7 +121,7 @@ export default function OrganizerEventsScreen() {
           {!search.trim() && filter !== 'Publiés' && filter !== 'Archivés' ? <Pressable onPress={() => router.push('/organizer/create')} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Préparer mon premier événement  →</Text></Pressable> : null}
         </View>}
 
-        <View style={styles.note}><Text style={styles.noteTitle}>Sauvegarde sur cet appareil</Text><Text style={styles.noteBody}>Les brouillons restent disponibles hors connexion. Utilise « Synchroniser » pour créer une copie privée dans Supabase. La synchronisation des affiches et la publication publique seront activées séparément.</Text></View>
+        <View style={styles.note}><Text style={styles.noteTitle}>Sauvegarde sur cet appareil</Text><Text style={styles.noteBody}>Les brouillons locaux restent disponibles hors connexion. À l’ouverture, Ticket Mada récupère aussi les brouillons privés du compte connecté. « Synchroniser » envoie les changements vers Supabase. Les affiches et la publication publique restent séparées.</Text></View>
         <Text style={styles.footer}>TICKET MADA  ·  GESTION DES ÉVÉNEMENTS</Text>
       </ScrollView>
     </SafeAreaView>
