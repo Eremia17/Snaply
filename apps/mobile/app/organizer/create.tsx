@@ -19,6 +19,7 @@ export default function CreateEventScreen() {
   const [saving, setSaving] = useState(false);
   const [loadingDraft, setLoadingDraft] = useState(Boolean(draftId));
   const [createdAt, setCreatedAt] = useState(new Date().toISOString());
+  const [cloudEventId, setCloudEventId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let active = true;
@@ -45,6 +46,7 @@ export default function CreateEventScreen() {
         setNextId(Math.max(1, ...draft.tiers.map(tier => tier.id)) + 1);
         setPosterUri(draft.posterUri);
         setCreatedAt(draft.createdAt);
+        setCloudEventId(draft.cloudEventId);
       } catch {
         if (active) Alert.alert('Erreur', 'Impossible de charger ce brouillon.');
       } finally {
@@ -139,6 +141,7 @@ export default function CreateEventScreen() {
         tiers,
         posterUri,
         status: 'draft',
+        cloudEventId,
         createdAt,
         updatedAt: now,
       });
