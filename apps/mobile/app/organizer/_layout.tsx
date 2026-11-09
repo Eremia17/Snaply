@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { router, Stack, useSegments } from 'expo-router';
+import { router, Stack, usePathname } from 'expo-router';
 import { ActivityIndicator, SafeAreaView } from 'react-native';
 import { colors } from '../../src/theme';
 import { isSupabaseConfigured, supabase } from '../../src/lib/supabase';
 
 export default function OrganizerLayout() {
-  const segments = useSegments();
-  const isAccessRequest = segments[1] === 'request';
+  const pathname = usePathname();
+  const isAccessRequest = pathname.endsWith('/organizer/request');
   const [allowed, setAllowed] = useState(false);
   const [checking, setChecking] = useState(true);
 
