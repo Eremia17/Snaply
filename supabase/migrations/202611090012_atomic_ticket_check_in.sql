@@ -39,7 +39,7 @@ begin
   join public.orders o on o.id = t.order_id
   join public.ticket_types tt on tt.id = t.ticket_type_id
   join public.events e on e.id = o.event_id and e.id = tt.event_id
-  where t.qr_token_hash = encode(extensions.digest(convert_to(p_qr_token, 'UTF8'), 'sha256'), 'hex')
+  where t.qr_token_hash = encode(digest(convert_to(p_qr_token, 'UTF8'), 'sha256'), 'hex')
   for update of t;
 
   if not found then
