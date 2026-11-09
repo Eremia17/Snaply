@@ -32,7 +32,7 @@ begin
     raise exception 'Authentication required';
   end if;
 
-  if p_decision not in ('approved', 'rejected') then
+  if p_decision is null or p_decision not in ('approved', 'rejected') then
     raise exception 'Invalid decision';
   end if;
 
