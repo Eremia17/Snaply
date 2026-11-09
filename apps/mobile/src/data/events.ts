@@ -64,7 +64,7 @@ export async function fetchPublishedEvents(): Promise<EventItem[]> {
         category: event.category,
         city: event.city,
         venue: event.venue,
-        dateLabel: new Date(event.starts_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+        dateLabel: new Date(event.starts_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Indian/Antananarivo' }),
         priceLabel: minPrice === null ? 'Prix à confirmer' : minPrice === 0 ? 'Entrée libre' : 'Dès ' + formatAriary(minPrice),
         accent: visual.accent,
         symbol: visual.symbol,
@@ -85,7 +85,7 @@ export async function fetchEventById(id: string): Promise<EventItem | null> {
   try {
     const { data, error } = await supabase
       .from('events')
-      .select('id,title,description,category,city,venue,starts_at,ticket_types(price_mga)')
+      .select('id,title,description,category,city,venue,starts_at,cover_path,ticket_types(price_mga)')
       .eq('id', id)
       .eq('status', 'published')
       .maybeSingle();
