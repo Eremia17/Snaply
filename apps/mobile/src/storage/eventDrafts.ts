@@ -89,3 +89,11 @@ export async function persistEventPoster(sourceUri: string): Promise<string> {
   await FileSystem.copyAsync({ from: sourceUri, to: destination });
   return destination;
 }
+
+export async function setEventDraftCloudId(id: string, cloudEventId: string): Promise<void> {
+  const items = await readAll();
+  const next = items.map(item => item.id === id
+    ? { ...item, cloudEventId, updatedAt: new Date().toISOString() }
+    : item);
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+}
