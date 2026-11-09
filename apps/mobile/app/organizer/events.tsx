@@ -36,7 +36,19 @@ export default function OrganizerEventsScreen() {
     return matchesFilter && matchesSearch;
   }), [events, filter, search]);
 
-  async function synchronizeDraft(item: EventDraft) {\n    if (item.cloudEventId) { Alert.alert('Déjà synchronisé', 'Ce brouillon possède déjà une copie cloud.'); return; }\n    try {\n      const result = await syncEventDraft(item);\n      await setEventDraftCloudId(item.id, result.eventId);\n      await refresh();\n      Alert.alert('Synchronisation terminée', 'Le brouillon est maintenant enregistré dans ton espace Supabase. Il reste privé et n’est pas publié.');\n    } catch (error) {\n      Alert.alert('Synchronisation impossible', error instanceof Error ? error.message : 'Une erreur inattendue est survenue.');\n    }\n  }\n\n  async function archiveDraft(item: EventDraft) {
+  async function synchronizeDraft(item: EventDraft) {
+    if (item.cloudEventId) { Alert.alert('Déjà synchronisé', 'Ce brouillon possède déjà une copie cloud.'); return; }
+    try {
+      const result = await syncEventDraft(item);
+      await setEventDraftCloudId(item.id, result.eventId);
+      await refresh();
+      Alert.alert('Synchronisation terminée', 'Le brouillon est maintenant enregistré dans ton espace Supabase. Il reste privé et n’est pas publié.');
+    } catch (error) {
+      Alert.alert('Synchronisation impossible', error instanceof Error ? error.message : 'Une erreur inattendue est survenue.');
+    }
+  }
+
+  async function archiveDraft(item: EventDraft) {
     const nextStatus = item.status === 'archived' ? 'draft' : 'archived';
     try {
       await updateEventDraftStatus(item.id, nextStatus);
@@ -96,7 +108,8 @@ export default function OrganizerEventsScreen() {
             </View>
             <View style={styles.eventActions}>
               <Pressable onPress={() => router.push({ pathname: '/organizer/create', params: { draftId: item.id } })} style={styles.editButton}><Text style={styles.editButtonText}>Modifier  →</Text></Pressable>
-              <Pressable onPress={() => synchronizeDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.cloudEventId ? 'Synchronisé' : 'Synchroniser'}</Text></Pressable>\n              <Pressable onPress={() => archiveDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'archived' ? 'Restaurer' : 'Archiver'}</Text></Pressable>
+              <Pressable onPress={() => synchronizeDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.cloudEventId ? 'Synchronisé' : 'Synchroniser'}</Text></Pressable>
+              <Pressable onPress={() => archiveDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'archived' ? 'Restaurer' : 'Archiver'}</Text></Pressable>
               <Pressable onPress={() => confirmDelete(item)} style={styles.deleteButton}><Text style={styles.deleteText}>Supprimer</Text></Pressable>
             </View>
           </View>;
