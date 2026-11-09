@@ -1,7 +1,7 @@
 import { formatAriary } from '../utils/currency';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
-export type EventTicketTier = { name: string; priceMGA: number; available: number };
+export type EventTicketTier = { id: string; name: string; priceMGA: number; available: number };
 
 export type EventItem = {
   id: string;
@@ -40,7 +40,7 @@ export async function fetchPublishedEvents(): Promise<EventItem[]> {
   try {
     const { data, error } = await supabase
       .from('events')
-      .select('id,title,description,category,city,venue,starts_at,cover_path,ticket_types(name,price_mga,quantity_total,quantity_sold)')
+      .select('id,title,description,category,city,venue,starts_at,cover_path,ticket_types(id,name,price_mga,quantity_total,quantity_sold,quantity_reserved)')
       .eq('status', 'published')
       .gte('starts_at', new Date().toISOString())
       .order('starts_at', { ascending: true });
@@ -56,9 +56,9 @@ export async function fetchPublishedEvents(): Promise<EventItem[]> {
         venue: string;
         starts_at: string;
         cover_path?: string | null;
-        ticket_types?: { name: string; price_mga: number | string; quantity_total: number; quantity_sold: number }[];
+        ticket_types?: { id: string; name: string; price_mga: number | string; quantity_total: number; quantity_sold: number; quantity_reserved: number }[];
       };
-      const ticketTiers = (event.ticket_types ?? []).map(ticket => ({ name: ticket.name, priceMGA: Number(ticket.price_mga), available: Math.max(0, Number(ticket.quantity_total) - Number(ticket.quantity_sold)) }));
+      const ticketTiers = (event.ticket_types ?? []).map(ticket => ({ id: ticket.id, name: ticket.name, priceMGA: Number(ticket.price_mga), available: Math.max(0, Number(ticket.quantity_total) - Number(ticket.quantity_sold) - Number(ticket.quantity_reserved ?? 0)) }));
       const prices = ticketTiers.map(ticket => ticket.priceMGA).filter(price => Number.isFinite(price) && price >= 0);
       const minPrice = prices.length ? Math.min(...prices) : null;
       const poster = event.cover_path ? await client.storage.from('event-posters').createSignedUrl(event.cover_path, 3600) : null;
