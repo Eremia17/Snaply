@@ -37,12 +37,11 @@ export default function OrganizerEventsScreen() {
   }), [events, filter, search]);
 
   async function synchronizeDraft(item: EventDraft) {
-    if (item.cloudEventId) { Alert.alert('Déjà synchronisé', 'Ce brouillon possède déjà une copie cloud.'); return; }
     try {
       const result = await syncEventDraft(item);
       await setEventDraftCloudId(item.id, result.eventId);
       await refresh();
-      Alert.alert('Synchronisation terminée', 'Le brouillon est maintenant enregistré dans ton espace Supabase. Il reste privé et n’est pas publié.');
+      Alert.alert(result.created ? 'Synchronisation terminée' : 'Mise à jour cloud terminée', 'Le brouillon est enregistré dans ton espace Supabase. Il reste privé et n’est pas publié.');
     } catch (error) {
       Alert.alert('Synchronisation impossible', error instanceof Error ? error.message : 'Une erreur inattendue est survenue.');
     }
@@ -108,7 +107,7 @@ export default function OrganizerEventsScreen() {
             </View>
             <View style={styles.eventActions}>
               <Pressable onPress={() => router.push({ pathname: '/organizer/create', params: { draftId: item.id } })} style={styles.editButton}><Text style={styles.editButtonText}>Modifier  →</Text></Pressable>
-              <Pressable onPress={() => synchronizeDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.cloudEventId ? 'Synchronisé' : 'Synchroniser'}</Text></Pressable>
+              <Pressable onPress={() => synchronizeDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.cloudEventId ? 'Mettre à jour cloud' : 'Synchroniser'}</Text></Pressable>
               <Pressable onPress={() => archiveDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'archived' ? 'Restaurer' : 'Archiver'}</Text></Pressable>
               <Pressable onPress={() => confirmDelete(item)} style={styles.deleteButton}><Text style={styles.deleteText}>Supprimer</Text></Pressable>
             </View>
