@@ -23,7 +23,7 @@ export default function EntryScreen() {
           </View>
         </Pressable>
 
-        <Pressable accessibilityRole="button" accessibilityLabel="Entrer dans l'espace organisateur" onPress={() => router.replace('/organizer')} style={[styles.choiceCard, styles.organizerCard]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Entrer dans l'espace organisateur" onPress={() => router.replace('/account?next=organizer')} style={[styles.choiceCard, styles.organizerCard]}>
           <View style={[styles.choiceIcon, styles.organizerIcon]}><Text style={styles.choiceIconText}>▦</Text></View>
           <View style={styles.choiceCopy}>
             <Text style={styles.choiceEyebrow}>CRÉER & PILOTER</Text>
