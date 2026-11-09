@@ -45,6 +45,10 @@ begin
     raise exception 'Authentication required';
   end if;
 
+  if p_publish is null then
+    raise exception 'Publication decision is required';
+  end if;
+
   if not exists (
     select 1 from public.profiles
     where id = v_user_id and role = 'organizer'
