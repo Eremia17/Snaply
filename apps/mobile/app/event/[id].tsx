@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Image, SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
 import { fetchEventById, type EventItem } from '../../src/data/events';
 import { colors } from '../../src/theme';
+import { formatAriary } from '../../src/utils/currency';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,6 +37,7 @@ export default function EventDetailScreen() {
         <Text style={styles.title}>{event.title}</Text>
         <Text style={styles.meta}>⌖  {event.city} · {event.venue}</Text>
         <View style={styles.infoCard}><Text style={styles.label}>DATE</Text><Text style={styles.value}>{event.dateLabel}</Text><Text style={styles.label}>TARIF INDICATIF</Text><Text style={styles.price}>{event.priceLabel}</Text></View>
+        {event.ticketTiers?.length ? <View style={styles.infoCard}><Text style={styles.label}>CATÉGORIES DE BILLETS</Text>{event.ticketTiers.map((tier, index) => <View key={tier.name + index} style={styles.ticketRow}><View style={{ flex: 1, gap: 4 }}><Text style={styles.ticketName}>{tier.name}</Text><Text style={styles.ticketAvailability}>{tier.available > 0 ? tier.available + ' place(s) disponible(s)' : 'Complet'}</Text></View><Text style={styles.ticketPrice}>{formatAriary(tier.priceMGA)}</Text></View>)}</View> : null}
         <View style={styles.infoCard}><Text style={styles.label}>À PROPOS</Text><Text style={styles.body}>{event.description || 'Informations complémentaires à venir.'}</Text></View>
         {event.isDemo ? (
           <View style={styles.disabled}><Text style={styles.disabledTitle}>Événement de démonstration</Text><Text style={styles.body}>Cette fiche sert à présenter l'expérience Ticket Mada. Elle ne correspond pas à une vraie manifestation et ne permet pas de réserver.</Text></View>
@@ -64,6 +66,10 @@ const styles = StyleSheet.create({
   label: { color: colors.muted, fontSize: 9, letterSpacing: 1.8, fontWeight: '900', marginTop: 5 },
   value: { color: colors.text, fontSize: 15, fontWeight: '700' },
   price: { color: colors.success, fontSize: 17, fontWeight: '900' },
+  ticketRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.border },
+  ticketName: { color: colors.text, fontSize: 13, fontWeight: '800' },
+  ticketAvailability: { color: colors.muted, fontSize: 10 },
+  ticketPrice: { color: colors.success, fontSize: 13, fontWeight: '900' },
   body: { color: colors.muted, fontSize: 13, lineHeight: 21 },
   disabled: { backgroundColor: colors.primarySoft, borderColor: '#5A303D', borderWidth: 1, borderRadius: 16, padding: 16, marginTop: 18, gap: 8 },
   disabledTitle: { color: colors.text, fontSize: 15, fontWeight: '800' }
