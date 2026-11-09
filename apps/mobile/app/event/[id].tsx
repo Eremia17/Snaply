@@ -53,8 +53,8 @@ export default function EventDetailScreen() {
       Alert.alert(
         'Pré-réservation créée',
         quantity + ' billet(s) · ' + formatAriary(reservation.subtotalMGA) +
-          '\\nRéservation valable jusqu’à ' + expiry + ' (heure de Madagascar).' +
-          '\\n\\nAucun paiement n’a été effectué et aucun billet n’a encore été émis.',
+          '\nRéservation valable jusqu’à ' + expiry + ' (heure de Madagascar).' +
+          '\n\nAucun paiement n’a été effectué et aucun billet n’a encore été émis.',
       );
     } catch (error) {
       Alert.alert('Réservation impossible', error instanceof Error ? error.message : 'Une erreur inattendue est survenue.');
