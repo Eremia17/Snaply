@@ -15,6 +15,7 @@ On a fresh Supabase project, apply every SQL migration in this exact filename or
 7. `202611090004_organizer_draft_delete_policy.sql`
 8. `202611090005_atomic_organizer_draft_sync.sql`
 9. `202611090006_private_event_posters.sql`
+10. `202611090007_secure_event_publication.sql`
 
 The second and third migration files both define parts of organizer review and role protection. Run them in order; the later secure review definition is the final one.
 
@@ -56,6 +57,8 @@ Only a trusted project owner should run this bootstrap query. Never expose a Sup
 - The app calls `review_organizer_application` to approve or reject an application.
 - Approved organizers can save private event drafts and their ticket tiers atomically.
 - Organizers can upload and retrieve their own private event posters.
+- Organizers can publish a complete future event through a server-side validation function; direct client changes to event visibility are blocked.
+- Unpublishing is blocked while pending or paid orders exist, so cancellation and refund handling cannot be bypassed.
 - Approval changes the applicant's profile role to `organizer` and marks the application reviewed in one database transaction.
 - Rejection leaves the applicant as a spectator.
 - Non-administrators cannot execute the review function successfully, even if they call it directly.
