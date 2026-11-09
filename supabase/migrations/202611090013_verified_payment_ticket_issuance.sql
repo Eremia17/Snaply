@@ -24,6 +24,7 @@ declare
   v_ticket_count integer;
   v_expected_count integer;
   v_existing_payment public.payment_records%rowtype;
+  v_inventory record;
 begin
   if coalesce(auth.role(), '') <> 'service_role' then
     raise exception 'Cette opération est réservée au serveur de paiement.';
@@ -175,16 +176,16 @@ begin
   end if;
 
   -- Lock and convert each reserved quantity into sold quantity.
-  for v_existing_payment in
+  for v_inventory in
     select oi.ticket_type_id, sum(oi.quantity)::integer as quantity
     from public.order_items oi
     where oi.order_id = p_order_id
     group by oi.ticket_type_id
   loop
     update public.ticket_types tt
-    set quantity_reserved = tt.quantity_reserved - v_existing_payment.quantity,
+    set quantity_reserved = tt.quantity_reserved - v_inventory.quantity,
         quantity_sold = tt.quantity_sold + v_existing_payment.quantity
-    where tt.id = v_existing_payment.ticket_type_id
+    where tt.id = v_inventory.ticket_type_id
       and tt.quantity_reserved >= v_existing_payment.quantity
       and tt.quantity_sold + v_existing_payment.quantity <= tt.quantity_total;
 
