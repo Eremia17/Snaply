@@ -41,7 +41,7 @@ export default function OrganizerEventsScreen() {
   async function synchronizeDraft(item: EventDraft) {
     try {
       const result = await syncEventDraft(item);
-      await setEventDraftCloudId(item.id, result.eventId);
+      await setEventDraftCloudId(item.id, result.eventId, result.cloudPosterPath);
       await refresh();
       Alert.alert(result.created ? 'Synchronisation terminée' : 'Mise à jour cloud terminée', 'Le brouillon est enregistré dans ton espace Supabase. Il reste privé et n’est pas publié.');
     } catch (error) {
@@ -121,7 +121,7 @@ export default function OrganizerEventsScreen() {
           {!search.trim() && filter !== 'Publiés' && filter !== 'Archivés' ? <Pressable onPress={() => router.push('/organizer/create')} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Préparer mon premier événement  →</Text></Pressable> : null}
         </View>}
 
-        <View style={styles.note}><Text style={styles.noteTitle}>Sauvegarde sur cet appareil</Text><Text style={styles.noteBody}>Les brouillons locaux restent disponibles hors connexion. À l’ouverture, Ticket Mada récupère aussi les brouillons privés du compte connecté. « Synchroniser » envoie les changements vers Supabase. Les affiches et la publication publique restent séparées.</Text></View>
+        <View style={styles.note}><Text style={styles.noteTitle}>Sauvegarde sur cet appareil</Text><Text style={styles.noteBody}>Les brouillons locaux restent disponibles hors connexion. À l’ouverture, Ticket Mada récupère aussi les brouillons privés du compte connecté. « Synchroniser » envoie les changements vers Supabase. Les affiches sont envoyées dans un espace privé ; la publication publique reste séparée.</Text></View>
         <Text style={styles.footer}>TICKET MADA  ·  GESTION DES ÉVÉNEMENTS</Text>
       </ScrollView>
     </SafeAreaView>
