@@ -37,8 +37,9 @@ const accents: Record<string, { accent: string; symbol: string }> = {
 export async function fetchPublishedEvents(): Promise<EventItem[]> {
   if (!isSupabaseConfigured || !supabase) return demoEvents;
   const client = supabase;
+  const client = supabase;
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('events')
       .select('id,title,description,category,city,venue,starts_at,cover_path,ticket_types(id,name,price_mga,quantity_total,quantity_sold,quantity_reserved)')
       .eq('status', 'published')
@@ -88,10 +89,11 @@ export async function fetchEventById(id: string): Promise<EventItem | null> {
   const demo = demoEvents.find(item => item.id === id);
   if (demo) return demo;
   if (!isSupabaseConfigured || !supabase) return null;
+  const client = supabase;
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('events')
-      .select('id,title,description,category,city,venue,starts_at,cover_path,ticket_types(name,price_mga,quantity_total,quantity_sold)')
+      .select('id,title,description,category,city,venue,starts_at,cover_path,ticket_types(id,name,price_mga,quantity_total,quantity_sold,quantity_reserved)')
       .eq('id', id)
       .eq('status', 'published')
       .maybeSingle();
@@ -105,12 +107,12 @@ export async function fetchEventById(id: string): Promise<EventItem | null> {
       venue: string;
       starts_at: string;
       cover_path?: string | null;
-      ticket_types?: { name: string; price_mga: number | string; quantity_total: number; quantity_sold: number }[];
+      ticket_types?: { id: string; name: string; price_mga: number | string; quantity_total: number; quantity_sold: number; quantity_reserved: number }[];
     };
-    const ticketTiers = (event.ticket_types ?? []).map(ticket => ({ name: ticket.name, priceMGA: Number(ticket.price_mga), available: Math.max(0, Number(ticket.quantity_total) - Number(ticket.quantity_sold)) }));
+    const ticketTiers = (event.ticket_types ?? []).map(ticket => ({ id: ticket.id, name: ticket.name, priceMGA: Number(ticket.price_mga), available: Math.max(0, Number(ticket.quantity_total) - Number(ticket.quantity_sold) - Number(ticket.quantity_reserved ?? 0)) }));
     const prices = ticketTiers.map(ticket => ticket.priceMGA).filter(price => Number.isFinite(price) && price >= 0);
     const minPrice = prices.length ? Math.min(...prices) : null;
-    const poster = event.cover_path ? await supabase.storage.from('event-posters').createSignedUrl(event.cover_path, 3600) : null;
+    const poster = event.cover_path ? await client.storage.from('event-posters').createSignedUrl(event.cover_path, 3600) : null;
     const visual = accents[event.category] ?? { accent: '#394052', symbol: '✦' };
     return {
       id: event.id,
