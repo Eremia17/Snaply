@@ -39,9 +39,15 @@ begin
      or char_length(trim(coalesce(p_venue, ''))) = 0
      or p_starts_at is null
      or (p_ends_at is not null and p_ends_at <= p_starts_at)
-     or coalesce(jsonb_typeof(p_ticket_tiers), 'null') <> 'array'
-     or jsonb_array_length(p_ticket_tiers) = 0 then
+     then
     raise exception 'Invalid event draft data';
+  end if;
+
+  if coalesce(jsonb_typeof(p_ticket_tiers), 'null') <> 'array' then
+    raise exception 'Ticket tiers must be a JSON array';
+  end if;
+  if jsonb_array_length(p_ticket_tiers) = 0 then
+    raise exception 'At least one ticket tier is required';
   end if;
 
   for v_tier in select item from jsonb_array_elements(p_ticket_tiers) as x(item)
@@ -96,4 +102,4 @@ end;
 $$;
 
 revoke all on function public.save_organizer_event_draft(uuid, text, text, text, text, text, text, timestamptz, timestamptz, jsonb) from public, anon;
-grant execute on function public.save_organizer_event_draft(uuid, text, text, text, text, text, timestamptz, timestamptz, jsonb) to authenticated;
+grant execute on function public.save_organizer_event_draft(uuid, text, text, text, text, text, text, timestamptz, timestamptz, jsonb) to authenticated;
