@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
+import { ActivityIndicator, Image, SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
 import { fetchEventById, type EventItem } from '../../src/data/events';
 import { colors } from '../../src/theme';
 
@@ -31,7 +31,7 @@ export default function EventDetailScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content}>
         <Pressable onPress={() => router.back()} style={styles.back}><Text style={styles.link}>‹  Retour</Text></Pressable>
-        <View style={[styles.poster, { backgroundColor: event.accent }]}><Text style={styles.symbol}>{event.symbol}</Text><Text style={styles.tag}>{event.category.toUpperCase()}</Text></View>
+        <View style={[styles.poster, { backgroundColor: event.accent }]}>{event.coverUrl ? <Image source={{ uri: event.coverUrl }} style={styles.posterImage} /> : null}{event.coverUrl ? <View style={styles.posterShade} /> : null}<Text style={styles.symbol}>{event.symbol}</Text><Text style={styles.tag}>{event.category.toUpperCase()}</Text></View>
         <Text style={styles.kicker}>TICKET MADA · MADAGASCAR</Text>
         <Text style={styles.title}>{event.title}</Text>
         <Text style={styles.meta}>⌖  {event.city} · {event.venue}</Text>
@@ -52,7 +52,9 @@ const styles = StyleSheet.create({
   notFound: { flex: 1, justifyContent: 'center', padding: 22 },
   back: { paddingVertical: 12, marginBottom: 12 },
   link: { color: colors.primary, fontWeight: '800' },
-  poster: { height: 210, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  poster: { height: 210, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  posterImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', resizeMode: 'cover' },
+  posterShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)' },
   symbol: { color: '#fff', fontSize: 76 },
   tag: { position: 'absolute', bottom: 17, color: '#fff', fontSize: 11, letterSpacing: 2, fontWeight: '900' },
   kicker: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 2, marginTop: 25 },
