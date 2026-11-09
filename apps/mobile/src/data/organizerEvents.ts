@@ -2,7 +2,9 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import * as FileSystem from 'expo-file-system/legacy';
 import { listEventDrafts, saveEventDraft, type EventDraft } from '../storage/eventDrafts';
 
-export type DraftSyncResult = { eventId: string; created: boolean; cloudPosterPath?: string | null };\n\n
+export type DraftSyncResult = { eventId: string; created: boolean; cloudPosterPath?: string | null };
+
+
 function decodeBase64(value: string): Uint8Array {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   const clean = value.replace(/[^A-Za-z0-9+/]/g, '');
@@ -44,7 +46,7 @@ async function uploadEventPoster(
   const encoded = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
   const bytes = decodeBase64(encoded);
   const path = userId + '/' + eventKey + '/poster.' + safeExtension;
-  const { error } = await supabase.storage.from('event-posters').upload(path, bytes, {
+  const { error } = await supabase.storage.from('event-posters').upload(path, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer, {
     contentType: mime,
     upsert: true,
     cacheControl: '3600',
@@ -81,7 +83,9 @@ export async function syncEventDraft(draft: EventDraft): Promise<DraftSyncResult
     throw new Error('Vérifie la date et les horaires de cet événement.');
   }
 
-  const posterPath = await uploadEventPoster(authData.user.id, draft, draft.cloudEventId ?? draft.id);\n\n  const ticketTiers = draft.tiers.map(tier => ({
+  const posterPath = await uploadEventPoster(authData.user.id, draft, draft.cloudEventId ?? draft.id);
+
+  const ticketTiers = draft.tiers.map(tier => ({
     name: tier.name.trim(),
     price_mga: Number(tier.price),
     quantity_total: Number(tier.quantity),
@@ -95,7 +99,8 @@ export async function syncEventDraft(draft: EventDraft): Promise<DraftSyncResult
     p_city: draft.city.trim(),
     p_venue: draft.venue.trim(),
     p_address: draft.address.trim(),
-    p_cover_path: posterPath,\n    p_starts_at: startsAt,
+    p_cover_path: posterPath,
+    p_starts_at: startsAt,
     p_ends_at: endsAt,
     p_ticket_tiers: ticketTiers,
   });
@@ -153,7 +158,9 @@ export async function refreshOrganizerCloudDrafts(): Promise<number> {
       price: String(tier.price_mga),
       quantity: String(tier.quantity_total),
     }));
-    const posterPath = remote.cover_path ? String(remote.cover_path) : undefined;\n    const signedPoster = posterPath ? await supabase.storage.from('event-posters').createSignedUrl(posterPath, 3600) : null;\n    const draft: EventDraft = {
+    const posterPath = remote.cover_path ? String(remote.cover_path) : undefined;
+    const signedPoster = posterPath ? await supabase.storage.from('event-posters').createSignedUrl(posterPath, 3600) : null;
+    const draft: EventDraft = {
       id: existing?.id ?? 'cloud-' + cloudId,
       cloudEventId: cloudId,
       title: String(remote.title ?? ''),
@@ -166,7 +173,8 @@ export async function refreshOrganizerCloudDrafts(): Promise<number> {
       startTime: start.time,
       endTime: end?.time ?? '',
       tiers,
-      posterUri: signedPoster?.data?.signedUrl ?? existing?.posterUri ?? null,\n      cloudPosterPath: posterPath ?? existing?.cloudPosterPath,
+      posterUri: signedPoster?.data?.signedUrl ?? existing?.posterUri ?? null,
+      cloudPosterPath: posterPath ?? existing?.cloudPosterPath,
       status: 'draft',
       createdAt: String(remote.created_at ?? cloudUpdatedAt),
       updatedAt: cloudUpdatedAt,
