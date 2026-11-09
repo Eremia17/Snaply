@@ -20,6 +20,7 @@ export default function CreateEventScreen() {
   const [loadingDraft, setLoadingDraft] = useState(Boolean(draftId));
   const [createdAt, setCreatedAt] = useState(new Date().toISOString());
   const [cloudEventId, setCloudEventId] = useState<string | undefined>(undefined);
+  const [cloudPosterPath, setCloudPosterPath] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let active = true;
@@ -47,6 +48,7 @@ export default function CreateEventScreen() {
         setPosterUri(draft.posterUri);
         setCreatedAt(draft.createdAt);
         setCloudEventId(draft.cloudEventId);
+        setCloudPosterPath(draft.cloudPosterPath);
       } catch {
         if (active) Alert.alert('Erreur', 'Impossible de charger ce brouillon.');
       } finally {
@@ -90,6 +92,7 @@ export default function CreateEventScreen() {
       if (!result.canceled && result.assets[0]) {
         const savedUri = await persistEventPoster(result.assets[0].uri);
         setPosterUri(savedUri);
+        setCloudPosterPath(undefined);
       }
     } catch {
       setError("Impossible d'ouvrir la galerie. Réessaie dans un instant.");
@@ -142,6 +145,7 @@ export default function CreateEventScreen() {
         posterUri,
         status: 'draft',
         cloudEventId,
+        cloudPosterPath,
         createdAt,
         updatedAt: now,
       });
