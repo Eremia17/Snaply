@@ -98,7 +98,7 @@ export default function HomeScreen() {
         <View style={styles.eventList}>
           {loadingEvents ? <Text style={styles.empty}>Chargement des événements…</Text> : filtered.length ? filtered.map((event) => <EventCard key={event.id} item={event} />) : <Text style={styles.empty}>{t.empty}</Text>}
         </View>
-        {events.every(event => event.isDemo) ? <View style={styles.notice}><Text style={styles.noticeTitle}>Aperçu Ticket Mada</Text><Text style={styles.noticeText}>Les cartes affichées sont des exemples. Les vrais événements publiés apparaîtront automatiquement dès que la base Supabase en contiendra.</Text></View> : <View style={styles.notice}><Text style={styles.noticeTitle}>Billetterie en préparation</Text><Text style={styles.noticeText}>Les événements publiés sont maintenant chargés depuis Ticket Mada. La réservation et le paiement seront activés après les contrôles serveur et les intégrations de paiement.</Text></View>}
+        {events.every(event => event.isDemo) ? <View style={styles.notice}><Text style={styles.noticeTitle}>Aperçu Ticket Mada</Text><Text style={styles.noticeText}>Les cartes affichées sont des exemples. Les vrais événements publiés apparaîtront automatiquement dès que la base Supabase en contiendra.</Text></View> : <View style={styles.notice}><Text style={styles.noticeTitle}>Billetterie en préparation</Text><Text style={styles.noticeText}>Les événements publiés sont chargés depuis Ticket Mada. Tu peux pré-réserver des places pendant 15 minutes ; le paiement et l’émission des billets seront ajoutés séparément.</Text></View>}
         <Text style={styles.footer}>FAIT AVEC ♥ À MADAGASCAR</Text>
       </ScrollView>
     </SafeAreaView>
