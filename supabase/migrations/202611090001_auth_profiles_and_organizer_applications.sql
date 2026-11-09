@@ -38,6 +38,9 @@ create table if not exists public.organizer_applications (
 create index if not exists organizer_applications_user_created_idx
   on public.organizer_applications (user_id, created_at desc);
 
+create unique index if not exists one_pending_organizer_application_per_user
+  on public.organizer_applications (user_id) where status = 'pending';
+
 alter table public.organizer_applications enable row level security;
 
 drop policy if exists "Users can submit organizer applications" on public.organizer_applications;
@@ -49,10 +52,6 @@ create policy "Users can submit organizer applications"
     and exists (
       select 1 from public.profiles p
       where p.id = auth.uid() and p.role = 'customer'
-    )
-    and not exists (
-      select 1 from public.organizer_applications a
-      where a.user_id = auth.uid() and a.status = 'pending'
     )
   );
 
