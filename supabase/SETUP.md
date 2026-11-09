@@ -20,6 +20,7 @@ On a fresh Supabase project, apply every SQL migration in this exact filename or
 12. `202611090009_release_expired_reservations_on_event_changes.sql`
 13. `202611090010_protect_ticket_inventory.sql`
 14. `202611090011_lock_published_ticket_types.sql`
+15. `202611090012_atomic_ticket_check_in.sql`
 
 The second and third migration files both define parts of organizer review and role protection. Run them in order; the later secure review definition is the final one.
 
@@ -67,6 +68,7 @@ Only a trusted project owner should run this bootstrap query. Never expose a Sup
 - Expired reservations are released during the next reservation attempt and before an organizer unpublishes an event.
 - Reserved and sold inventory counters cannot be edited directly by organizer clients; only trusted transactional server functions can change them.
 - Ticket categories become read-only to organizers after publication; organizers must unpublish safely before editing them. No payment is collected and no ticket or QR code is issued by this reservation feature.
+- The atomic `check_in_ticket` RPC hashes an opaque QR token, verifies that the authenticated approved organizer owns the event, and changes a valid ticket to used in one transaction. Repeated scans are rejected. This is the backend check-in primitive only: QR issuance, camera scanning UI and payment confirmation are not yet implemented.
 - Approval changes the applicant's profile role to `organizer` and marks the application reviewed in one database transaction.
 - Rejection leaves the applicant as a spectator.
 - Non-administrators cannot execute the review function successfully, even if they call it directly.
