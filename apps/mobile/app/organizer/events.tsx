@@ -125,13 +125,13 @@ export default function OrganizerEventsScreen() {
               {item.status !== 'published' ? <Pressable onPress={() => synchronizeDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.cloudEventId ? 'Mettre à jour cloud' : 'Synchroniser'}</Text></Pressable> : null}
               {item.cloudEventId && item.status !== 'archived' ? <Pressable onPress={() => togglePublication(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'published' ? 'Dépublier' : 'Publier'}</Text></Pressable> : null}
               {item.status !== 'published' ? <Pressable onPress={() => archiveDraft(item)} style={styles.actionButton}><Text style={styles.actionText}>{item.status === 'archived' ? 'Restaurer' : 'Archiver'}</Text></Pressable> : null}
-              <Pressable onPress={() => confirmDelete(item)} style={styles.deleteButton}><Text style={styles.deleteText}>Supprimer</Text></Pressable>
+              {item.status !== 'published' ? <Pressable onPress={() => confirmDelete(item)} style={styles.deleteButton}><Text style={styles.deleteText}>Supprimer</Text></Pressable> : null}
             </View>
           </View>;
         }) : <View style={styles.emptyCard}>
           <View style={styles.emptyArtwork}><View style={styles.artBack} /><View style={styles.artFront}><View style={styles.artLine} /><View style={styles.artLineShort} /><View style={styles.artPill} /></View><View style={styles.artPlus}>＋</View></View>
           <Text style={styles.emptyTitle}>{search.trim() ? 'Aucun résultat' : filter === 'Brouillons' ? 'Aucun brouillon pour le moment' : filter === 'Archivés' ? 'Aucune archive' : filter === 'Publiés' ? 'Aucun événement publié' : 'Ton espace événementiel est prêt'}</Text>
-          <Text style={styles.emptyBody}>{search.trim() ? 'Aucun événement ne correspond à cette recherche.' : filter === 'Publiés' ? 'La publication sera activée après la connexion du compte organisateur et des services serveur.' : filter === 'Archivés' ? 'Les événements archivés resteront accessibles ici.' : 'Crée ton premier événement. Tu pourras l’enregistrer en brouillon, le modifier et le retrouver ici.'}</Text>
+          <Text style={styles.emptyBody}>{search.trim() ? 'Aucun événement ne correspond à cette recherche.' : filter === 'Publiés' ? 'Synchronise d’abord un brouillon complet pour pouvoir le publier.' : filter === 'Archivés' ? 'Les événements archivés resteront accessibles ici.' : 'Crée ton premier événement. Tu pourras l’enregistrer en brouillon, le modifier et le retrouver ici.'}</Text>
           {!search.trim() && filter !== 'Publiés' && filter !== 'Archivés' ? <Pressable onPress={() => router.push('/organizer/create')} style={styles.secondaryButton}><Text style={styles.secondaryButtonText}>Préparer mon premier événement  →</Text></Pressable> : null}
         </View>}
 
