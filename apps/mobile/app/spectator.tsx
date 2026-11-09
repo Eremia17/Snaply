@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
-import { demoEvents } from '../src/data/events';
+import { demoEvents, fetchPublishedEvents } from '../src/data/events';
 import type { EventItem } from '../src/data/events';
 import { colors } from '../src/theme';
 
@@ -34,12 +34,23 @@ export default function HomeScreen() {
   const [language, setLanguage] = useState<Language>('fr');
   const [category, setCategory] = useState('Tout');
   const [query, setQuery] = useState('');
+  const [events, setEvents] = useState<EventItem[]>(demoEvents);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  useEffect(() => {
+    let active = true;
+    fetchPublishedEvents().then(items => {
+      if (active) setEvents(items);
+    }).finally(() => {
+      if (active) setLoadingEvents(false);
+    });
+    return () => { active = false; };
+  }, []);
   const t = copy[language];
-  const filtered = useMemo(() => demoEvents.filter((event) => {
+  const filtered = useMemo(() => events.filter((event) => {
     const matchesQuery = `${event.title} ${event.city} ${event.category}`.toLowerCase().includes(query.toLowerCase());
     const matchesCategory = category === 'Tout' || event.category === category;
     return matchesQuery && matchesCategory;
-  }), [category, query]);
+  }), [events, category, query]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -83,9 +94,9 @@ export default function HomeScreen() {
         </ScrollView>
 
         <View style={styles.eventList}>
-          {filtered.length ? filtered.map((event) => <EventCard key={event.id} item={event} />) : <Text style={styles.empty}>{t.empty}</Text>}
+          {loadingEvents ? <Text style={styles.empty}>Chargement des événements…</Text> : filtered.length ? filtered.map((event) => <EventCard key={event.id} item={event} />) : <Text style={styles.empty}>{t.empty}</Text>}
         </View>
-        <View style={styles.notice}><Text style={styles.noticeTitle}>Bientôt sur Ticket Mada</Text><Text style={styles.noticeText}>Ces événements sont des exemples. Les réservations, paiements et billets QR seront activés après intégration et tests.</Text></View>
+        {events.every(event => event.isDemo) ? <View style={styles.notice}><Text style={styles.noticeTitle}>Aperçu Ticket Mada</Text><Text style={styles.noticeText}>Les cartes affichées sont des exemples. Les vrais événements publiés apparaîtront automatiquement dès que la base Supabase en contiendra.</Text></View> : <View style={styles.notice}><Text style={styles.noticeTitle}>Billetterie en préparation</Text><Text style={styles.noticeText}>Les événements publiés sont maintenant chargés depuis Ticket Mada. La réservation et le paiement seront activés après les contrôles serveur et les intégrations de paiement.</Text></View>}
         <Text style={styles.footer}>FAIT AVEC ♥ À MADAGASCAR</Text>
       </ScrollView>
     </SafeAreaView>
