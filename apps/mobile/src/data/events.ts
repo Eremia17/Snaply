@@ -12,6 +12,7 @@ export type EventItem = {
   accent: string;
   symbol: string;
   description?: string;
+  coverUrl?: string;
   isDemo: boolean;
 };
 
@@ -35,13 +36,13 @@ export async function fetchPublishedEvents(): Promise<EventItem[]> {
   try {
     const { data, error } = await supabase
       .from('events')
-      .select('id,title,description,category,city,venue,starts_at,ticket_types(price_mga)')
+      .select('id,title,description,category,city,venue,starts_at,cover_path,ticket_types(price_mga)')
       .eq('status', 'published')
       .gte('starts_at', new Date().toISOString())
       .order('starts_at', { ascending: true });
     if (error || !data?.length) return demoEvents;
 
-    return data.map(raw => {
+    return await Promise.all(data.map(async raw => {
       const event = raw as unknown as {
         id: string;
         title: string;
@@ -50,10 +51,12 @@ export async function fetchPublishedEvents(): Promise<EventItem[]> {
         city: string;
         venue: string;
         starts_at: string;
+        cover_path?: string | null;
         ticket_types?: { price_mga: number | string }[];
       };
       const prices = (event.ticket_types ?? []).map(ticket => Number(ticket.price_mga)).filter(price => Number.isFinite(price) && price >= 0);
       const minPrice = prices.length ? Math.min(...prices) : null;
+      const poster = event.cover_path ? await supabase.storage.from('event-posters').createSignedUrl(event.cover_path, 3600) : null;
       const visual = accents[event.category] ?? { accent: '#394052', symbol: '✦' };
       return {
         id: event.id,
@@ -66,9 +69,10 @@ export async function fetchPublishedEvents(): Promise<EventItem[]> {
         accent: visual.accent,
         symbol: visual.symbol,
         description: event.description,
+        coverUrl: poster?.data?.signedUrl,
         isDemo: false,
       };
-    });
+    }));
   } catch {
     return demoEvents;
   }
@@ -94,10 +98,12 @@ export async function fetchEventById(id: string): Promise<EventItem | null> {
       city: string;
       venue: string;
       starts_at: string;
+      cover_path?: string | null;
       ticket_types?: { price_mga: number | string }[];
     };
     const prices = (event.ticket_types ?? []).map(ticket => Number(ticket.price_mga)).filter(price => Number.isFinite(price) && price >= 0);
     const minPrice = prices.length ? Math.min(...prices) : null;
+    const poster = event.cover_path ? await supabase.storage.from('event-posters').createSignedUrl(event.cover_path, 3600) : null;
     const visual = accents[event.category] ?? { accent: '#394052', symbol: '✦' };
     return {
       id: event.id,
@@ -110,6 +116,7 @@ export async function fetchEventById(id: string): Promise<EventItem | null> {
       accent: visual.accent,
       symbol: visual.symbol,
       description: event.description,
+      coverUrl: poster?.data?.signedUrl,
       isDemo: false,
     };
   } catch {
