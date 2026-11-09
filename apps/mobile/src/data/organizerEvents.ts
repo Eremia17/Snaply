@@ -1,5 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import type { EventDraft } from '../storage/eventDrafts';
+import { listEventDrafts, saveEventDraft, type EventDraft } from '../storage/eventDrafts';
 
 export type DraftSyncResult = { eventId: string; created: boolean };
 
@@ -53,4 +53,73 @@ export async function syncEventDraft(draft: EventDraft): Promise<DraftSyncResult
   }
 
   return { eventId, created: !draft.cloudEventId };
+}
+
+function madagascarDateTime(value: string): { date: string; time: string } {
+  const dateParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Indian/Antananarivo', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date(value));
+  const timeParts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Indian/Antananarivo', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date(value));
+  const part = (parts: Intl.DateTimeFormatPart[], type: string) => parts.find(item => item.type === type)?.value ?? '';
+  return {
+    date: part(dateParts, 'year') + '-' + part(dateParts, 'month') + '-' + part(dateParts, 'day'),
+    time: part(timeParts, 'hour') + ':' + part(timeParts, 'minute'),
+  };
+}
+
+/** Pull the signed-in organizer's private cloud drafts into the local offline cache. */
+export async function refreshOrganizerCloudDrafts(): Promise<number> {
+  if (!isSupabaseConfigured || !supabase) return 0;
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) return 0;
+
+  const { data, error } = await supabase
+    .from('events')
+    .select('id,title,description,category,city,venue,starts_at,ends_at,status,created_at,updated_at,ticket_types(id,name,price_mga,quantity_total)')
+    .eq('organizer_id', authData.user.id)
+    .eq('status', 'draft')
+    .order('updated_at', { ascending: false });
+  if (error) throw new Error('Impossible de récupérer les brouillons cloud : ' + error.message);
+
+  const localDrafts = await listEventDrafts();
+  let imported = 0;
+  for (const remote of data ?? []) {
+    const cloudId = String(remote.id);
+    const existing = localDrafts.find(item => item.cloudEventId === cloudId);
+    const cloudUpdatedAt = String(remote.updated_at ?? remote.created_at ?? new Date().toISOString());
+    // Keep newer local edits; the organizer can explicitly synchronize them.
+    if (existing && Date.parse(existing.updatedAt) > Date.parse(cloudUpdatedAt)) continue;
+
+    const start = madagascarDateTime(String(remote.starts_at));
+    const end = remote.ends_at ? madagascarDateTime(String(remote.ends_at)) : null;
+    const tiers = (remote.ticket_types ?? []).map((tier, index) => ({
+      id: index + 1,
+      name: String(tier.name),
+      price: String(tier.price_mga),
+      quantity: String(tier.quantity_total),
+    }));
+    const draft: EventDraft = {
+      id: existing?.id ?? 'cloud-' + cloudId,
+      cloudEventId: cloudId,
+      title: String(remote.title ?? ''),
+      category: String(remote.category ?? 'Autre'),
+      description: String(remote.description ?? ''),
+      city: String(remote.city ?? ''),
+      venue: String(remote.venue ?? ''),
+      address: existing?.address ?? '',
+      date: start.date,
+      startTime: start.time,
+      endTime: end?.time ?? '',
+      tiers,
+      posterUri: existing?.posterUri ?? null,
+      status: 'draft',
+      createdAt: String(remote.created_at ?? cloudUpdatedAt),
+      updatedAt: cloudUpdatedAt,
+    };
+    await saveEventDraft(draft);
+    imported += 1;
+  }
+  return imported;
 }
