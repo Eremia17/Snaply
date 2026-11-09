@@ -91,10 +91,10 @@ export async function persistEventPoster(sourceUri: string): Promise<string> {
   return destination;
 }
 
-export async function setEventDraftCloudId(id: string, cloudEventId: string): Promise<void> {
+export async function setEventDraftCloudId(id: string, cloudEventId: string, cloudPosterPath?: string | null): Promise<void> {
   const items = await readAll();
   const next = items.map(item => item.id === id
-    ? { ...item, cloudEventId, updatedAt: new Date().toISOString() }
+    ? { ...item, cloudEventId, cloudPosterPath: cloudPosterPath ?? item.cloudPosterPath, updatedAt: new Date().toISOString() }
     : item);
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
