@@ -29,40 +29,28 @@ export async function syncEventDraft(draft: EventDraft): Promise<DraftSyncResult
     throw new Error('Vérifie la date et les horaires de cet événement.');
   }
 
-  const { data: event, error: eventError } = await supabase
-    .from('events')
-    .insert({
-      organizer_id: authData.user.id,
-      title: draft.title.trim(),
-      description: draft.description.trim(),
-      category: draft.category,
-      city: draft.city.trim(),
-      venue: draft.venue.trim(),
-      starts_at: startsAt,
-      ends_at: endsAt,
-      status: 'draft',
-    })
-    .select('id')
-    .single();
-
-  if (eventError || !event) {
-    if (eventError?.code === '42501') throw new Error('Accès refusé : vérifie que ton compte organisateur est bien approuvé et que les migrations Supabase sont appliquées.');
-    throw new Error(eventError?.message || 'La création du brouillon cloud a échoué.');
-  }
-
-  const ticketRows = draft.tiers.map(tier => ({
-    event_id: event.id,
+  const ticketTiers = draft.tiers.map(tier => ({
     name: tier.name.trim(),
     price_mga: Number(tier.price),
     quantity_total: Number(tier.quantity),
   }));
 
-  const { error: ticketError } = await supabase.from('ticket_types').insert(ticketRows);
-  if (ticketError) {
-    // Avoid leaving an incomplete event if tier creation fails.
-    await supabase.from('events').delete().eq('id', event.id).eq('organizer_id', authData.user.id);
-    throw new Error('Événement non synchronisé : ' + ticketError.message);
+  const { data: eventId, error: saveError } = await supabase.rpc('save_organizer_event_draft', {
+    p_event_id: draft.cloudEventId ?? null,
+    p_title: draft.title.trim(),
+    p_description: draft.description.trim(),
+    p_category: draft.category,
+    p_city: draft.city.trim(),
+    p_venue: draft.venue.trim(),
+    p_starts_at: startsAt,
+    p_ends_at: endsAt,
+    p_ticket_tiers: ticketTiers,
+  });
+
+  if (saveError || !eventId) {
+    if (saveError?.code === '42501') throw new Error('Accès refusé : vérifie que ton compte organisateur est bien approuvé et que les migrations Supabase sont appliquées.');
+    throw new Error(saveError?.message || 'La synchronisation du brouillon cloud a échoué.');
   }
 
-  return { eventId: event.id, created: true };
+  return { eventId, created: !draft.cloudEventId };
 }
