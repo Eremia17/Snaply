@@ -91,7 +91,7 @@ export async function fetchEventById(id: string): Promise<EventItem | null> {
   try {
     const { data, error } = await supabase
       .from('events')
-      .select('id,title,description,category,city,venue,starts_at,cover_path,ticket_types(price_mga)')
+      .select('id,title,description,category,city,venue,starts_at,cover_path,ticket_types(name,price_mga,quantity_total,quantity_sold)')
       .eq('id', id)
       .eq('status', 'published')
       .maybeSingle();
@@ -105,7 +105,7 @@ export async function fetchEventById(id: string): Promise<EventItem | null> {
       venue: string;
       starts_at: string;
       cover_path?: string | null;
-      ticket_types?: { price_mga: number | string }[];
+      ticket_types?: { name: string; price_mga: number | string; quantity_total: number; quantity_sold: number }[];
     };
     const ticketTiers = (event.ticket_types ?? []).map(ticket => ({ name: ticket.name, priceMGA: Number(ticket.price_mga), available: Math.max(0, Number(ticket.quantity_total) - Number(ticket.quantity_sold)) }));
     const prices = ticketTiers.map(ticket => ticket.priceMGA).filter(price => Number.isFinite(price) && price >= 0);
@@ -118,7 +118,7 @@ export async function fetchEventById(id: string): Promise<EventItem | null> {
       category: event.category,
       city: event.city,
       venue: event.venue,
-      dateLabel: new Date(event.starts_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+      dateLabel: new Date(event.starts_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Indian/Antananarivo' }),
       priceLabel: minPrice === null ? 'Prix à confirmer' : minPrice === 0 ? 'Entrée libre' : 'Dès ' + formatAriary(minPrice),
       accent: visual.accent,
       symbol: visual.symbol,
