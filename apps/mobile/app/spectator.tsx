@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
+import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { demoEvents, fetchPublishedEvents } from '../src/data/events';
 import type { EventItem } from '../src/data/events';
@@ -15,6 +15,8 @@ function EventCard({ item }: { item: EventItem }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`Ouvrir ${item.title}`} style={styles.eventCard} onPress={() => router.push({ pathname: '/event/[id]', params: { id: item.id } })}>
       <View style={[styles.eventArtwork, { backgroundColor: item.accent }]}>
+        {item.coverUrl ? <Image source={{ uri: item.coverUrl }} style={styles.artworkImage} /> : null}
+        {item.coverUrl ? <View style={styles.artworkShade} /> : null}
         <Text style={styles.artworkSymbol}>{item.symbol}</Text>
         <Text style={styles.artworkTag}>{item.category.toUpperCase()}</Text>
       </View>
@@ -139,6 +141,8 @@ const styles = StyleSheet.create({
   eventList: { gap: 13 },
   eventCard: { flexDirection: 'row', padding: 10, backgroundColor: colors.surface, borderRadius: 17, borderWidth: 1, borderColor: colors.border, gap: 13 },
   eventArtwork: { width: 102, height: 112, borderRadius: 12, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  artworkImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', resizeMode: 'cover' },
+  artworkShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.28)' },
   artworkSymbol: { color: '#FFFFFF', fontSize: 42, fontWeight: '300' },
   artworkTag: { position: 'absolute', bottom: 9, color: '#FFFFFF', fontSize: 8, letterSpacing: 1.1, fontWeight: '900' },
   eventInfo: { flex: 1, justifyContent: 'center', gap: 7 },
