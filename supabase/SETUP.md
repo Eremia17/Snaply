@@ -21,7 +21,7 @@ The second and third migration files both define parts of organizer review and r
 
 If any migrations have already been applied, check the database migration history and current schema first. Do not blindly rerun SQL files or apply them out of order. GitHub commits do not apply migrations to Supabase automatically.
 
-Migration 006 creates a **private** `event-posters` Storage bucket. Upload, read, update and delete policies restrict each organizer to files inside their own user-ID folder. Poster uploads are limited to 5 MiB and JPEG, PNG or WebP.
+Migration 006 creates a **private** `event-posters` Storage bucket. Upload, read, update and delete policies restrict each organizer to files inside their own user-ID folder. Poster uploads are limited to 5 MiB and JPEG, PNG or WebP. Spectators can read an image only when its exact object path is attached to an event whose status is `published`.
 
 ## Assign the first administrator
 
