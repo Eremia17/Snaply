@@ -27,6 +27,10 @@ begin
     raise exception 'Authentication required';
   end if;
 
+  if p_cover_path is not null and p_cover_path !~ ('^' || v_user_id::text || '/') then
+    raise exception 'Poster path must belong to the authenticated organizer';
+  end if;
+
   if not exists (
     select 1 from public.profiles
     where id = v_user_id and role = 'organizer'
