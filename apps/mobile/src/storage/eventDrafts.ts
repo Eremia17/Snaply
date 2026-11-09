@@ -16,6 +16,7 @@ export type EventDraft = {
   tiers: DraftTicketTier[];
   posterUri: string | null;
   status: 'draft' | 'archived';
+  cloudEventId?: string;
   createdAt: string;
   updatedAt: string;
 };
