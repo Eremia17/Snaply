@@ -16,6 +16,7 @@ On a fresh Supabase project, apply every SQL migration in this exact filename or
 8. `202611090005_atomic_organizer_draft_sync.sql`
 9. `202611090006_private_event_posters.sql`
 10. `202611090007_secure_event_publication.sql`
+11. `202611090008_atomic_ticket_reservations.sql`
 
 The second and third migration files both define parts of organizer review and role protection. Run them in order; the later secure review definition is the final one.
 
@@ -59,6 +60,8 @@ Only a trusted project owner should run this bootstrap query. Never expose a Sup
 - Organizers can upload and retrieve their own private event posters.
 - Organizers can publish a complete future event through a server-side validation function; direct client changes to event visibility are blocked.
 - Unpublishing is blocked while pending or paid orders exist, so cancellation and refund handling cannot be bypassed.
+- Spectators can temporarily reserve 1–10 tickets per order. Inventory is locked transactionally, and unpaid reservations expire after 15 minutes.
+- Expired reservations are released during the next reservation attempt. No payment is collected and no ticket or QR code is issued by this reservation feature.
 - Approval changes the applicant's profile role to `organizer` and marks the application reviewed in one database transaction.
 - Rejection leaves the applicant as a spectator.
 - Non-administrators cannot execute the review function successfully, even if they call it directly.
