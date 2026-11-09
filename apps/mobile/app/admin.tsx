@@ -57,7 +57,7 @@ export default function AdminScreen() {
 
   async function review(item: Application, decision: 'approved' | 'rejected') {
     if (!supabase) return;
-    const label = decision === 'approved' ? 'approuver' : 'refuser';
+    const client = supabase;
     Alert.alert(
       decision === 'approved' ? 'Approuver cet organisateur ?' : 'Refuser cette demande ?',
       decision === 'approved'
@@ -68,7 +68,7 @@ export default function AdminScreen() {
         { text: decision === 'approved' ? 'Approuver' : 'Refuser', style: decision === 'approved' ? 'default' : 'destructive', onPress: async () => {
           setBusyId(item.id);
           try {
-            const { error: rpcError } = await supabase.rpc('review_organizer_application', {
+            const { error: rpcError } = await client.rpc('review_organizer_application', {
               p_application_id: item.id,
               p_decision: decision,
             });
@@ -82,7 +82,6 @@ export default function AdminScreen() {
         } },
       ],
     );
-    void label;
   }
 
   return (
