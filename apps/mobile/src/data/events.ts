@@ -1,3 +1,6 @@
+import { formatAriary } from '../utils/currency';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
+
 export type EventItem = {
   id: string;
   title: string;
@@ -8,11 +11,108 @@ export type EventItem = {
   priceLabel: string;
   accent: string;
   symbol: string;
+  description?: string;
+  isDemo: boolean;
 };
 
-// Données fictives de démonstration : aucun événement ni billet réel n'est vendu.
 export const demoEvents: EventItem[] = [
-  { id: 'demo-1', title: 'Soirée live', category: 'Musique', city: 'Antananarivo', venue: 'Centre-ville', dateLabel: 'À venir', priceLabel: 'Dès 15 000 Ar', accent: '#573044', symbol: '♫' },
-  { id: 'demo-2', title: 'Festival culturel', category: 'Culture', city: 'Antsirabe', venue: 'Espace culturel', dateLabel: 'À venir', priceLabel: 'Dès 10 000 Ar', accent: '#30465C', symbol: '✦' },
-  { id: 'demo-3', title: 'Rencontre créative', category: 'Conférence', city: 'Toamasina', venue: 'Salle polyvalente', dateLabel: 'À venir', priceLabel: 'Entrée libre', accent: '#4B4930', symbol: '✧' }
+  { id: 'demo-1', title: 'Soirée live', category: 'Musique', city: 'Antananarivo', venue: 'Centre-ville', dateLabel: 'À venir', priceLabel: 'Dès 15 000 Ar', accent: '#573044', symbol: '♫', description: 'Exemple de fiche événement pour présenter le fonctionnement de Ticket Mada.', isDemo: true },
+  { id: 'demo-2', title: 'Festival culturel', category: 'Culture', city: 'Antsirabe', venue: 'Espace culturel', dateLabel: 'À venir', priceLabel: 'Dès 10 000 Ar', accent: '#30465C', symbol: '✦', description: 'Exemple de fiche événement pour présenter le fonctionnement de Ticket Mada.', isDemo: true },
+  { id: 'demo-3', title: 'Rencontre créative', category: 'Conférence', city: 'Toamasina', venue: 'Salle polyvalente', dateLabel: 'À venir', priceLabel: 'Entrée libre', accent: '#4B4930', symbol: '✧', description: 'Exemple de fiche événement pour présenter le fonctionnement de Ticket Mada.', isDemo: true }
 ];
+
+const accents: Record<string, { accent: string; symbol: string }> = {
+  Musique: { accent: '#573044', symbol: '♫' },
+  Festival: { accent: '#49334D', symbol: '✦' },
+  Culture: { accent: '#30465C', symbol: '✧' },
+  Sport: { accent: '#315044', symbol: '⚑' },
+  Conférence: { accent: '#4B4930', symbol: '◇' },
+  Spectacle: { accent: '#583A31', symbol: '✶' },
+};
+
+export async function fetchPublishedEvents(): Promise<EventItem[]> {
+  if (!isSupabaseConfigured || !supabase) return demoEvents;
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .select('id,title,description,category,city,venue,starts_at,ticket_types(price_mga)')
+      .eq('status', 'published')
+      .gte('starts_at', new Date().toISOString())
+      .order('starts_at', { ascending: true });
+    if (error || !data?.length) return demoEvents;
+
+    return data.map(raw => {
+      const event = raw as unknown as {
+        id: string;
+        title: string;
+        description: string;
+        category: string;
+        city: string;
+        venue: string;
+        starts_at: string;
+        ticket_types?: { price_mga: number | string }[];
+      };
+      const prices = (event.ticket_types ?? []).map(ticket => Number(ticket.price_mga)).filter(price => Number.isFinite(price) && price >= 0);
+      const minPrice = prices.length ? Math.min(...prices) : null;
+      const visual = accents[event.category] ?? { accent: '#394052', symbol: '✦' };
+      return {
+        id: event.id,
+        title: event.title,
+        category: event.category,
+        city: event.city,
+        venue: event.venue,
+        dateLabel: new Date(event.starts_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+        priceLabel: minPrice === null ? 'Prix à confirmer' : minPrice === 0 ? 'Entrée libre' : 'Dès ' + formatAriary(minPrice),
+        accent: visual.accent,
+        symbol: visual.symbol,
+        description: event.description,
+        isDemo: false,
+      };
+    });
+  } catch {
+    return demoEvents;
+  }
+}
+
+export async function fetchEventById(id: string): Promise<EventItem | null> {
+  const demo = demoEvents.find(item => item.id === id);
+  if (demo) return demo;
+  if (!isSupabaseConfigured || !supabase) return null;
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .select('id,title,description,category,city,venue,starts_at,ticket_types(price_mga)')
+      .eq('id', id)
+      .eq('status', 'published')
+      .maybeSingle();
+    if (error || !data) return null;
+    const event = data as unknown as {
+      id: string;
+      title: string;
+      description: string;
+      category: string;
+      city: string;
+      venue: string;
+      starts_at: string;
+      ticket_types?: { price_mga: number | string }[];
+    };
+    const prices = (event.ticket_types ?? []).map(ticket => Number(ticket.price_mga)).filter(price => Number.isFinite(price) && price >= 0);
+    const minPrice = prices.length ? Math.min(...prices) : null;
+    const visual = accents[event.category] ?? { accent: '#394052', symbol: '✦' };
+    return {
+      id: event.id,
+      title: event.title,
+      category: event.category,
+      city: event.city,
+      venue: event.venue,
+      dateLabel: new Date(event.starts_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+      priceLabel: minPrice === null ? 'Prix à confirmer' : minPrice === 0 ? 'Entrée libre' : 'Dès ' + formatAriary(minPrice),
+      accent: visual.accent,
+      symbol: visual.symbol,
+      description: event.description,
+      isDemo: false,
+    };
+  } catch {
+    return null;
+  }
+}
