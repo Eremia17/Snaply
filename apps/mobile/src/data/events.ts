@@ -37,7 +37,6 @@ const accents: Record<string, { accent: string; symbol: string }> = {
 export async function fetchPublishedEvents(): Promise<EventItem[]> {
   if (!isSupabaseConfigured || !supabase) return demoEvents;
   const client = supabase;
-  const client = supabase;
   try {
     const { data, error } = await client
       .from('events')
