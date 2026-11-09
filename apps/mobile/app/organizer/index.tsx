@@ -24,7 +24,7 @@ export default function OrganizerScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topbar}>
           <View><Text style={styles.brand}>TICKET <Text style={styles.brandAccent}>MADA</Text></Text><Text style={styles.workspace}>ESPACE ORGANISATEUR</Text></View>
-          <Pressable onPress={() => router.back()} style={styles.avatar}><Text style={styles.avatarText}>TM</Text></Pressable>
+          <Pressable onPress={() => router.replace('/')} accessibilityRole="button" accessibilityLabel="Changer d’espace" style={styles.avatar}><Text style={styles.avatarText}>↔</Text></Pressable>
         </View>
         <View style={styles.headingRow}>
           <View style={{ flex: 1 }}><Text style={styles.eyebrow}>CENTRE DE PILOTAGE</Text><Text style={styles.title}>Vue d’ensemble</Text><Text style={styles.subtitle}>Pilote tes événements depuis un seul espace.</Text></View>
