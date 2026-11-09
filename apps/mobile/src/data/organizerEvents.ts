@@ -42,6 +42,7 @@ export async function syncEventDraft(draft: EventDraft): Promise<DraftSyncResult
     p_category: draft.category,
     p_city: draft.city.trim(),
     p_venue: draft.venue.trim(),
+    p_address: draft.address.trim(),
     p_starts_at: startsAt,
     p_ends_at: endsAt,
     p_ticket_tiers: ticketTiers,
@@ -77,7 +78,7 @@ export async function refreshOrganizerCloudDrafts(): Promise<number> {
 
   const { data, error } = await supabase
     .from('events')
-    .select('id,title,description,category,city,venue,starts_at,ends_at,status,created_at,updated_at,ticket_types(id,name,price_mga,quantity_total)')
+    .select('id,title,description,category,city,venue,address,starts_at,ends_at,status,created_at,updated_at,ticket_types(id,name,price_mga,quantity_total)')
     .eq('organizer_id', authData.user.id)
     .eq('status', 'draft')
     .order('updated_at', { ascending: false });
@@ -108,7 +109,7 @@ export async function refreshOrganizerCloudDrafts(): Promise<number> {
       description: String(remote.description ?? ''),
       city: String(remote.city ?? ''),
       venue: String(remote.venue ?? ''),
-      address: existing?.address ?? '',
+      address: String(remote.address ?? existing?.address ?? ''),
       date: start.date,
       startTime: start.time,
       endTime: end?.time ?? '',
