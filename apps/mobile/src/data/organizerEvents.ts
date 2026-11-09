@@ -29,6 +29,7 @@ async function uploadEventPoster(
   eventKey: string,
 ): Promise<string | null> {
   if (!supabase) return draft.cloudPosterPath ?? null;
+  if (draft.cloudPosterPath) return draft.cloudPosterPath;
   const uri = draft.posterUri;
   if (!uri || (!uri.startsWith('file://') && !uri.startsWith('content://'))) {
     return draft.cloudPosterPath ?? null;
