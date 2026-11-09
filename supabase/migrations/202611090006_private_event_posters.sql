@@ -48,3 +48,16 @@ using (
   and (storage.foldername(name))[1] = (select auth.uid())::text
   and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'organizer')
 );
+
+-- Spectators may read an image only when its exact object path is attached to a published event.
+create policy "Public can read posters for published events"
+on storage.objects for select to anon, authenticated
+using (
+  bucket_id = 'event-posters'
+  and exists (
+    select 1
+    from public.events e
+    where e.cover_path = storage.objects.name
+      and e.status = 'published'
+  )
+);
