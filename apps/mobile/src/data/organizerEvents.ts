@@ -1,7 +1,59 @@
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import * as FileSystem from 'expo-file-system/legacy';
 import { listEventDrafts, saveEventDraft, type EventDraft } from '../storage/eventDrafts';
 
-export type DraftSyncResult = { eventId: string; created: boolean };
+export type DraftSyncResult = { eventId: string; created: boolean; cloudPosterPath?: string | null };\n\n
+function decodeBase64(value: string): Uint8Array {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const clean = value.replace(/[^A-Za-z0-9+/]/g, '');
+  const output = new Uint8Array(Math.floor(clean.length * 3 / 4));
+  let outputIndex = 0;
+  for (let index = 0; index < clean.length; index += 4) {
+    const a = alphabet.indexOf(clean[index] ?? 'A');
+    const b = alphabet.indexOf(clean[index + 1] ?? 'A');
+    const c = alphabet.indexOf(clean[index + 2] ?? 'A');
+    const d = alphabet.indexOf(clean[index + 3] ?? 'A');
+    const chunk = (a << 18) | (b << 12) | ((c < 0 ? 0 : c) << 6) | (d < 0 ? 0 : d);
+    if (outputIndex < output.length) output[outputIndex++] = (chunk >> 16) & 255;
+    if (index + 2 < clean.length && outputIndex < output.length) output[outputIndex++] = (chunk >> 8) & 255;
+    if (index + 3 < clean.length && outputIndex < output.length) output[outputIndex++] = chunk & 255;
+  }
+  return output.subarray(0, outputIndex);
+}
+
+async function uploadEventPoster(
+  userId: string,
+  draft: EventDraft,
+  eventKey: string,
+): Promise<string | null> {
+  if (!supabase) return draft.cloudPosterPath ?? null;
+  const uri = draft.posterUri;
+  if (!uri || (!uri.startsWith('file://') && !uri.startsWith('content://'))) {
+    return draft.cloudPosterPath ?? null;
+  }
+
+  const info = await FileSystem.getInfoAsync(uri, { size: true });
+  if (!info.exists) throw new Error('Le fichier de l’affiche est introuvable sur cet appareil.');
+  if (typeof info.size === 'number' && info.size > 5 * 1024 * 1024) {
+    throw new Error('L’affiche dépasse la limite de 5 Mo. Choisis une image plus légère.');
+  }
+
+  const extension = uri.split('?')[0].split('.').pop()?.toLowerCase();
+  const mime = extension === 'png' ? 'image/png' : extension === 'webp' ? 'image/webp' : 'image/jpeg';
+  const safeExtension = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+  const encoded = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+  const bytes = decodeBase64(encoded);
+  const path = userId + '/' + eventKey + '/poster.' + safeExtension;
+  const { error } = await supabase.storage.from('event-posters').upload(path, bytes, {
+    contentType: mime,
+    upsert: true,
+    cacheControl: '3600',
+  });
+  if (error) throw new Error('Envoi de l’affiche impossible : ' + error.message);
+  return path;
+}
+
+
 
 function toLocalIso(date: string, time: string): string {
   // Madagascar uses UTC+03:00. Store an explicit offset so device timezone
@@ -29,7 +81,7 @@ export async function syncEventDraft(draft: EventDraft): Promise<DraftSyncResult
     throw new Error('Vérifie la date et les horaires de cet événement.');
   }
 
-  const ticketTiers = draft.tiers.map(tier => ({
+  const posterPath = await uploadEventPoster(authData.user.id, draft, draft.cloudEventId ?? draft.id);\n\n  const ticketTiers = draft.tiers.map(tier => ({
     name: tier.name.trim(),
     price_mga: Number(tier.price),
     quantity_total: Number(tier.quantity),
@@ -43,7 +95,7 @@ export async function syncEventDraft(draft: EventDraft): Promise<DraftSyncResult
     p_city: draft.city.trim(),
     p_venue: draft.venue.trim(),
     p_address: draft.address.trim(),
-    p_starts_at: startsAt,
+    p_cover_path: posterPath,\n    p_starts_at: startsAt,
     p_ends_at: endsAt,
     p_ticket_tiers: ticketTiers,
   });
@@ -53,7 +105,7 @@ export async function syncEventDraft(draft: EventDraft): Promise<DraftSyncResult
     throw new Error(saveError?.message || 'La synchronisation du brouillon cloud a échoué.');
   }
 
-  return { eventId, created: !draft.cloudEventId };
+  return { eventId, created: !draft.cloudEventId, cloudPosterPath: posterPath } as DraftSyncResult;
 }
 
 function madagascarDateTime(value: string): { date: string; time: string } {
@@ -78,7 +130,7 @@ export async function refreshOrganizerCloudDrafts(): Promise<number> {
 
   const { data, error } = await supabase
     .from('events')
-    .select('id,title,description,category,city,venue,address,starts_at,ends_at,status,created_at,updated_at,ticket_types(id,name,price_mga,quantity_total)')
+    .select('id,title,description,category,city,venue,address,cover_path,starts_at,ends_at,status,created_at,updated_at,ticket_types(id,name,price_mga,quantity_total)')
     .eq('organizer_id', authData.user.id)
     .eq('status', 'draft')
     .order('updated_at', { ascending: false });
@@ -101,7 +153,7 @@ export async function refreshOrganizerCloudDrafts(): Promise<number> {
       price: String(tier.price_mga),
       quantity: String(tier.quantity_total),
     }));
-    const draft: EventDraft = {
+    const posterPath = remote.cover_path ? String(remote.cover_path) : undefined;\n    const signedPoster = posterPath ? await supabase.storage.from('event-posters').createSignedUrl(posterPath, 3600) : null;\n    const draft: EventDraft = {
       id: existing?.id ?? 'cloud-' + cloudId,
       cloudEventId: cloudId,
       title: String(remote.title ?? ''),
@@ -114,7 +166,7 @@ export async function refreshOrganizerCloudDrafts(): Promise<number> {
       startTime: start.time,
       endTime: end?.time ?? '',
       tiers,
-      posterUri: existing?.posterUri ?? null,
+      posterUri: signedPoster?.data?.signedUrl ?? existing?.posterUri ?? null,\n      cloudPosterPath: posterPath ?? existing?.cloudPosterPath,
       status: 'draft',
       createdAt: String(remote.created_at ?? cloudUpdatedAt),
       updatedAt: cloudUpdatedAt,
