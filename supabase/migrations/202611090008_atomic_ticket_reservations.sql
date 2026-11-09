@@ -72,6 +72,9 @@ begin
     raise exception 'Profil utilisateur introuvable';
   end if;
 
+  -- Serialize retries using the same buyer/key pair before checking the unique key.
+  perform pg_advisory_xact_lock(hashtext(v_user_id::text), hashtext(p_reservation_key));
+
   -- Idempotency: a retry with the same key returns the original reservation.
   select * into v_existing
   from public.orders o
