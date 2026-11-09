@@ -37,12 +37,12 @@ begin
      or char_length(trim(coalesce(p_venue, ''))) = 0
      or p_starts_at is null
      or (p_ends_at is not null and p_ends_at <= p_starts_at)
-     or jsonb_typeof(p_ticket_tiers) <> 'array'
+     or coalesce(jsonb_typeof(p_ticket_tiers), 'null') <> 'array'
      or jsonb_array_length(p_ticket_tiers) = 0 then
     raise exception 'Invalid event draft data';
   end if;
 
-  for v_tier in select value from jsonb_array_elements(p_ticket_tiers)
+  for v_tier in select item from jsonb_array_elements(p_ticket_tiers) as x(item)
   loop
     if char_length(trim(coalesce(v_tier->>'name', ''))) = 0
        or coalesce((v_tier->>'price_mga')::bigint, -1) < 0
@@ -86,7 +86,7 @@ begin
     trim(tier->>'name'),
     (tier->>'price_mga')::bigint,
     (tier->>'quantity_total')::integer
-  from jsonb_array_elements(p_ticket_tiers) as tier;
+  from jsonb_array_elements(p_ticket_tiers) as x(tier);
 
   return v_event_id;
 end;
