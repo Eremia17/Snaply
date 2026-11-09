@@ -17,6 +17,7 @@ on storage.objects for insert to authenticated
 with check (
   bucket_id = 'event-posters'
   and (storage.foldername(name))[1] = (select auth.uid())::text
+  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'organizer')
 );
 
 create policy "Organizers read their own event posters"
