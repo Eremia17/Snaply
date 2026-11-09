@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
-import { SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
 import { colors } from '../../src/theme';
+import { isSupabaseConfigured, supabase } from '../../src/lib/supabase';
 
 const shortcuts = [
   { icon: '▦', title: 'Mes événements', detail: 'Retrouver, modifier et suivre tes événements', route: '/organizer/events' as const },
@@ -19,6 +21,42 @@ function Metric({ label, hint }: { label: string; hint: string }) {
   return <View style={styles.metric}><Text style={styles.metricValue}>—</Text><Text style={styles.metricLabel}>{label}</Text><Text style={styles.metricHint}>{hint}</Text></View>;
 }
 export default function OrganizerScreen() {
+  const [checkingAccess, setCheckingAccess] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    async function verifyAccess() {
+      if (!isSupabaseConfigured || !supabase) {
+        router.replace('/account?next=organizer');
+        return;
+      }
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        router.replace('/account?next=organizer');
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .maybeSingle();
+      if (!active) return;
+      if (profile?.role !== 'organizer') {
+        router.replace('/organizer/request');
+        return;
+      }
+      setAuthorized(true);
+      setCheckingAccess(false);
+    }
+    void verifyAccess();
+    return () => { active = false; };
+  }, []);
+
+  if (checkingAccess || !authorized) {
+    return <SafeAreaView style={styles.safe}><ActivityIndicator color={colors.primary} style={{ flex: 1 }} /></SafeAreaView>;
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
