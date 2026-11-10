@@ -49,7 +49,7 @@ export default function EntryScreen() {
             <Text style={styles.subtitle}>Les concerts, les rencontres et les instants qui deviennent des souvenirs. Tout Madagascar, au même endroit.</Text>
           </Animated.View>
 
-          <Animated.View style={[styles.artStage, { opacity: intro, transform: [{ translateY: intro.interpolate({ inputRange: [0, 1], outputRange: [34, 0] }), { scale: intro.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }] }]}>
+          <Animated.View style={[styles.artStage, { opacity: intro, transform: [{ translateY: intro.interpolate({ inputRange: [0, 1], outputRange: [34, 0] }) }, { scale: intro.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }] }]}>
             <View style={styles.artGlow} />
             <Animated.View style={[styles.floatingDisc, { transform: [{ translateY: orbShift }, { rotate: '-13deg' }] }]} />
             <View style={styles.artGrid} />
