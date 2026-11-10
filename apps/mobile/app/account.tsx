@@ -45,13 +45,20 @@ export default function AccountScreen() {
         if (error) throw error;
       }
 
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) {
+        throw new Error('La session n’a pas pu être ouverte. Connecte-toi à nouveau.');
+      }
+
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', userData.user?.id ?? '')
+        .eq('id', userData.user.id)
         .single();
-      if (profileError) throw profileError;
+      if (profileError) {
+        throw new Error('Compte authentifié, mais profil introuvable. Réessaie dans un instant.');
+      }
 
       if (profile.role === 'admin') {
         router.replace('/admin');
