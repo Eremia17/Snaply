@@ -76,7 +76,7 @@ export default function OrganizerAttendanceScreen() {
               return <View key={item.eventId} style={styles.eventCard}>
                 <Text style={styles.eventTitle}>{item.eventTitle}</Text>
                 <Text style={styles.eventMeta}>{item.eventCity} · {formatDate(item.eventStartsAt)}</Text>
-                <View style={styles.progressTrack}><View style={[styles.progressFill, { width: (ratio * 100) + '%' }]} /></View>
+                <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${ratio * 100}%` as `${number}%` }]} /></View>
                 <View style={styles.eventNumbers}>
                   <Text style={styles.eventNumber}><Text style={styles.green}>{item.ticketsCheckedIn}</Text> entrées</Text>
                   <Text style={styles.eventNumber}>{item.ticketsIssued} billets émis</Text>
