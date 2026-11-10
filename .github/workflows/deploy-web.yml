@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "apps/mobile/**"
+      - "apps/web/**"
       - ".github/workflows/deploy-web.yml"
   workflow_dispatch:
 
@@ -26,20 +26,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install dependencies
-        run: npm install
-      - name: Export Ticket Mada for web
-        run: npm --workspace apps/mobile run export:web
-      - name: Add GitHub Pages route fallback
-        run: cp apps/mobile/dist/index.html apps/mobile/dist/404.html
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
       - name: Upload website
         uses: actions/upload-pages-artifact@v3
         with:
-          path: apps/mobile/dist
+          path: apps/web
       - name: Deploy website
         id: deployment
         uses: actions/deploy-pages@v4
