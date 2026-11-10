@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   typecheck:
     name: TypeScript validation
@@ -19,6 +22,20 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
+      - name: Align dependencies with Expo SDK 58
+        working-directory: apps/mobile
+        run: |
+          npx expo install --fix
+          npx expo-doctor@latest
+      - name: Save SDK 58 dependency alignment
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/mobile/package.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(mobile): align dependencies with Expo SDK 58"
+            git push
+          fi
       - name: Check TypeScript
         run: npm run typecheck
       - name: Build Expo web preview
