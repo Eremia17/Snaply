@@ -204,14 +204,18 @@ export default function CreateEventScreen() {
         </> : null}
 
         {step === 2 ? <>
-          <View style={styles.ticketIntro}><View style={{ flex: 1 }}><Text style={styles.ticketIntroTitle}>Structure tarifaire</Text><Text style={styles.ticketIntroText}>Crée une ou plusieurs catégories avec un quota distinct.</Text></View><View style={styles.capacityBadge}><Text style={styles.capacityValue}>{totalCapacity || '—'}</Text><Text style={styles.capacityLabel}>PLACES</Text></View></View>
+          <View style={styles.ticketIntro}><View style={{ flex: 1 }}><Text style={styles.ticketIntroTitle}>Catégories de billets</Text><Text style={styles.ticketIntroText}>Définis un tarif et un quota indépendant pour chaque catégorie.</Text></View><View style={styles.capacityBadge}><Text style={styles.capacityValue}>{totalCapacity || '—'}</Text><Text style={styles.capacityLabel}>PLACES</Text></View></View>
+          <Text style={styles.presetTitle}>AJOUT RAPIDE</Text>
+          <View style={styles.presetList}>
+            {['Standard', 'VIP', 'VVIP', 'Étudiant', 'Enfant', 'Accès backstage'].map(name => <Pressable key={name} style={styles.presetChip} onPress={() => { setTiers(current => [...current, { id: nextId, name, price: '', quantity: '' }]); setNextId(value => value + 1); }}><Text style={styles.presetChipText}>＋ {name}</Text></Pressable>)}
+          </View>
           {tiers.map((tier, index) => <View key={tier.id} style={styles.tierCard}>
             <View style={styles.tierHeader}><Text style={styles.tierIndex}>CATÉGORIE {String(index + 1).padStart(2, '0')}</Text>{tiers.length > 1 ? <Pressable onPress={() => setTiers(current => current.filter(t => t.id !== tier.id))}><Text style={styles.removeText}>Supprimer</Text></Pressable> : null}</View>
             <Input label="INTITULÉ DU BILLET" value={tier.name} onChangeText={v => updateTier(tier.id, 'name', v)} placeholder="Entrée standard, VIP..." />
             <View style={styles.inlineFields}><View style={styles.inlineField}><Input label="PRIX (ARIARY)" value={tier.price} onChangeText={v => updateTier(tier.id, 'price', v)} placeholder="25000" numeric /></View><View style={styles.inlineField}><Input label="QUOTA" value={tier.quantity} onChangeText={v => updateTier(tier.id, 'quantity', v)} placeholder="300" numeric /></View></View>
           </View>)}
           <Pressable style={styles.addTier} onPress={() => { setTiers(current => [...current, { id: nextId, name: '', price: '', quantity: '' }]); setNextId(v => v + 1); }}><Text style={styles.addTierText}>＋  Ajouter une catégorie</Text></Pressable>
-          <View style={styles.infoNote}><Text style={styles.infoNoteTitle}>Gestion des capacités</Text><Text style={styles.infoNoteBody}>Les quotas devront être réservés de manière atomique au paiement pour éviter toute survente. Aucun billet n’est émis dans cette version.</Text></View>
+          <View style={styles.infoNote}><Text style={styles.infoNoteTitle}>Réservation et paiement sur place</Text><Text style={styles.infoNoteBody}>Les catégories et leurs tarifs sont configurables en Ariary. Le parcours de réservation avec règlement à l’entrée et émission du QR définitif sera activé séparément ; une réservation non réglée ne doit jamais être comptée comme un billet payé.</Text></View>
         </> : null}
 
         {step === 3 ? <>
@@ -291,6 +295,10 @@ const styles = StyleSheet.create({
   capacityBadge: { minWidth: 62, alignItems: 'center', padding: 8, borderRadius: 10, backgroundColor: colors.surfaceRaised },
   capacityValue: { color: colors.text, fontSize: 17, fontWeight: '900' },
   capacityLabel: { color: colors.muted, fontSize: 7, letterSpacing: 1, marginTop: 2 },
+  presetTitle: { color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 1.2, marginTop: 4, marginBottom: 8 },
+  presetList: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 13 },
+  presetChip: { paddingHorizontal: 11, paddingVertical: 9, borderRadius: 9, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceRaised },
+  presetChipText: { color: colors.text, fontSize: 9, fontWeight: '800' },
   tierCard: { padding: 14, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, marginBottom: 11 },
   tierHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   tierIndex: { color: colors.primary, fontSize: 8, fontWeight: '900', letterSpacing: 1.4 },
