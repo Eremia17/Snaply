@@ -29,6 +29,12 @@ If any migrations have already been applied, check the database migration histor
 
 Migration 006 creates a **private** `event-posters` Storage bucket. Upload, read, update and delete policies restrict each organizer to files inside their own user-ID folder. Poster uploads are limited to 5 MiB and JPEG, PNG or WebP. Spectators can read an image only when its exact object path is attached to an event whose status is `published`.
 
+## Organizer QR scanner
+
+The mobile organizer workspace links to `/organizer/scanner`. It uses Expo SDK 57's `expo-camera` `CameraView` with QR-only barcode detection. A scanned token is sent directly to the authenticated `check_in_ticket(p_qr_token)` RPC; the database validates the organizer role, event ownership, ticket state and event status, then marks the ticket used atomically. A second scan is rejected.
+
+The scanner requires an internet connection. It does not cache tickets or support offline check-in yet. The app requests camera permission only when the scanner screen is opened. Install the SDK-matched camera package (`expo-camera ~57.0.6`) and use an Expo Go build that supports SDK 57.
+
 ## Secure QR token delivery
 
 The Edge Function `my-ticket-qr` returns a QR payload only after validating the caller's Supabase session, confirming that the requested ticket belongs to that user, and confirming that its order is paid and the ticket is still valid.
