@@ -1,5 +1,4 @@
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { formatAriary } from '../utils/currency';
 
 export type OrganizerOrder = {
   orderId: string;
