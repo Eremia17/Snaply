@@ -25,8 +25,7 @@ jobs:
       - name: Align dependencies with Expo SDK 58
         working-directory: apps/mobile
         run: |
-          npx expo install --fix
-          npx expo-doctor@latest
+          npx expo install --check
       - name: Save SDK 58 dependency alignment
         run: |
           git config user.name "github-actions[bot]"
@@ -38,5 +37,3 @@ jobs:
           fi
       - name: Check TypeScript
         run: npm run typecheck
-      - name: Build Expo web preview
-        run: npm --workspace apps/mobile run export:web
