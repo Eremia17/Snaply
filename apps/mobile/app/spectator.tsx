@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Animated, Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
+import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { demoEvents, fetchPublishedEvents } from '../src/data/events';
 import type { EventItem } from '../src/data/events';
