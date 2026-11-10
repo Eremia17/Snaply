@@ -7,14 +7,31 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "plugins": ["expo-router"],
-    "experiments": { "typedRoutes": true },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ticket Mada utilise la caméra pour contrôler les billets à l’entrée.",
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
     "android": {
       "package": "mg.ticketmada.app",
       "versionCode": 1,
-      "adaptiveIcon": { "backgroundColor": "#10131D" }
+      "adaptiveIcon": {
+        "backgroundColor": "#10131D"
+      }
     },
-    "ios": { "bundleIdentifier": "mg.ticketmada.app" },
-    "web": { "bundler": "metro" }
+    "ios": {
+      "bundleIdentifier": "mg.ticketmada.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
   }
 }
