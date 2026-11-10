@@ -9,22 +9,40 @@ export default function ProfileScreen() {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [role, setRole] = useState('customer');
+  const [loadError, setLoadError] = useState('');
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured || !supabase) {
       router.replace('/account');
       return;
     }
-    const { data: authData } = await supabase.auth.getUser();
-    if (!authData.user) {
-      router.replace('/account');
-      return;
+
+    setLoading(true);
+    setLoadError('');
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!authData.user) {
+        router.replace('/account');
+        return;
+      }
+
+      setEmail(authData.user.email ?? '');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('display_name,role')
+        .eq('id', authData.user.id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error('Ton profil est introuvable. Réessaie dans un instant.');
+
+      setDisplayName(data.display_name ?? '');
+      setRole(data.role ?? 'customer');
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Impossible de charger ton profil.');
+    } finally {
+      setLoading(false);
     }
-    setEmail(authData.user.email ?? '');
-    const { data } = await supabase.from('profiles').select('display_name,role').eq('id', authData.user.id).maybeSingle();
-    setDisplayName(data?.display_name ?? '');
-    setRole(data?.role ?? 'customer');
-    setLoading(false);
   }, []);
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
@@ -46,6 +64,23 @@ export default function ProfileScreen() {
   }
 
   if (loading) return <SafeAreaView style={styles.safe}><ActivityIndicator color={colors.primary} style={{ flex: 1 }} /></SafeAreaView>;
+
+  if (loadError) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.errorState}>
+          <Text style={styles.title}>Profil indisponible</Text>
+          <Text style={styles.errorText}>{loadError}</Text>
+          <Pressable onPress={() => void load()} style={styles.primary}>
+            <Text style={styles.primaryText}>Réessayer</Text>
+          </Pressable>
+          <Pressable onPress={signOut} style={styles.logout}>
+            <Text style={styles.logoutText}>Se déconnecter</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -80,6 +115,8 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  errorState: { flex: 1, justifyContent: 'center', padding: 24 },
+  errorText: { color: colors.muted, fontSize: 12, lineHeight: 19, marginTop: 10 },
   content: { flexGrow: 1, justifyContent: 'center', padding: 24 },
   back: { color: colors.muted, fontSize: 11, fontWeight: '700', marginBottom: 38 },
   avatar: { width: 68, height: 68, borderRadius: 22, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
