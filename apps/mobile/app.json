@@ -18,7 +18,8 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "baseUrl": "/Snaply"
     },
     "android": {
       "package": "mg.ticketmada.app",
@@ -31,7 +32,8 @@
       "bundleIdentifier": "mg.ticketmada.app"
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "output": "single"
     }
   }
 }
