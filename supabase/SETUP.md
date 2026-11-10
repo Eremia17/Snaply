@@ -22,6 +22,7 @@ On a fresh Supabase project, apply every SQL migration in this exact filename or
 14. `202611090011_lock_published_ticket_types.sql`
 15. `202611090012_atomic_ticket_check_in.sql`
 16. `202611090013_verified_payment_ticket_issuance.sql`
+17. `202611100001_organizer_attendance_reporting.sql`
 
 The second and third migration files both define parts of organizer review and role protection. Run them in order; the later secure review definition is the final one.
 
@@ -34,6 +35,10 @@ Migration 006 creates a **private** `event-posters` Storage bucket. Upload, read
 The mobile organizer workspace links to `/organizer/scanner`. It uses Expo SDK 57's `expo-camera` `CameraView` with QR-only barcode detection. A scanned token is sent directly to the authenticated `check_in_ticket(p_qr_token)` RPC; the database validates the organizer role, event ownership, ticket state and event status, then marks the ticket used atomically. A second scan is rejected.
 
 The scanner requires an internet connection. It does not cache tickets or support offline check-in yet. The app requests camera permission only when the scanner screen is opened. Install the SDK-matched camera package (`expo-camera ~57.0.6`) and use an Expo Go build that supports SDK 57.
+
+## Organizer attendance reports
+
+The `/organizer/attendance` screen calls two authenticated reporting RPCs: `organizer_attendance_stats()` returns per-event paid ticket totals, valid tickets, checked-in tickets and latest check-in time; `organizer_checkin_history()` returns the latest 100 check-ins with only the event name, ticket type, ticket ID and timestamp. Both functions verify the organizer/admin role and restrict organizers to their own events. They do not expose buyer names, emails or phone numbers. Apply migration `202611100001_organizer_attendance_reporting.sql` once before opening this screen.
 
 ## Secure QR token delivery
 
@@ -92,9 +97,10 @@ Only a trusted project owner should run this bootstrap query. Never expose a Sup
 - Expired reservations are released during the next reservation attempt and before an organizer unpublishes an event.
 - Reserved and sold inventory counters cannot be edited directly by organizer clients; only trusted transactional server functions can change them.
 - Ticket categories become read-only to organizers after publication; organizers must unpublish safely before editing them. No payment is collected and no ticket or QR code is issued by this reservation feature.
-- The atomic `check_in_ticket` RPC hashes an opaque QR token, verifies that the authenticated approved organizer owns the event, and changes a valid ticket to used in one transaction. Repeated scans are rejected. This is the backend check-in primitive only: camera scanning UI is not yet implemented.
+- The atomic `check_in_ticket` RPC hashes an opaque QR token, verifies that the authenticated approved organizer owns the event, and changes a valid ticket to used in one transaction. The organizer mobile scanner sends QR payloads to this RPC; repeated scans are rejected. Online check-in only; offline scanning is not implemented.
+- Organizer attendance reporting returns per-event totals and the latest 100 check-ins through role-checked RPCs, without exposing buyer contact details.
 - The server-only `finalize_verified_order_payment` RPC converts an unexpired reservation into paid inventory, records the verified payment ledger, and issues one valid ticket per reserved place in a single transaction. It accepts only the `service_role`; a trusted Edge Function must first verify the provider's signed callback and amount. The server supplies unique ticket IDs and opaque QR tokens; only token hashes are stored. Never call this RPC from the mobile app, a browser redirect, or an unverified client request.
-- No payment provider is connected yet. Provider webhook verification, secure ticket delivery, QR display and camera scanning remain separate implementation and test tasks. The fee amount passed to the RPC must come from a verified provider settlement record; no provider fee or commission is assumed.
+- No payment provider is connected yet. Provider webhook verification and end-to-end payment-to-ticket issuance remain separate implementation and test tasks. Secure QR delivery and organizer scanning code are present but require deployment/configuration and real-device testing. The fee amount passed to the RPC must come from a verified provider settlement record; no provider fee or commission is assumed.
 - Approval changes the applicant's profile role to `organizer` and marks the application reviewed in one database transaction.
 - Rejection leaves the applicant as a spectator.
 - Non-administrators cannot execute the review function successfully, even if they call it directly.
