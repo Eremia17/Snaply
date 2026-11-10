@@ -128,6 +128,7 @@ begin
       )
       left join public.tickets t
         on t.id = x.ticket_id
+       and t.ticket_type_id = x.ticket_type_id
        and t.qr_token_hash = encode(digest(convert_to(x.qr_token, 'UTF8'), 'sha256'), 'hex')
       where t.id is null
     ) then
@@ -140,6 +141,8 @@ begin
       join jsonb_to_recordset(p_tickets) as x(
         ticket_id uuid, ticket_type_id uuid, holder_name text, qr_token text
       ) on x.ticket_id = t.id
+       and x.ticket_type_id = t.ticket_type_id
+       and t.qr_token_hash = encode(digest(convert_to(x.qr_token, 'UTF8'), 'sha256'), 'hex')
       order by t.created_at, t.id;
     return;
   end if;
