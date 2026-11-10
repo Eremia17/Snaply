@@ -187,7 +187,7 @@ export async function refreshOrganizerCloudDrafts(): Promise<number> {
       tiers,
       posterUri: signedPoster?.data?.signedUrl ?? existing?.posterUri ?? null,
       cloudPosterPath: posterPath ?? existing?.cloudPosterPath,
-      status: remote.status === 'published' ? 'published' : 'draft',
+      status: remote.status === 'published' ? 'published' : existing?.status === 'archived' ? 'archived' : 'draft',
       createdAt: String(remote.created_at ?? cloudUpdatedAt),
       updatedAt: cloudUpdatedAt,
     };
