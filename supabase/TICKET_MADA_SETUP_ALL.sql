@@ -1,5 +1,5 @@
 -- TICKET MADA — INSTALLATION SQL CONSOLIDÉE
--- Source: les 17 migrations de supabase/migrations/, dans leur ordre chronologique.
+-- Source: les 18 migrations de supabase/migrations/, dans leur ordre chronologique.
 -- IMPORTANT: à exécuter UNE SEULE FOIS sur un projet Supabase NEUF.
 -- Ne pas exécuter si une migration Ticket Mada a déjà été appliquée.
 -- Les migrations individuelles restent la source de référence du dépôt.
@@ -1667,3 +1667,31 @@ revoke all on function public.organizer_attendance_stats() from public, anon;
 revoke all on function public.organizer_checkin_history() from public, anon;
 grant execute on function public.organizer_attendance_stats() to authenticated;
 grant execute on function public.organizer_checkin_history() to authenticated;
+
+
+-- ============================================================================
+-- MIGRATION: 202611100002_explicit_data_api_grants.sql
+-- ============================================================================
+
+-- Ticket Mada: privileges explicites pour le Data API Supabase.
+-- Depuis le changement de défaut de Supabase (octobre 2026), les privilèges
+-- des nouvelles tables ne sont plus automatiquement accordés aux rôles API.
+-- Toutes les tables métier ont RLS activé dans les migrations précédentes.
+
+grant usage on schema public to anon, authenticated, service_role;
+
+grant select on table public.events, public.ticket_types to anon;
+
+grant select, insert, update, delete on table
+  public.profiles,
+  public.events,
+  public.ticket_types,
+  public.orders,
+  public.tickets,
+  public.organizer_commission_terms,
+  public.payment_records,
+  public.organizer_applications,
+  public.order_items
+ to authenticated;
+
+grant all privileges on all tables in schema public to service_role;
