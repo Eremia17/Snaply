@@ -23,7 +23,6 @@ On a fresh Supabase project, apply every SQL migration in this exact filename or
 15. `202611090012_atomic_ticket_check_in.sql`
 16. `202611090013_verified_payment_ticket_issuance.sql`
 17. `202611100001_organizer_checkin_activity.sql`
-17. `202611100001_organizer_attendance_reporting.sql`
 
 The second and third migration files both define parts of organizer review and role protection. Run them in order; the later secure review definition is the final one.
 
@@ -39,7 +38,7 @@ The scanner requires an internet connection. It does not cache tickets or suppor
 
 ## Organizer attendance reports
 
-The `/organizer/attendance` screen calls two authenticated reporting RPCs: `organizer_attendance_stats()` returns per-event paid ticket totals, valid tickets, checked-in tickets and latest check-in time; `organizer_checkin_history()` returns the latest 100 check-ins with only the event name, ticket type, ticket ID and timestamp. Both functions verify the organizer/admin role and restrict organizers to their own events. They do not expose buyer names, emails or phone numbers. Apply migration `202611100001_organizer_attendance_reporting.sql` once before opening this screen.
+The `/organizer/attendance` screen calls two authenticated reporting RPCs: `organizer_attendance_stats()` returns per-event paid ticket totals, valid tickets, checked-in tickets and latest check-in time; `organizer_checkin_history()` returns the latest 100 check-ins with only the event name, ticket type, ticket ID and timestamp. Both functions verify the organizer/admin role and restrict organizers to their own events. They do not expose buyer names, emails or phone numbers. Apply migration `202611100001_organizer_checkin_activity.sql` once before opening this screen.
 
 ## Secure QR token delivery
 
