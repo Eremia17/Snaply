@@ -2,6 +2,10 @@
 
 The SQL files in `migrations/` are committed to GitHub, but GitHub does not apply them to your Supabase project automatically.
 
+For a brand-new project, use the consolidated installer [`TICKET_MADA_SETUP_ALL.sql`](./TICKET_MADA_SETUP_ALL.sql) exactly once instead of pasting the individual files one by one. It currently includes the schema, explicit Data API grants, the auth-trigger hardening, and the supporting indexes. Do not run the consolidated installer after any of its SQL has already been applied.
+
+**Migration-history note:** the initial consolidated install is recorded in Supabase as one baseline migration, followed by any later hotfix migrations. The original individual files are retained in Git for traceability. Do not run `supabase db push` against this project until the repository migration chain has been baselined to match the remote migration history; otherwise the CLI may try to replay the older individual files.
+
 ## Apply the migrations
 
 On a fresh Supabase project, apply every SQL migration in this exact filename order. Open **SQL Editor** and execute each file once:
@@ -24,6 +28,8 @@ On a fresh Supabase project, apply every SQL migration in this exact filename or
 16. `202611090013_verified_payment_ticket_issuance.sql`
 17. `202611100001_organizer_checkin_activity.sql`
 18. `202611100002_explicit_data_api_grants.sql`
+19. `202611100003_restrict_auth_trigger_and_index_foreign_keys.sql`
+18. `202611100002_explicit_data_api_grants.sql`
 
 Migration 018 grants the minimum client roles explicit access to the current public tables. This is required because new Supabase projects no longer automatically grant Data API table privileges by default. All nine application tables have RLS enabled; anonymous clients receive read-only access to published-event catalogue tables, authenticated users are still constrained by RLS, and the server-side service role receives table privileges. When adding future tables, add explicit grants and RLS policies in the same migration.
 
@@ -31,6 +37,8 @@ Migration 018 grants the minimum client roles explicit access to the current pub
 The second and third migration files both define parts of organizer review and role protection. Run them in order; the later secure review definition is the final one.
 
 If any migrations have already been applied, check the database migration history and current schema first. Do not blindly rerun SQL files or apply them out of order. GitHub commits do not apply migrations to Supabase automatically.
+
+Migration 018 grants explicit Data API privileges to the client roles, while RLS continues to restrict row access. Migration 019 revokes direct execution of the Auth trigger function and adds indexes for three foreign keys flagged by the Supabase advisor.
 
 Migration 006 creates a **private** `event-posters` Storage bucket. Upload, read, update and delete policies restrict each organizer to files inside their own user-ID folder. Poster uploads are limited to 5 MiB and JPEG, PNG or WebP. Spectators can read an image only when its exact object path is attached to an event whose status is `published`.
 
