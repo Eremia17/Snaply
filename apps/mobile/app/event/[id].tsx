@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
 import { fetchEventById, type EventItem } from '../../src/data/events';
 import { colors } from '../../src/theme';
 import { formatAriary } from '../../src/utils/currency';
-import { reserveEventTickets } from '../../src/data/reservations';
+import { createReservationKey, reserveEventTickets } from '../../src/data/reservations';
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -13,6 +13,7 @@ export default function EventDetailScreen() {
   const [selectedTierId, setSelectedTierId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [reserving, setReserving] = useState(false);
+  const reservationKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -42,9 +43,16 @@ export default function EventDetailScreen() {
     if (!selectedTier || selectedTier.available < 1 || reserving) return;
     setReserving(true);
     try {
-      const reservation = await reserveEventTickets(selectedTier.id, quantity);
-      const refreshedEvent = await fetchEventById(id);
-      if (refreshedEvent) setEvent(refreshedEvent);
+      const reservationKey = reservationKeyRef.current ?? createReservationKey();
+      reservationKeyRef.current = reservationKey;
+      const reservation = await reserveEventTickets(selectedTier.id, quantity, reservationKey);
+      reservationKeyRef.current = null;
+      try {
+        const refreshedEvent = await fetchEventById(id);
+        if (refreshedEvent) setEvent(refreshedEvent);
+      } catch {
+        // The reservation is already confirmed; a refresh failure must not report it as failed.
+      }
       const expiry = new Date(reservation.expiresAt).toLocaleTimeString('fr-FR', {
         hour: '2-digit',
         minute: '2-digit',
@@ -72,7 +80,7 @@ export default function EventDetailScreen() {
         <Text style={styles.title}>{event.title}</Text>
         <Text style={styles.meta}>⌖  {event.city} · {event.venue}</Text>
         <View style={styles.infoCard}><Text style={styles.label}>DATE</Text><Text style={styles.value}>{event.dateLabel}</Text><Text style={styles.label}>TARIF INDICATIF</Text><Text style={styles.price}>{event.priceLabel}</Text></View>
-        {event.ticketTiers?.length ? <View style={styles.infoCard}><Text style={styles.label}>CATÉGORIES DE BILLETS</Text>{event.ticketTiers.map((tier, index) => <Pressable key={tier.id || tier.name + index} disabled={tier.available < 1 || event.isDemo} onPress={() => { setSelectedTierId(tier.id); setQuantity(1); }} style={[styles.ticketRow, selectedTierId === tier.id && styles.ticketRowSelected]}><View style={{ flex: 1, gap: 4 }}><Text style={styles.ticketName}>{tier.name}</Text><Text style={styles.ticketAvailability}>{tier.available > 0 ? tier.available + ' place(s) disponible(s)' : 'Complet'}</Text></View><Text style={styles.ticketPrice}>{formatAriary(tier.priceMGA)}</Text>{selectedTierId === tier.id ? <Text style={styles.selectedMark}>✓</Text> : null}</Pressable>)}{!event.isDemo && selectedTier ? <><View style={styles.quantityRow}><Text style={styles.quantityLabel}>Quantité</Text><View style={styles.quantityControls}><Pressable disabled={quantity <= 1} onPress={() => setQuantity(value => Math.max(1, value - 1))} style={styles.quantityButton}><Text style={styles.quantityButtonText}>−</Text></Pressable><Text style={styles.quantityValue}>{quantity}</Text><Pressable disabled={quantity >= Math.min(10, selectedTier.available)} onPress={() => setQuantity(value => Math.min(10, selectedTier.available, value + 1))} style={styles.quantityButton}><Text style={styles.quantityButtonText}>＋</Text></Pressable></View></View><Text style={styles.reservationTotal}>Total provisoire · {formatAriary(selectedTier.priceMGA * quantity)}</Text><Pressable disabled={reserving || selectedTier.available < 1} onPress={handleReservation} style={[styles.reserveButton, (reserving || selectedTier.available < 1) && styles.reserveButtonDisabled]}><Text style={styles.reserveButtonText}>{reserving ? 'Réservation…' : 'Pré-réserver pendant 15 min'}</Text></Pressable><Text style={styles.reservationHint}>Le stock est bloqué temporairement. Aucun paiement ni billet n’est émis à cette étape.</Text></> : null}</View> : null}
+        {event.ticketTiers?.length ? <View style={styles.infoCard}><Text style={styles.label}>CATÉGORIES DE BILLETS</Text>{event.ticketTiers.map((tier, index) => <Pressable key={tier.id || tier.name + index} disabled={tier.available < 1 || event.isDemo} onPress={() => { reservationKeyRef.current = null; setSelectedTierId(tier.id); setQuantity(1); }} style={[styles.ticketRow, selectedTierId === tier.id && styles.ticketRowSelected]}><View style={{ flex: 1, gap: 4 }}><Text style={styles.ticketName}>{tier.name}</Text><Text style={styles.ticketAvailability}>{tier.available > 0 ? tier.available + ' place(s) disponible(s)' : 'Complet'}</Text></View><Text style={styles.ticketPrice}>{formatAriary(tier.priceMGA)}</Text>{selectedTierId === tier.id ? <Text style={styles.selectedMark}>✓</Text> : null}</Pressable>)}{!event.isDemo && selectedTier ? <><View style={styles.quantityRow}><Text style={styles.quantityLabel}>Quantité</Text><View style={styles.quantityControls}><Pressable disabled={quantity <= 1} onPress={() => { reservationKeyRef.current = null; setQuantity(value => Math.max(1, value - 1)); }} style={styles.quantityButton}><Text style={styles.quantityButtonText}>−</Text></Pressable><Text style={styles.quantityValue}>{quantity}</Text><Pressable disabled={quantity >= Math.min(10, selectedTier.available)} onPress={() => { reservationKeyRef.current = null; setQuantity(value => Math.min(10, selectedTier.available, value + 1)); }} style={styles.quantityButton}><Text style={styles.quantityButtonText}>＋</Text></Pressable></View></View><Text style={styles.reservationTotal}>Total provisoire · {formatAriary(selectedTier.priceMGA * quantity)}</Text><Pressable disabled={reserving || selectedTier.available < 1} onPress={handleReservation} style={[styles.reserveButton, (reserving || selectedTier.available < 1) && styles.reserveButtonDisabled]}><Text style={styles.reserveButtonText}>{reserving ? 'Réservation…' : 'Pré-réserver pendant 15 min'}</Text></Pressable><Text style={styles.reservationHint}>Le stock est bloqué temporairement. Aucun paiement ni billet n’est émis à cette étape.</Text></> : null}</View> : null}
         <View style={styles.infoCard}><Text style={styles.label}>À PROPOS</Text><Text style={styles.body}>{event.description || 'Informations complémentaires à venir.'}</Text></View>
         {event.isDemo ? (
           <View style={styles.disabled}><Text style={styles.disabledTitle}>Événement de démonstration</Text><Text style={styles.body}>Cette fiche sert à présenter l'expérience Ticket Mada. Elle ne correspond pas à une vraie manifestation et ne permet pas de réserver.</Text></View>
