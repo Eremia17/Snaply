@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { fetchMyIssuedTickets, type IssuedTicket } from '../src/data/tickets';
+import QRCode from 'react-native-qrcode-svg';
+import { fetchMyIssuedTickets, fetchMyTicketQrToken, type IssuedTicket } from '../src/data/tickets';
 import { colors } from '../src/theme';
 
 function statusLabel(status: string): string {
@@ -16,6 +17,9 @@ export default function MyTicketsScreen() {
   const [items, setItems] = useState<IssuedTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [qrTokens, setQrTokens] = useState<Record<string, string>>({});
+  const [qrLoadingId, setQrLoadingId] = useState<string | null>(null);
+  const [qrErrors, setQrErrors] = useState<Record<string, string>>({});
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -30,6 +34,19 @@ export default function MyTicketsScreen() {
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  const showQr = useCallback(async (ticketId: string) => {
+    setQrLoadingId(ticketId);
+    setQrErrors(current => ({ ...current, [ticketId]: '' }));
+    try {
+      const token = await fetchMyTicketQrToken(ticketId);
+      setQrTokens(current => ({ ...current, [ticketId]: token }));
+    } catch (reason) {
+      setQrErrors(current => ({ ...current, [ticketId]: reason instanceof Error ? reason.message : 'QR indisponible.' }));
+    } finally {
+      setQrLoadingId(null);
+    }
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -71,10 +88,19 @@ export default function MyTicketsScreen() {
                 <Text style={styles.ticketId}>#{item.id.slice(0, 8).toUpperCase()}</Text>
               </View>
               {item.checkedInAt ? <Text style={styles.usedAt}>Contrôle effectué le {new Date(item.checkedInAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Indian/Antananarivo' })}.</Text> : null}
-              <View style={styles.qrNotice}>
-                <Text style={styles.qrTitle}>QR sécurisé en préparation</Text>
-                <Text style={styles.qrText}>Le serveur conserve uniquement l’empreinte du jeton QR. L’affichage du code sera activé avec sa remise sécurisée au titulaire.</Text>
-              </View>
+              {item.status === 'valid' ? <View style={styles.qrNotice}>
+                <Text style={styles.qrTitle}>Ton QR sécurisé</Text>
+                {qrTokens[item.id] ? <View style={styles.qrDisplay}>
+                  <QRCode value={qrTokens[item.id]} size={210} color="#10131D" backgroundColor="#FFFFFF" ecl="H" />
+                  <Text style={styles.qrCaption}>Présente ce code à l’entrée. Garde-le personnel.</Text>
+                </View> : <>
+                  <Text style={styles.qrText}>Le code est récupéré auprès du serveur après vérification de ton compte et de ton billet.</Text>
+                  <Pressable disabled={qrLoadingId === item.id} onPress={() => showQr(item.id)} style={styles.qrButton}>
+                    <Text style={styles.qrButtonText}>{qrLoadingId === item.id ? 'Récupération…' : 'Afficher mon QR'}</Text>
+                  </Pressable>
+                  {qrErrors[item.id] ? <Text style={styles.qrError}>{qrErrors[item.id]}</Text> : null}
+                </>}
+              </View> : null}
             </View>;
           }) : <View style={styles.empty}>
             <Text style={styles.emptyTitle}>Aucun billet confirmé</Text>
@@ -117,6 +143,11 @@ const styles = StyleSheet.create({
   qrNotice: { padding: 12, borderRadius: 10, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: '#5A303D', marginTop: 13 },
   qrTitle: { color: colors.text, fontSize: 10, fontWeight: '900' },
   qrText: { color: '#D7BFC5', fontSize: 9, lineHeight: 14, marginTop: 5 },
+  qrDisplay: { alignItems: 'center', padding: 12, marginTop: 10, backgroundColor: '#FFFFFF', borderRadius: 12 },
+  qrCaption: { color: '#10131D', fontSize: 9, fontWeight: '700', marginTop: 10, textAlign: 'center' },
+  qrButton: { alignSelf: 'flex-start', paddingHorizontal: 13, paddingVertical: 10, borderRadius: 9, backgroundColor: colors.primary, marginTop: 10 },
+  qrButtonText: { color: colors.white, fontSize: 10, fontWeight: '900' },
+  qrError: { color: '#FFB0B0', fontSize: 9, lineHeight: 14, marginTop: 8 },
   empty: { padding: 22, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', gap: 10 },
   emptyTitle: { color: colors.text, fontSize: 15, fontWeight: '900', textAlign: 'center' },
   primary: { paddingHorizontal: 14, paddingVertical: 11, borderRadius: 9, backgroundColor: colors.primary, marginTop: 5 },
