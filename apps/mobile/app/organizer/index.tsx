@@ -9,13 +9,14 @@ const shortcuts = [
   { icon: '▦', title: 'Mes événements', detail: 'Retrouver, modifier et suivre tes événements', route: '/organizer/events' as const },
   { icon: '+', title: 'Nouvel événement', detail: 'Créer une fiche et configurer la billetterie', route: '/organizer/create' as const },
   { icon: '▤', title: 'Billetterie', detail: 'Types de billets, quotas et tarifs', route: null },
+  { icon: '▣', title: 'Réservations', detail: 'Suivre les commandes et les places réservées', route: '/organizer/orders' as const },
   { icon: '⌁', title: 'Contrôle d’accès', detail: 'Scanner et valider les billets à l’entrée', route: '/organizer/scanner' as const },
   { icon: '↗', title: 'Rapports', detail: 'Fréquentation, entrées et historique des contrôles', route: '/organizer/attendance' as const },
 ];
 const pipeline = [
   { number: '01', title: 'Configurer l’organisation', detail: 'Profil, coordonnées et validation du compte' },
   { number: '02', title: 'Préparer un événement', detail: 'Programme, lieu, capacité et tarifs' },
-  { number: '03', title: 'Ouvrir la billetterie', detail: 'Paiement, émission des billets et contrôles' },
+  { number: '03', title: 'Ouvrir la billetterie', detail: 'Réservations, règlement sur place et contrôles' },
 ];
 
 function Metric({ label, hint, value }: { label: string; hint: string; value: string | number }) {
@@ -78,9 +79,9 @@ export default function OrganizerScreen() {
           <Pressable onPress={() => router.push('/organizer/create')} style={styles.createButton}><Text style={styles.createPlus}>＋</Text><Text style={styles.createText}>Créer</Text></Pressable>
         </View>
 
-        <View style={styles.statusBanner}><View style={styles.statusDot} /><View style={{ flex: 1 }}><Text style={styles.statusTitle}>Espace en préparation</Text><Text style={styles.statusBody}>Les statistiques apparaîtront ici dès que les événements et les ventes seront connectés.</Text></View></View>
+        <View style={styles.statusBanner}><View style={styles.statusDot} /><View style={{ flex: 1 }}><Text style={styles.statusTitle}>Espace en préparation</Text><Text style={styles.statusBody}>Les réservations, billets émis et entrées validées sont suivis ici. Le règlement en ligne reste désactivé.</Text></View></View>
 
-        <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Activité</Text><Text style={styles.sectionMeta}>DONNÉES EN ATTENTE</Text></View>
+        <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Activité</Text><Text style={styles.sectionMeta}>SUIVI DES ACTIVITÉS</Text></View>
         <View style={styles.metrics}>
           <Metric label="Événements" hint="Événements gérés" value={attendance.length} />
           <Metric label="Billets émis" hint="Commandes payées" value={attendance.reduce((sum, item) => sum + item.ticketsIssued, 0)} />
