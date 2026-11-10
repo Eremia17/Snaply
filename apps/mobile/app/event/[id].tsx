@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Alert, Image, SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, SafeAreaView, ScrollView, Share, StyleSheet, Text, Pressable, View } from 'react-native';
 import { fetchEventById, type EventItem } from '../../src/data/events';
 import { colors } from '../../src/theme';
 import { formatAriary } from '../../src/utils/currency';
@@ -38,6 +38,25 @@ export default function EventDetailScreen() {
   }
 
   const selectedTier = event.ticketTiers?.find(tier => tier.id === selectedTierId);
+
+  async function handleShare() {
+    const message = [
+      '🎟️ ' + event.title,
+      event.category + ' · ' + event.city,
+      event.venue,
+      event.dateLabel,
+      'Tarifs : ' + event.priceLabel,
+      '',
+      event.description,
+      '',
+      'Annonce partagée avec Ticket Mada.',
+    ].filter(Boolean).join('\\n');
+    try {
+      await Share.share({ title: event.title, message });
+    } catch {
+      Alert.alert('Partage indisponible', 'Impossible de partager cette annonce pour le moment.');
+    }
+  }
 
   async function handleReservation() {
     if (!selectedTier || selectedTier.available < 1 || reserving) return;
@@ -79,6 +98,7 @@ export default function EventDetailScreen() {
         <Text style={styles.kicker}>TICKET MADA · MADAGASCAR</Text>
         <Text style={styles.title}>{event.title}</Text>
         <Text style={styles.meta}>⌖  {event.city} · {event.venue}</Text>
+        <Pressable onPress={handleShare} style={styles.shareButton}><Text style={styles.shareButtonText}>↗  Partager l’annonce</Text></Pressable>
         <View style={styles.infoCard}><Text style={styles.label}>DATE</Text><Text style={styles.value}>{event.dateLabel}</Text><Text style={styles.label}>TARIF INDICATIF</Text><Text style={styles.price}>{event.priceLabel}</Text></View>
         {event.ticketTiers?.length ? <View style={styles.infoCard}><Text style={styles.label}>CATÉGORIES DE BILLETS</Text>{event.ticketTiers.map((tier, index) => <Pressable key={tier.id || tier.name + index} disabled={tier.available < 1 || event.isDemo} onPress={() => { reservationKeyRef.current = null; setSelectedTierId(tier.id); setQuantity(1); }} style={[styles.ticketRow, selectedTierId === tier.id && styles.ticketRowSelected]}><View style={{ flex: 1, gap: 4 }}><Text style={styles.ticketName}>{tier.name}</Text><Text style={styles.ticketAvailability}>{tier.available > 0 ? tier.available + ' place(s) disponible(s)' : 'Complet'}</Text></View><Text style={styles.ticketPrice}>{formatAriary(tier.priceMGA)}</Text>{selectedTierId === tier.id ? <Text style={styles.selectedMark}>✓</Text> : null}</Pressable>)}{!event.isDemo && selectedTier ? <><View style={styles.quantityRow}><Text style={styles.quantityLabel}>Quantité</Text><View style={styles.quantityControls}><Pressable disabled={quantity <= 1} onPress={() => { reservationKeyRef.current = null; setQuantity(value => Math.max(1, value - 1)); }} style={styles.quantityButton}><Text style={styles.quantityButtonText}>−</Text></Pressable><Text style={styles.quantityValue}>{quantity}</Text><Pressable disabled={quantity >= Math.min(10, selectedTier.available)} onPress={() => { reservationKeyRef.current = null; setQuantity(value => Math.min(10, selectedTier.available, value + 1)); }} style={styles.quantityButton}><Text style={styles.quantityButtonText}>＋</Text></Pressable></View></View><Text style={styles.reservationTotal}>Total provisoire · {formatAriary(selectedTier.priceMGA * quantity)}</Text><Pressable disabled={reserving || selectedTier.available < 1} onPress={handleReservation} style={[styles.reserveButton, (reserving || selectedTier.available < 1) && styles.reserveButtonDisabled]}><Text style={styles.reserveButtonText}>{reserving ? 'Réservation…' : 'Pré-réserver pendant 15 min'}</Text></Pressable><Text style={styles.reservationHint}>Le stock est bloqué temporairement. Aucun paiement ni billet n’est émis à cette étape.</Text></> : null}</View> : null}
         <View style={styles.infoCard}><Text style={styles.label}>À PROPOS</Text><Text style={styles.body}>{event.description || 'Informations complémentaires à venir.'}</Text></View>
@@ -105,6 +125,8 @@ const styles = StyleSheet.create({
   kicker: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 2, marginTop: 25 },
   title: { color: colors.text, fontSize: 30, fontWeight: '900', marginTop: 9 },
   meta: { color: colors.muted, fontSize: 13, marginTop: 9 },
+  shareButton: { alignSelf: 'flex-start', marginTop: 14, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  shareButtonText: { color: colors.text, fontSize: 11, fontWeight: '800' },
   infoCard: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 16, padding: 16, marginTop: 18, gap: 8 },
   label: { color: colors.muted, fontSize: 9, letterSpacing: 1.8, fontWeight: '900', marginTop: 5 },
   value: { color: colors.text, fontSize: 15, fontWeight: '700' },
