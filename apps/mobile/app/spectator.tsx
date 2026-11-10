@@ -38,15 +38,21 @@ export default function HomeScreen() {
   const [query, setQuery] = useState('');
   const [events, setEvents] = useState<EventItem[]>(demoEvents);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [eventsError, setEventsError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
   useEffect(() => {
     let active = true;
+    setLoadingEvents(true);
+    setEventsError('');
     fetchPublishedEvents().then(items => {
       if (active) setEvents(items);
+    }).catch(() => {
+      if (active) setEventsError('Impossible de charger les événements. Vérifie ta connexion puis réessaie.');
     }).finally(() => {
       if (active) setLoadingEvents(false);
     });
     return () => { active = false; };
-  }, []);
+  }, [retryKey]);
   const t = copy[language];
   const filtered = useMemo(() => events.filter((event) => {
     const matchesQuery = `${event.title} ${event.city} ${event.category}`.toLowerCase().includes(query.toLowerCase());
@@ -98,7 +104,7 @@ export default function HomeScreen() {
         </ScrollView>
 
         <View style={styles.eventList}>
-          {loadingEvents ? <Text style={styles.empty}>Chargement des événements…</Text> : filtered.length ? filtered.map((event) => <EventCard key={event.id} item={event} />) : <Text style={styles.empty}>{t.empty}</Text>}
+          {loadingEvents ? <Text style={styles.empty}>Chargement des événements…</Text> : eventsError ? <View style={styles.loadError}><Text style={styles.loadErrorText}>{eventsError}</Text><Pressable onPress={() => setRetryKey(value => value + 1)} style={styles.retryButton}><Text style={styles.retryButtonText}>Réessayer</Text></Pressable></View> : filtered.length ? filtered.map((event) => <EventCard key={event.id} item={event} />) : <Text style={styles.empty}>{t.empty}</Text>}
         </View>
         {events.every(event => event.isDemo) ? <View style={styles.notice}><Text style={styles.noticeTitle}>Aperçu Ticket Mada</Text><Text style={styles.noticeText}>Les cartes affichées sont des exemples. Les vrais événements publiés apparaîtront automatiquement dès que la base Supabase en contiendra.</Text></View> : <View style={styles.notice}><Text style={styles.noticeTitle}>Billetterie en préparation</Text><Text style={styles.noticeText}>Les événements publiés sont chargés depuis Ticket Mada. Tu peux pré-réserver des places pendant 15 minutes ; le paiement et l’émission des billets seront ajoutés séparément.</Text></View>}
         <Text style={styles.footer}>FAIT AVEC ♥ À MADAGASCAR</Text>
@@ -158,6 +164,10 @@ const styles = StyleSheet.create({
   eventDate: { color: colors.muted, fontSize: 10 },
   eventPrice: { color: colors.success, fontSize: 10, fontWeight: '800' },
   empty: { color: colors.muted, textAlign: 'center', padding: 28 },
+  loadError: { alignItems: 'center', padding: 22, gap: 12, backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border },
+  loadErrorText: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: 'center' },
+  retryButton: { backgroundColor: colors.primary, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 9 },
+  retryButtonText: { color: colors.white, fontSize: 11, fontWeight: '800' },
   notice: { marginTop: 25, padding: 16, borderRadius: 15, backgroundColor: colors.primarySoft, borderWidth: 1, borderColor: '#5A303D' },
   noticeTitle: { color: colors.text, fontWeight: '800', fontSize: 13 },
   noticeText: { color: '#D7BFC5', fontSize: 11, lineHeight: 17, marginTop: 6 },
