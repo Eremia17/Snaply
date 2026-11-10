@@ -19,7 +19,7 @@ begin
   from public.profiles p
   where p.id = v_user_id;
 
-  if v_role not in ('organizer', 'admin') then
+  if v_role is null or v_role not in ('organizer', 'admin') then
     raise exception 'Accès réservé aux organisateurs approuvés.';
   end if;
 
