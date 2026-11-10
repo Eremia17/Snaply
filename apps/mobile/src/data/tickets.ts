@@ -64,3 +64,22 @@ export async function fetchMyIssuedTickets(): Promise<IssuedTicket[]> {
     }];
   });
 }
+export async function fetchMyTicketQrToken(ticketId: string): Promise<string> {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('La connexion à Ticket Mada n’est pas configurée.');
+  }
+  if (!/^[0-9a-f-]{36}$/i.test(ticketId)) {
+    throw new Error('Identifiant de billet invalide.');
+  }
+
+  const { data, error } = await supabase.functions.invoke('my-ticket-qr', {
+    body: { ticketId },
+  });
+  if (error) {
+    throw new Error(error.message || 'Impossible de récupérer le QR sécurisé.');
+  }
+  if (!data || typeof data.qrToken !== 'string' || data.qrToken.length < 32) {
+    throw new Error(typeof data?.error === 'string' ? data.error : 'Le QR sécurisé n’est pas disponible.');
+  }
+  return data.qrToken;
+}
