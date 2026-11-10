@@ -22,6 +22,7 @@ On a fresh Supabase project, apply every SQL migration in this exact filename or
 14. `202611090011_lock_published_ticket_types.sql`
 15. `202611090012_atomic_ticket_check_in.sql`
 16. `202611090013_verified_payment_ticket_issuance.sql`
+17. `202611100001_organizer_checkin_activity.sql`
 17. `202611100001_organizer_attendance_reporting.sql`
 
 The second and third migration files both define parts of organizer review and role protection. Run them in order; the later secure review definition is the final one.
@@ -34,7 +35,7 @@ Migration 006 creates a **private** `event-posters` Storage bucket. Upload, read
 
 The mobile organizer workspace links to `/organizer/scanner`. It uses Expo SDK 57's `expo-camera` `CameraView` with QR-only barcode detection. A scanned token is sent directly to the authenticated `check_in_ticket(p_qr_token)` RPC; the database validates the organizer role, event ownership, ticket state and event status, then marks the ticket used atomically. A second scan is rejected.
 
-The scanner requires an internet connection. It does not cache tickets or support offline check-in yet. The app requests camera permission only when the scanner screen is opened. Install the SDK-matched camera package (`expo-camera ~57.0.6`) and use an Expo Go build that supports SDK 57.
+The scanner requires an internet connection. It does not cache tickets or support offline check-in yet. The app requests camera permission only when the scanner screen is opened. Install the SDK-matched camera package (`expo-camera ~57.0.6`) and use an Expo Go build that supports SDK 57. The organizer dashboard also links to `/organizer/attendance`, which reads event-level ticket counts and the latest 100 check-ins through the two read-only RPCs in migration 017. Both RPCs verify the authenticated organizer/admin role and restrict organizers to their own events.
 
 ## Organizer attendance reports
 
@@ -55,7 +56,7 @@ In the Supabase Dashboard, open **Edge Functions → Secrets** and add `TICKET_Q
 
 The mobile data layer exposes `fetchMyTicketQrToken(ticketId)`; it calls the Edge Function with the signed-in user's session. The **Mes billets** screen now renders the returned token as a QR image with `react-native-qrcode-svg`; the raw token is never displayed as ordinary text or written to logs. `react-native-svg` is included in Expo Go for this SDK, while the QR renderer is a JavaScript package.
 
-This endpoint does not process payments, issue tickets, or provide a scanner. Deploying the function and setting its secret are required before QR retrieval can work.
+This endpoint does not process payments or issue tickets. Deploying the function and setting its secret are required before QR retrieval can work.
 
 ## Assign the first administrator
 
