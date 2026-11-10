@@ -76,6 +76,7 @@ export default function MyTicketsScreen() {
               ? new Date(item.eventStartsAt).toLocaleString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Antananarivo' })
               : 'Date à confirmer';
             const label = statusLabel(item.status);
+            const qrToken = qrTokens[item.id];
             return <View key={item.id} style={styles.card}>
               <View style={styles.cardTop}>
                 <Text style={styles.ticketRef}>BILLET · {item.id.slice(0, 8).toUpperCase()}</Text>
@@ -90,8 +91,8 @@ export default function MyTicketsScreen() {
               {item.checkedInAt ? <Text style={styles.usedAt}>Contrôle effectué le {new Date(item.checkedInAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Indian/Antananarivo' })}.</Text> : null}
               {item.status === 'valid' ? <View style={styles.qrNotice}>
                 <Text style={styles.qrTitle}>Ton QR sécurisé</Text>
-                {qrTokens[item.id] ? <View style={styles.qrDisplay}>
-                  <QRCode value={qrTokens[item.id]} size={210} color="#10131D" backgroundColor="#FFFFFF" ecl="H" />
+                {qrToken ? <View style={styles.qrDisplay}>
+                  <QRCode value={qrToken} size={210} color="#10131D" backgroundColor="#FFFFFF" ecl="H" />
                   <Text style={styles.qrCaption}>Présente ce code à l’entrée. Garde-le personnel.</Text>
                 </View> : <>
                   <Text style={styles.qrText}>Le code est récupéré auprès du serveur après vérification de ton compte et de ton billet.</Text>
