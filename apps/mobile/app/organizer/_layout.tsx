@@ -40,7 +40,7 @@ export default function OrganizerLayout() {
           .maybeSingle();
         if (error) throw error;
         if (!active) return;
-        if (profile?.role !== 'organizer') {
+        if (profile?.role !== 'organizer' && profile?.role !== 'admin') {
           router.replace('/organizer/request');
           return;
         }
