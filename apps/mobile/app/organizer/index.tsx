@@ -42,7 +42,7 @@ export default function OrganizerScreen() {
         .eq('id', userData.user.id)
         .maybeSingle();
       if (!active) return;
-      if (profile?.role !== 'organizer') {
+      if (profile?.role !== 'organizer' && profile?.role !== 'admin') {
         router.replace('/organizer/request');
         return;
       }
