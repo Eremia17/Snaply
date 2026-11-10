@@ -9,7 +9,7 @@ const shortcuts = [
   { icon: '+', title: 'Nouvel événement', detail: 'Créer une fiche et configurer la billetterie', route: '/organizer/create' as const },
   { icon: '▤', title: 'Billetterie', detail: 'Types de billets, quotas et tarifs', route: null },
   { icon: '⌁', title: 'Contrôle d’accès', detail: 'Scanner et valider les billets à l’entrée', route: '/organizer/scanner' as const },
-  { icon: '↗', title: 'Rapports', detail: 'Ventes, fréquentation et reversements', route: null },
+  { icon: '↗', title: 'Rapports', detail: 'Fréquentation, entrées et historique des contrôles', route: '/organizer/attendance' as const },
 ];
 const pipeline = [
   { number: '01', title: 'Configurer l’organisation', detail: 'Profil, coordonnées et validation du compte' },
