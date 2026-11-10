@@ -46,7 +46,7 @@ export default function MyReservationsScreen() {
 
         <View style={styles.intro}>
           <Text style={styles.introTitle}>Ton historique, en un seul endroit.</Text>
-          <Text style={styles.introBody}>Retrouve tes pré-réservations et leur état. Une réservation temporaire ne constitue pas encore un billet.</Text>
+          <Text style={styles.introBody}>Retrouve tes réservations et leur état. Ta place reste bloquée jusqu’au début de l’événement, mais le billet définitif arrive seulement après confirmation du paiement sur place.</Text>
         </View>
 
         {loading ? <View style={styles.center}><ActivityIndicator color={colors.primary} /><Text style={styles.muted}>Chargement…</Text></View> :
@@ -74,9 +74,9 @@ export default function MyReservationsScreen() {
                 <Text style={styles.lineLabel}>{item.quantity} × {item.ticketName}</Text>
                 <Text style={styles.amount}>{formatAriary(item.subtotalMGA)}</Text>
               </View>
-              {item.status === 'pending' && status !== 'EXPIRÉE' ? <Text style={styles.expiry}>À finaliser avant {expiry} (heure de Madagascar)</Text> : null}
-              {status === 'EXPIRÉE' ? <Text style={styles.expiry}>Cette pré-réservation a dépassé sa limite de 15 minutes.</Text> : null}
-              <Text style={styles.disclaimer}>Aucun billet ni QR code n’est émis par une pré-réservation.</Text>
+              {item.status === 'pending' && status !== 'EXPIRÉE' ? <Text style={styles.expiry}>Paiement à effectuer auprès de l’organisateur avant {expiry} (heure de Madagascar)</Text> : null}
+              {status === 'EXPIRÉE' ? <Text style={styles.expiry}>La réservation a expiré au début de l’événement.</Text> : null}
+              <Text style={styles.disclaimer}>Le billet avec QR code sera disponible après confirmation du paiement par l’organisateur.</Text>
             </View>;
           }) : <View style={styles.empty}>
             <Text style={styles.emptyTitle}>Aucune réservation pour le moment</Text>
