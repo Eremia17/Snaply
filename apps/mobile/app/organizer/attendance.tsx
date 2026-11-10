@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { router } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../src/theme';
 import { fetchOrganizerAttendanceStats, fetchOrganizerCheckInHistory, type AttendanceStat, type CheckInHistoryItem } from '../../src/data/organizerAttendance';
@@ -36,7 +36,7 @@ export default function OrganizerAttendanceScreen() {
     }
   }, []);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
 
   const totals = useMemo(() => stats.reduce((acc, item) => ({
     events: acc.events + 1,
