@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
+import { Animated, Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { demoEvents, fetchPublishedEvents } from '../src/data/events';
 import type { EventItem } from '../src/data/events';
@@ -89,6 +89,14 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {events[0] ? <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/event/[id]', params: { id: events[0].id } })} style={({ pressed }) => [styles.featuredCard, pressed && styles.featuredPressed]}>
+          {events[0].coverUrl ? <Image source={{ uri: events[0].coverUrl }} style={styles.featuredImage} /> : <View style={[styles.featuredImage, { backgroundColor: events[0].accent }]} />}
+          <View style={styles.featuredShade} />
+          <View style={styles.featuredTop}><Text style={styles.featuredBadge}>À LA UNE · TICKET MADA</Text><Text style={styles.featuredIndex}>01 / 03</Text></View>
+          <View style={styles.featuredBottom}><Text style={styles.featuredCategory}>{events[0].category.toUpperCase()}  ·  {events[0].city.toUpperCase()}</Text><Text style={styles.featuredTitle}>{events[0].title}</Text><View style={styles.featuredAction}><Text style={styles.featuredActionText}>DÉCOUVRIR L'ÉVÉNEMENT</Text><Text style={styles.featuredArrow}>↗</Text></View></View>
+          <View style={styles.featuredOrb} />
+        </Pressable> : null}
+
         <View style={styles.accountLinks}><Pressable onPress={() => router.push('/my-tickets')} style={styles.reservationsLink}><Text style={styles.reservationsLinkText}>Mes billets  →</Text><Text style={styles.reservationsHint}>Billets confirmés</Text></Pressable><Pressable onPress={() => router.push('/my-reservations')} style={styles.reservationsLink}><Text style={styles.reservationsLinkText}>Mes réservations  →</Text><Text style={styles.reservationsHint}>Pré-réservations en cours</Text></Pressable></View>
 
         <View style={styles.sectionHeading}>
@@ -137,6 +145,20 @@ const styles = StyleSheet.create({
   searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 13, marginTop: 23, height: 52 },
   searchIcon: { color: colors.muted, fontSize: 25, marginRight: 8 },
   searchInput: { flex: 1, color: colors.text, fontSize: 13 },
+  featuredCard: { height: 310, borderRadius: 23, overflow: 'hidden', marginTop: 3, marginBottom: 23, justifyContent: 'space-between', padding: 18, backgroundColor: '#292331', borderWidth: 1, borderColor: '#51404F' },
+  featuredPressed: { opacity: 0.9, transform: [{ scale: 0.985 }] },
+  featuredImage: { ...StyleSheet.absoluteFill, width: '100%', height: '100%', resizeMode: 'cover' },
+  featuredShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(8,9,15,0.38)' },
+  featuredTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  featuredBadge: { color: '#10120B', backgroundColor: '#D6F36A', fontSize: 8, fontWeight: '900', letterSpacing: 1.1, paddingHorizontal: 10, paddingVertical: 8, borderRadius: 30, overflow: 'hidden' },
+  featuredIndex: { color: '#FFFFFF', fontSize: 9, letterSpacing: 1.4, fontWeight: '900' },
+  featuredBottom: { zIndex: 2 },
+  featuredCategory: { color: '#D6F36A', fontSize: 8, letterSpacing: 1.8, fontWeight: '900' },
+  featuredTitle: { color: '#FFFFFF', fontSize: 32, lineHeight: 36, fontWeight: '900', letterSpacing: -1.2, marginTop: 8, maxWidth: 270 },
+  featuredAction: { marginTop: 17, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.35)', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  featuredActionText: { color: '#FFFFFF', fontSize: 8, letterSpacing: 1.5, fontWeight: '900' },
+  featuredArrow: { color: '#D6F36A', fontSize: 22 },
+  featuredOrb: { position: 'absolute', width: 180, height: 180, borderRadius: 90, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', right: -55, top: 65 },
   accountLinks: { flexDirection: 'row', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 8, marginBottom: 17 },
   reservationsLink: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginBottom: 17 },
   reservationsLinkText: { color: colors.primary, fontSize: 10, fontWeight: '900' },
