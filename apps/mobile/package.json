@@ -23,7 +23,8 @@
     "@supabase/supabase-js": "^2.57.4",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-svg": "15.15.4",
-    "react-native-qrcode-svg": "6.3.54"
+    "react-native-qrcode-svg": "6.3.54",
+    "expo-camera": "~57.0.6"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
