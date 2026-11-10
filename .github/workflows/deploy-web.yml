@@ -1,0 +1,45 @@
+name: Deploy Ticket Mada Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/mobile/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Export Ticket Mada for web
+        run: npm --workspace apps/mobile run export:web
+      - name: Add GitHub Pages route fallback
+        run: cp apps/mobile/dist/index.html apps/mobile/dist/404.html
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/mobile/dist
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4
