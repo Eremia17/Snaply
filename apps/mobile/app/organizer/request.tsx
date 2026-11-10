@@ -13,33 +13,43 @@ export default function OrganizerRequestScreen() {
   const [checking, setChecking] = useState(true);
   const [message, setMessage] = useState('');
   const [pending, setPending] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      if (!isSupabaseConfigured || !supabase) {
-        router.replace('/account?next=organizer');
-        return;
-      }
-      const { data } = await supabase.auth.getUser();
+  async function loadApplication() {
+    if (!isSupabaseConfigured || !supabase) {
+      router.replace('/account?next=organizer');
+      return;
+    }
+
+    setChecking(true);
+    setLoadError('');
+    try {
+      const { data, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
       if (!data.user) {
         router.replace('/account?next=organizer');
         return;
       }
-      const { data: application } = await supabase
+
+      const { data: application, error } = await supabase
         .from('organizer_applications')
         .select('status')
         .eq('user_id', data.user.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (active) {
-        setPending(application?.status === 'pending');
-        setChecking(false);
-      }
+      if (error) throw error;
+
+      setPending(application?.status === 'pending');
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : 'Impossible de vérifier ta demande.');
+    } finally {
+      setChecking(false);
     }
-    void load();
-    return () => { active = false; };
+  }
+
+  useEffect(() => {
+    void loadApplication();
   }, []);
 
   async function submit() {
@@ -71,6 +81,23 @@ export default function OrganizerRequestScreen() {
   }
 
   if (checking) return <SafeAreaView style={styles.safe}><ActivityIndicator color={colors.primary} style={{ flex: 1 }} /></SafeAreaView>;
+
+  if (loadError) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.errorState}>
+          <Text style={styles.title}>Vérification impossible</Text>
+          <Text style={styles.subtitle}>{loadError}</Text>
+          <Pressable onPress={() => void loadApplication()} style={styles.button}>
+            <Text style={styles.buttonText}>Réessayer</Text>
+          </Pressable>
+          <Pressable onPress={() => router.replace('/')} style={styles.backAction}>
+            <Text style={styles.back}>Retour à l’accueil</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -107,6 +134,8 @@ export default function OrganizerRequestScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  errorState: { flex: 1, justifyContent: 'center', padding: 23 },
+  backAction: { alignItems: 'center', padding: 15 },
   content: { flexGrow: 1, justifyContent: 'center', padding: 23 },
   back: { color: colors.muted, fontSize: 11, fontWeight: '700', marginBottom: 32 },
   brand: { color: colors.text, fontSize: 15, fontWeight: '900', letterSpacing: 1.6 },
