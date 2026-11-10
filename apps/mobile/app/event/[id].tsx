@@ -38,21 +38,22 @@ export default function EventDetailScreen() {
   }
 
   const selectedTier = event.ticketTiers?.find(tier => tier.id === selectedTierId);
+  const shareTitle = event.title;
+  const shareMessage = [
+    '🎟️ ' + event.title,
+    event.category + ' · ' + event.city,
+    event.venue,
+    event.dateLabel,
+    'Tarifs : ' + event.priceLabel,
+    '',
+    event.description,
+    '',
+    'Annonce partagée avec Ticket Mada.',
+  ].filter(Boolean).join('\\n');
 
   async function handleShare() {
-    const message = [
-      '🎟️ ' + event.title,
-      event.category + ' · ' + event.city,
-      event.venue,
-      event.dateLabel,
-      'Tarifs : ' + event.priceLabel,
-      '',
-      event.description,
-      '',
-      'Annonce partagée avec Ticket Mada.',
-    ].filter(Boolean).join('\\n');
     try {
-      await Share.share({ title: event.title, message });
+      await Share.share({ title: shareTitle, message: shareMessage });
     } catch {
       Alert.alert('Partage indisponible', 'Impossible de partager cette annonce pour le moment.');
     }
