@@ -42,7 +42,7 @@ In the Supabase Dashboard, open **Edge Functions → Secrets** and add `TICKET_Q
 
 **Important issuance contract:** QR tokens are deterministic HMAC-SHA256 values derived from the ticket UUID using the shared `createTicketQrToken` helper. The trusted payment webhook must use that exact helper and the same secret when building the `p_tickets` argument for `finalize_verified_order_payment`. The database still stores only SHA-256 hashes. If an older or external issuer generated random tokens, this retrieval endpoint intentionally refuses to return a QR for those tickets; they must be securely reissued by a trusted server flow. Do not change or rotate the HMAC secret after issuing tickets unless a controlled migration/reissue plan is in place.
 
-The mobile data layer exposes `fetchMyTicketQrToken(ticketId)`; it calls the Edge Function with the signed-in user's session. The raw token is returned only to that authenticated owner and should be rendered as a QR image, never displayed as ordinary text or written to logs.
+The mobile data layer exposes `fetchMyTicketQrToken(ticketId)`; it calls the Edge Function with the signed-in user's session. The **Mes billets** screen now renders the returned token as a QR image with `react-native-qrcode-svg`; the raw token is never displayed as ordinary text or written to logs. `react-native-svg` is included in Expo Go for this SDK, while the QR renderer is a JavaScript package.
 
 This endpoint does not process payments, issue tickets, or provide a scanner. Deploying the function and setting its secret are required before QR retrieval can work.
 
