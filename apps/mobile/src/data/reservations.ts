@@ -6,7 +6,7 @@ export type TicketReservation = {
   subtotalMGA: number;
 };
 
-function createReservationKey(): string {
+export function createReservationKey(): string {
   return Date.now().toString(36) + '-' +
     Math.random().toString(36).slice(2) +
     Math.random().toString(36).slice(2);
@@ -15,6 +15,7 @@ function createReservationKey(): string {
 export async function reserveEventTickets(
   ticketTypeId: string,
   quantity: number,
+  reservationKey: string = createReservationKey(),
 ): Promise<TicketReservation> {
   if (!isSupabaseConfigured || !supabase) {
     throw new Error('La réservation en ligne n’est pas encore configurée.');
@@ -26,7 +27,10 @@ export async function reserveEventTickets(
     throw new Error('Connecte-toi à ton compte Ticket Mada pour réserver.');
   }
 
-  const reservationKey = createReservationKey();
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) {
+    throw new Error('La quantité doit être comprise entre 1 et 10 billets.');
+  }
+
   const { data, error } = await client.rpc('reserve_event_tickets', {
     p_ticket_type_id: ticketTypeId,
     p_quantity: quantity,
