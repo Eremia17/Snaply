@@ -20,9 +20,9 @@ export type EventItem = {
 };
 
 export const demoEvents: EventItem[] = [
-  { id: 'demo-1', title: 'Soirée live', category: 'Musique', city: 'Antananarivo', venue: 'Centre-ville', dateLabel: 'À venir', priceLabel: 'Dès 15 000 Ar', accent: '#573044', symbol: '♫', description: 'Exemple de fiche événement pour présenter le fonctionnement de Ticket Mada.', isDemo: true },
-  { id: 'demo-2', title: 'Festival culturel', category: 'Culture', city: 'Antsirabe', venue: 'Espace culturel', dateLabel: 'À venir', priceLabel: 'Dès 10 000 Ar', accent: '#30465C', symbol: '✦', description: 'Exemple de fiche événement pour présenter le fonctionnement de Ticket Mada.', isDemo: true },
-  { id: 'demo-3', title: 'Rencontre créative', category: 'Conférence', city: 'Toamasina', venue: 'Salle polyvalente', dateLabel: 'À venir', priceLabel: 'Entrée libre', accent: '#4B4930', symbol: '✧', description: 'Exemple de fiche événement pour présenter le fonctionnement de Ticket Mada.', isDemo: true }
+  { id: 'demo-1', title: 'Soirée live', category: 'Musique', city: 'Antananarivo', venue: 'Centre-ville', dateLabel: 'À venir', priceLabel: 'Dès 15 000 Ar', accent: '#573044', symbol: '♫', coverUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=900&q=75', description: 'Exemple de fiche événement pour présenter le fonctionnement de Ticket Mada.', isDemo: true },
+  { id: 'demo-2', title: 'Festival culturel', category: 'Culture', city: 'Antsirabe', venue: 'Espace culturel', dateLabel: 'À venir', priceLabel: 'Dès 10 000 Ar', accent: '#30465C', symbol: '✦', coverUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=900&q=75', description: 'Exemple de fiche événement pour présenter le fonctionnement de Ticket Mada.', isDemo: true },
+  { id: 'demo-3', title: 'Rencontre créative', category: 'Conférence', city: 'Toamasina', venue: 'Salle polyvalente', dateLabel: 'À venir', priceLabel: 'Entrée libre', accent: '#4B4930', symbol: '✧', coverUrl: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=900&q=75', description: 'Exemple de fiche événement pour présenter le fonctionnement de Ticket Mada.', isDemo: true }
 ];
 
 const accents: Record<string, { accent: string; symbol: string }> = {
