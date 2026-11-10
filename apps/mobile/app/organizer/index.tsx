@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
 import { colors } from '../../src/theme';
 import { isSupabaseConfigured, supabase } from '../../src/lib/supabase';
+import { fetchOrganizerAttendanceStats, type AttendanceStat } from '../../src/data/organizerAttendance';
 
 const shortcuts = [
   { icon: '▦', title: 'Mes événements', detail: 'Retrouver, modifier et suivre tes événements', route: '/organizer/events' as const },
@@ -17,12 +18,14 @@ const pipeline = [
   { number: '03', title: 'Ouvrir la billetterie', detail: 'Paiement, émission des billets et contrôles' },
 ];
 
-function Metric({ label, hint }: { label: string; hint: string }) {
-  return <View style={styles.metric}><Text style={styles.metricValue}>—</Text><Text style={styles.metricLabel}>{label}</Text><Text style={styles.metricHint}>{hint}</Text></View>;
+function Metric({ label, hint, value }: { label: string; hint: string; value: string | number }) {
+  return <View style={styles.metric}><Text style={styles.metricValue}>{value}</Text><Text style={styles.metricLabel}>{label}</Text><Text style={styles.metricHint}>{hint}</Text></View>;
 }
 export default function OrganizerScreen() {
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [authorized, setAuthorized] = useState(false);
+  const [attendance, setAttendance] = useState<AttendanceStat[]>([]);
+  const [statsWarning, setStatsWarning] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -48,6 +51,12 @@ export default function OrganizerScreen() {
       }
       setAuthorized(true);
       setCheckingAccess(false);
+      try {
+        const rows = await fetchOrganizerAttendanceStats();
+        if (active) { setAttendance(rows); setStatsWarning(''); }
+      } catch {
+        if (active) setStatsWarning('Les statistiques ne sont pas disponibles pour le moment.');
+      }
     }
     void verifyAccess();
     return () => { active = false; };
@@ -73,11 +82,12 @@ export default function OrganizerScreen() {
 
         <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Activité</Text><Text style={styles.sectionMeta}>DONNÉES EN ATTENTE</Text></View>
         <View style={styles.metrics}>
-          <Metric label="Événements" hint="Total publié" />
-          <Metric label="Billets vendus" hint="Toutes périodes" />
-          <Metric label="Chiffre d’affaires" hint="En Ariary" />
-          <Metric label="Entrées validées" hint="Contrôle d’accès" />
+          <Metric label="Événements" hint="Événements gérés" value={attendance.length} />
+          <Metric label="Billets émis" hint="Commandes payées" value={attendance.reduce((sum, item) => sum + item.ticketsIssued, 0)} />
+          <Metric label="Chiffre d’affaires" hint="Paiements à connecter" value="—" />
+          <Metric label="Entrées validées" hint="Contrôles confirmés" value={attendance.reduce((sum, item) => sum + item.ticketsCheckedIn, 0)} />
         </View>
+        {statsWarning ? <Text style={styles.statsWarning}>{statsWarning}</Text> : null}
 
         <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Outils de gestion</Text><Text style={styles.sectionMeta}>WORKSPACE</Text></View>
         <View style={styles.tools}>
@@ -125,6 +135,7 @@ const styles = StyleSheet.create({
   metricValue: { color: colors.text, fontSize: 25, fontWeight: '900' },
   metricLabel: { color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 7 },
   metricHint: { color: colors.muted, fontSize: 9, marginTop: 3 },
+  statsWarning: { color: colors.muted, fontSize: 9, lineHeight: 14, marginTop: 8 },
   tools: { borderRadius: 15, overflow: 'hidden', borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   tool: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 13, borderBottomWidth: 1, borderBottomColor: colors.border, minHeight: 72 },
   toolIcon: { width: 38, height: 38, borderRadius: 11, backgroundColor: colors.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
