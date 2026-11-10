@@ -10,6 +10,7 @@ export default function OrganizerLayout() {
   const [allowed, setAllowed] = useState(false);
   const [checking, setChecking] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -52,7 +53,7 @@ export default function OrganizerLayout() {
     }
     void verify();
     return () => { active = false; };
-  }, [isAccessRequest]);
+  }, [isAccessRequest, retryKey]);
 
   if (checking) {
     return <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}><ActivityIndicator color={colors.primary} style={{ flex: 1 }} /></SafeAreaView>;
@@ -63,7 +64,7 @@ export default function OrganizerLayout() {
         <View style={styles.errorState}>
           <Text style={styles.title}>Accès à vérifier</Text>
           <Text style={styles.message}>{loadError}</Text>
-          <Pressable onPress={() => router.replace('/organizer')} style={styles.button}>
+          <Pressable onPress={() => setRetryKey(value => value + 1)} style={styles.button}>
             <Text style={styles.buttonText}>Réessayer</Text>
           </Pressable>
           <Pressable onPress={() => router.replace('/account?next=organizer')} style={styles.secondary}>
