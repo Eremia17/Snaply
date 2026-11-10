@@ -44,7 +44,8 @@ export async function fetchPublishedEvents(): Promise<EventItem[]> {
       .eq('status', 'published')
       .gte('starts_at', new Date().toISOString())
       .order('starts_at', { ascending: true });
-    if (error || !data?.length) return demoEvents;
+    if (error) throw error;
+    if (!data?.length) return demoEvents;
 
     return await Promise.all(data.map(async raw => {
       const event = raw as unknown as {
@@ -79,8 +80,8 @@ export async function fetchPublishedEvents(): Promise<EventItem[]> {
         isDemo: false,
       };
     }));
-  } catch {
-    return demoEvents;
+  } catch (error) {
+    throw error;
   }
 }
 
