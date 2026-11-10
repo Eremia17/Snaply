@@ -29,7 +29,6 @@ On a fresh Supabase project, apply every SQL migration in this exact filename or
 17. `202611100001_organizer_checkin_activity.sql`
 18. `202611100002_explicit_data_api_grants.sql`
 19. `202611100003_restrict_auth_trigger_and_index_foreign_keys.sql`
-18. `202611100002_explicit_data_api_grants.sql`
 
 Migration 018 grants the minimum client roles explicit access to the current public tables. This is required because new Supabase projects no longer automatically grant Data API table privileges by default. All nine application tables have RLS enabled; anonymous clients receive read-only access to published-event catalogue tables, authenticated users are still constrained by RLS, and the server-side service role receives table privileges. When adding future tables, add explicit grants and RLS policies in the same migration.
 
