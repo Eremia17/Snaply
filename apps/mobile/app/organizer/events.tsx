@@ -14,13 +14,23 @@ export default function OrganizerEventsScreen() {
   const [search, setSearch] = useState('');
   const [events, setEvents] = useState<EventDraft[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cloudWarning, setCloudWarning] = useState('');
 
   const refresh = useCallback(async () => {
+    setLoading(true);
     try {
-      await refreshOrganizerCloudDrafts().catch(() => 0);
+      try {
+        await refreshOrganizerCloudDrafts();
+        setCloudWarning('');
+      } catch {
+        setCloudWarning('Connexion cloud indisponible. Les brouillons enregistrés sur cet appareil restent accessibles.');
+      }
       setEvents(await listEventDrafts());
-    } catch { Alert.alert('Erreur', 'Impossible de lire les brouillons enregistrés sur cet appareil.'); }
-    finally { setLoading(false); }
+    } catch {
+      Alert.alert('Erreur', 'Impossible de lire les brouillons enregistrés sur cet appareil.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
@@ -105,6 +115,8 @@ export default function OrganizerEventsScreen() {
           </Pressable>)}
         </ScrollView>
 
+        {cloudWarning ? <View style={styles.cloudWarning}><Text style={styles.cloudWarningText}>{cloudWarning}</Text><Pressable onPress={refresh} style={styles.cloudRetry}><Text style={styles.cloudRetryText}>Réessayer</Text></Pressable></View> : null}
+
         <View style={styles.listHeader}><Text style={styles.listTitle}>{filter === 'Tous' ? 'Tous les événements' : filter}</Text><Text style={styles.listMeta}>{visibleEvents.length} ÉVÉNEMENT{visibleEvents.length > 1 ? 'S' : ''}</Text></View>
 
         {loading ? <View style={styles.emptyCard}><Text style={styles.emptyTitle}>Chargement des événements…</Text></View> : visibleEvents.length ? visibleEvents.map(item => {
@@ -174,6 +186,10 @@ const styles = StyleSheet.create({
   listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 25, marginBottom: 12 },
   listTitle: { color: colors.text, fontSize: 14, fontWeight: '900' },
   listMeta: { color: colors.muted, fontSize: 7, letterSpacing: 1, fontWeight: '800' },
+  cloudWarning: { padding: 12, borderRadius: 10, backgroundColor: '#302B20', borderWidth: 1, borderColor: '#66512B', marginTop: 14, gap: 8 },
+  cloudWarningText: { color: '#E8D5A5', fontSize: 10, lineHeight: 15 },
+  cloudRetry: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 7, backgroundColor: '#594522' },
+  cloudRetryText: { color: '#FFF0C7', fontSize: 9, fontWeight: '900' },
   emptyCard: { borderRadius: 15, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, paddingHorizontal: 19, paddingVertical: 25, alignItems: 'center' },
   emptyArtwork: { width: 104, height: 90, alignItems: 'center', justifyContent: 'center', marginBottom: 13 },
   artBack: { position: 'absolute', width: 53, height: 64, borderRadius: 9, backgroundColor: '#343044', transform: [{ rotate: '10deg' }], marginLeft: 18, marginTop: -5 },
