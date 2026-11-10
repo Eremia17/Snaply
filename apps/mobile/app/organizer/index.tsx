@@ -8,7 +8,7 @@ const shortcuts = [
   { icon: '▦', title: 'Mes événements', detail: 'Retrouver, modifier et suivre tes événements', route: '/organizer/events' as const },
   { icon: '+', title: 'Nouvel événement', detail: 'Créer une fiche et configurer la billetterie', route: '/organizer/create' as const },
   { icon: '▤', title: 'Billetterie', detail: 'Types de billets, quotas et tarifs', route: null },
-  { icon: '⌁', title: 'Contrôle d’accès', detail: 'Scanner et valider les billets à l’entrée', route: null },
+  { icon: '⌁', title: 'Contrôle d’accès', detail: 'Scanner et valider les billets à l’entrée', route: '/organizer/scanner' as const },
   { icon: '↗', title: 'Rapports', detail: 'Ventes, fréquentation et reversements', route: null },
 ];
 const pipeline = [
