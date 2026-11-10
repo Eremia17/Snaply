@@ -51,9 +51,13 @@ export default function MyReservationsScreen() {
 
         {loading ? <View style={styles.center}><ActivityIndicator color={colors.primary} /><Text style={styles.muted}>Chargement…</Text></View> :
           error ? <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>Connexion nécessaire</Text>
+            <Text style={styles.emptyTitle}>{error.toLowerCase().includes('connecte-toi') ? 'Connexion nécessaire' : 'Chargement impossible'}</Text>
             <Text style={styles.muted}>{error}</Text>
-            <Pressable onPress={() => router.push('/account?next=spectator')} style={styles.primary}><Text style={styles.primaryText}>Se connecter</Text></Pressable>
+            {error.toLowerCase().includes('connecte-toi') ? (
+              <Pressable onPress={() => router.push('/account?next=spectator')} style={styles.primary}><Text style={styles.primaryText}>Se connecter</Text></Pressable>
+            ) : (
+              <Pressable onPress={refresh} style={styles.primary}><Text style={styles.primaryText}>Réessayer</Text></Pressable>
+            )}
           </View> :
           items.length ? items.map(item => {
             const status = getStatus(item);
