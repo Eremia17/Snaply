@@ -10,7 +10,8 @@ AdEarn is a responsive web platform prototype for transparent, partner-funded mi
 - Supabase-backed mission catalogue with search/category filters and mission detail pages.
 - Authenticated text-based task submissions with duplicate protection and a member submission-history page.
 - Wallet and dashboard read from an append-only ledger projection; no balances are fabricated.
-- Database-role-gated, read-only admin dashboard for reviewing pending submissions and viewing account/task totals.
+- Database-role-gated admin dashboard with audited approve/reject controls for pending submissions.
+- Atomic PostgreSQL review function locks each attempt, verifies the admin role and writes an audit-log entry. Review decisions do not create wallet credits.
 - Core PostgreSQL schema and read-only verification queries are in `supabase/`.
 
 ## Not live yet
@@ -18,7 +19,7 @@ AdEarn is a responsive web platform prototype for transparent, partner-funded mi
 - A dedicated AdEarn Supabase project has not been configured or connected.
 - The SQL schema has been committed but has **not** been applied to a database.
 - No real partner has been approved and no paid mission is seeded.
-- Task review/approval automation and partner event verification are not implemented.
+- Partner event verification and reward-credit automation are not implemented. Admins can approve/reject submissions, but approval does not pay a reward.
 - Withdrawal requests and payouts are not activated. No real money is held or paid.
 
 Do not credit users from browser events. Production rewards must be verified server-side against an authorized partner's documented callback or API, with idempotency, audit logs and a funded reward budget.
@@ -89,7 +90,7 @@ Render's free web services sleep after 15 minutes without incoming traffic and c
 ## Next engineering steps
 
 1. Install and verify the schema on a dedicated AdEarn Supabase project.
-2. Add a secure server-side review workflow for task submissions and idempotent reward credits. The current admin screen is intentionally read-only.
+2. Connect an approved partner and funded reward budget before implementing idempotent reward credits. The admin review workflow currently records approve/reject decisions but intentionally does not pay rewards.
 3. Add file uploads only after private Storage buckets and access policies are tested.
 4. Integrate partners only after confirming that incentivized tasks are explicitly allowed.
 5. Design withdrawals only after confirming a real, funded payout route and its fees/limits.
