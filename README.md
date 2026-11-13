@@ -7,7 +7,7 @@ AdEarn is a responsive web platform prototype for transparent, partner-funded mi
 - Responsive public landing page and mission catalogue.
 - Supabase email/password registration, sign-in, email confirmation and password recovery flows.
 - Protected member area with editable display name.
-- Supabase-backed mission catalogue and mission detail pages.
+- Supabase-backed mission catalogue with search/category filters and mission detail pages.
 - Authenticated text-based task submissions with duplicate protection and a member submission-history page.
 - Wallet and dashboard read from an append-only ledger projection; no balances are fabricated.
 - Core PostgreSQL schema and read-only verification queries are in `supabase/`.
