@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./marketplace.css";
 
 export const metadata: Metadata = {
-  title: "AdEarn — Des missions claires, des règles transparentes",
-  description: "AdEarn, une plateforme de micro-missions avec des conditions visibles et un suivi transparent.",
+  title: "AdEarn — Plateforme de micro-tâches",
+  description: "Découvrez des micro-tâches, suivez vos soumissions et consultez vos récompenses confirmées sur AdEarn.",
   applicationName: "AdEarn",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f7f9fc",
+  themeColor: "#f7f8fc",
   width: "device-width",
   initialScale: 1,
 };
