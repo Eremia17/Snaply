@@ -224,3 +224,29 @@ where table_schema = 'public'
     'events', 'orders', 'order_items', 'tickets', 'ticket_types',
     'payment_records', 'organizer_applications', 'organizer_commission_terms'
   );
+
+
+-- 21) Partner registry: only admins may add pending providers or activate
+-- verified partners with an HTTPS evidence URL and incentive permission.
+select tablename, policyname, cmd, roles, qual, with_check
+from pg_catalog.pg_policies
+where schemaname = 'public'
+  and tablename = 'ad_providers'
+order by policyname;
+
+select
+  pg_catalog.has_table_privilege('authenticated', 'public.ad_providers', 'INSERT') as admin_insert_grant,
+  pg_catalog.has_table_privilege('authenticated', 'public.ad_providers', 'UPDATE') as admin_update_grant;
+
+select
+  column_name, data_type, is_nullable
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'ad_providers'
+  and column_name in ('verification_url', 'admin_notes');
+
+select trigger_name
+from information_schema.triggers
+where event_object_schema = 'public'
+  and event_object_table = 'ad_providers'
+  and trigger_name = 'ad_providers_admin_audit';
