@@ -126,7 +126,6 @@ create table if not exists public.tasks (
     check (status in ('draft', 'published', 'paused', 'archived')),
   starts_at timestamptz,
   ends_at timestamptz,
-  max_participants integer check (max_participants is null or max_participants > 0),
   published_at timestamptz,
   created_at timestamptz not null default pg_catalog.now(),
   updated_at timestamptz not null default pg_catalog.now(),
