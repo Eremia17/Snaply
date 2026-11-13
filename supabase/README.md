@@ -8,8 +8,9 @@ This folder contains the proposed core schema for a **separate AdEarn Supabase p
 2. Open that AdEarn project's SQL Editor.
 3. Review and run `AD EARN CORE SCHEMA.sql`.
 4. Confirm these tables exist: `profiles`, `wallets`, `ad_providers`, `tasks`, `task_attempts`, `transactions`, `withdrawals`, and `admin_logs`.
-5. Register a test account through AdEarn after its environment variables are configured. Confirm that the Auth trigger creates one profile and one empty wallet.
-6. Verify RLS is enabled on every table with this query:
+5. Run the read-only checks in `VERIFY CORE SCHEMA.sql` and review RLS, grants, triggers and the wallet view.
+6. Register a test account through AdEarn after its environment variables are configured. Confirm that the Auth trigger creates one profile and one empty wallet.
+7. Verify RLS is enabled on every table with this query:
 
 ```sql
 select schemaname, tablename, rowsecurity
