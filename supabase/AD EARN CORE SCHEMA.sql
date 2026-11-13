@@ -393,3 +393,67 @@ comment on table public.admin_logs is
   'Internal audit trail with no direct access from anon or authenticated client roles.';
 comment on view public.wallet_balances is
   'Read-only balance projection calculated from immutable ledger entries.';
+
+
+-- Admin access is assigned manually by a trusted project owner.
+-- Never expose role updates to client users.
+create or replace function private.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.profiles as profile
+    where profile.id = (select auth.uid())
+      and profile.role = 'admin'
+  );
+$$;
+
+revoke all on function private.is_admin() from public, anon;
+grant execute on function private.is_admin() to authenticated;
+
+drop policy if exists profiles_select_admin on public.profiles;
+create policy profiles_select_admin on public.profiles
+for select to authenticated
+using ((select private.is_admin()));
+
+drop policy if exists wallets_select_admin on public.wallets;
+create policy wallets_select_admin on public.wallets
+for select to authenticated
+using ((select private.is_admin()));
+
+drop policy if exists providers_select_admin on public.ad_providers;
+create policy providers_select_admin on public.ad_providers
+for select to authenticated
+using ((select private.is_admin()));
+
+drop policy if exists tasks_select_admin on public.tasks;
+create policy tasks_select_admin on public.tasks
+for select to authenticated
+using ((select private.is_admin()));
+
+drop policy if exists attempts_select_admin on public.task_attempts;
+create policy attempts_select_admin on public.task_attempts
+for select to authenticated
+using ((select private.is_admin()));
+
+drop policy if exists transactions_select_admin on public.transactions;
+create policy transactions_select_admin on public.transactions
+for select to authenticated
+using ((select private.is_admin()));
+
+drop policy if exists withdrawals_select_admin on public.withdrawals;
+create policy withdrawals_select_admin on public.withdrawals
+for select to authenticated
+using ((select private.is_admin()));
+
+drop policy if exists admin_logs_select_admin on public.admin_logs;
+create policy admin_logs_select_admin on public.admin_logs
+for select to authenticated
+using ((select private.is_admin()));
+
+comment on function private.is_admin() is
+  'Checks the database-managed profile role for the current authenticated user. Role changes must be performed by a trusted project owner.';
