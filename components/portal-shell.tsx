@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { ArrowUpRight, FolderKanban, Bell, CircleHelp, ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Wallet, UserRound, Zap, ScrollText } from "lucide-react";
+import { ArrowUpRight, FolderKanban, Building2, Bell, CircleHelp, ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Wallet, UserRound, Zap, ScrollText } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { signOut } from "@/app/auth/actions";
@@ -32,14 +32,14 @@ export default async function PortalShell({ children, active }: { children: Reac
     <aside className="portal-sidebar">
       <Link href="/" className="portal-brand"><span><Zap size={18} fill="currentColor"/></span>adearn<span className="portal-dot">.</span></Link>
       <div className="portal-side-label">ESPACE PERSONNEL</div>
-      <nav className="portal-nav">{links.map(item => { const Icon=item.icon; return <Link key={item.href} href={item.href} className={active===item.href?"active":""}><Icon size={17}/>{item.label}</Link>; })}{isAdmin && <><Link href="/admin" className={active==="/admin"?"active":""}><ShieldCheck size={17}/>Administration</Link><Link href="/admin/tasks" className={active==="/admin/tasks"?"active":""}><FolderKanban size={17}/>Gestion des missions</Link><Link href="/admin/logs" className={active==="/admin/logs"?"active":""}><ScrollText size={17}/>Journal d’audit</Link></>}</nav>
+      <nav className="portal-nav">{links.map(item => { const Icon=item.icon; return <Link key={item.href} href={item.href} className={active===item.href?"active":""}><Icon size={17}/>{item.label}</Link>; })}{isAdmin && <><Link href="/admin" className={active==="/admin"?"active":""}><ShieldCheck size={17}/>Administration</Link><Link href="/admin/tasks" className={active==="/admin/tasks"?"active":""}><FolderKanban size={17}/>Gestion des missions</Link><Link href="/admin/providers" className={active==="/admin/providers"?"active":""}><Building2 size={17}/>Partenaires</Link><Link href="/admin/logs" className={active==="/admin/logs"?"active":""}><ScrollText size={17}/>Journal d’audit</Link></>}</nav>
       <div className="portal-side-bottom">
         <div className="portal-help"><CircleHelp size={18}/><b>Besoin d'aide ?</b><small>Notre centre d'aide arrive bientôt.</small><Link href="/help">En savoir plus <ArrowUpRight size={13}/></Link></div>
         <form action={signOut}><button type="submit" className="portal-logout"><LogOut size={16}/> Se déconnecter</button></form>
       </div>
     </aside>
     <div className="portal-main">
-      <header className="portal-topbar"><div><span className="portal-breadcrumb">ADEARN</span><span className="crumb-slash">/</span><b>{active==="/dashboard"?"TABLEAU DE BORD":active==="/wallet"?"PORTEFEUILLE":active==="/profile"?"PROFIL":active==="/submissions"?"PARTICIPATIONS":active==="/admin/tasks"?"GESTION DES MISSIONS":active==="/admin/logs"?"JOURNAL D’AUDIT":active==="/admin"?"ADMINISTRATION":"MISSIONS"}</b></div><div className="portal-top-actions"><span className="demo-chip">MISSIONS EN DÉMO</span><span className="portal-user-email">{email}</span><button className="icon-button" aria-label="Notifications"><Bell size={17}/></button><div className="user-avatar" aria-label="Compte connecté">{initial}</div></div></header>
+      <header className="portal-topbar"><div><span className="portal-breadcrumb">ADEARN</span><span className="crumb-slash">/</span><b>{active==="/dashboard"?"TABLEAU DE BORD":active==="/wallet"?"PORTEFEUILLE":active==="/profile"?"PROFIL":active==="/submissions"?"PARTICIPATIONS":active==="/admin/tasks"?"GESTION DES MISSIONS":active==="/admin/logs"?"JOURNAL D’AUDIT":active==="/admin/providers"?"PARTENAIRES":active==="/admin"?"ADMINISTRATION":"MISSIONS"}</b></div><div className="portal-top-actions"><span className="demo-chip">MISSIONS EN DÉMO</span><span className="portal-user-email">{email}</span><button className="icon-button" aria-label="Notifications"><Bell size={17}/></button><div className="user-avatar" aria-label="Compte connecté">{initial}</div></div></header>
       <main className="portal-content">{children}</main>
       <footer className="portal-footer"><span>© 2026 ADEARN</span><span>Compte sécurisé · Missions et portefeuille en démonstration</span><Link href="/">Site public ↗</Link></footer>
     </div>
