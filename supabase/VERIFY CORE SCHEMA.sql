@@ -90,10 +90,10 @@ select
 from pg_catalog.pg_policies
 where schemaname = 'public'
   and policyname in (
-    'profiles_select_admin', 'wallets_select_admin',
-    'providers_select_admin', 'tasks_select_admin',
-    'attempts_select_admin', 'transactions_select_admin',
-    'withdrawals_select_admin', 'admin_logs_select_admin'
+    'profiles_select_own_or_admin', 'wallets_select_own_or_admin',
+    'providers_select_authenticated', 'tasks_select_authenticated',
+    'task_attempts_select_own_or_admin', 'transactions_select_own_or_admin',
+    'withdrawals_select_own_or_admin', 'admin_logs_select_admin'
   )
 order by tablename;
 
