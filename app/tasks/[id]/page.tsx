@@ -109,20 +109,22 @@ export default async function TaskDetailPage({ params, searchParams }: Props) {
           {query.error && <div className="auth-feedback auth-error" role="alert">{submissionErrors[query.error] ?? "Impossible d'envoyer la participation."}</div>}
           {previousAttempt ? (
             <div className="attempt-existing"><BadgeCheck size={22}/><b>Participation déjà envoyée</b><p>Statut : {previousAttempt.status === "approved" ? "Approuvée" : previousAttempt.status === "rejected" ? "Refusée" : previousAttempt.status === "under_review" ? "En cours de vérification" : "En attente de vérification"}.</p></div>
+          ) : isNotStarted ? (
+            <div className="task-date-note">Cette mission n'a pas encore commencé. Le formulaire s'ouvrira à la date prévue.</div>
           ) : signedIn ? (
             <>
-              <p>Respectez les consignes et ajoutez votre réponse ou la preuve demandée. Les envois sont contrôlés avant toute récompense.</p>
+              <p>Respectez les consignes et ajoutez votre réponse ou une preuve textuelle. Les envois sont contrôlés avant toute récompense.</p>
               <form action={submitTask} className="task-submit-form">
                 <input type="hidden" name="taskId" value={task.id}/>
                 <label htmlFor="response">Votre réponse / preuve</label>
                 <textarea id="response" name="response" rows={6} minLength={3} maxLength={5000} placeholder="Décrivez votre participation ou ajoutez les informations demandées…" required/>
+                <small className="task-proof-limit">Preuve textuelle uniquement dans cette version. Les missions nécessitant un fichier ne doivent pas être publiées avant l’activation du dépôt sécurisé.</small>
                 <button type="submit" className="auth-submit">Envoyer ma participation <ArrowUpRight size={16}/></button>
               </form>
             </>
           ) : (
             <div className="task-signin-prompt"><p>Connectez-vous pour participer à cette mission. Vous pourrez suivre le résultat depuis votre espace personnel.</p><Link href="/login" className="auth-submit">Se connecter <ArrowUpRight size={16}/></Link><Link href="/register" className="task-create-account">Créer un compte</Link></div>
           )}
-          {isNotStarted && <div className="task-date-note">Cette mission n'a pas encore commencé. Les soumissions seront ouvertes à la date indiquée.</div>}
         </section>
       </div>
       <div className="task-detail-foot"><FileText size={15}/> Une participation envoyée n'est pas une récompense validée. La vérification doit être terminée avant tout crédit.</div>
