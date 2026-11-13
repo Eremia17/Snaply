@@ -29,7 +29,6 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
           <p>Un espace pensé pour participer à des missions utiles, avec des règles compréhensibles.</p>
         </div>
         <div className="auth-visual-bottom">✳ <span>VOTRE TEMPS COMPTE</span></div>
-        <img src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=75" alt="Bureau de travail accueillant"/>
       </div>
       <div className="auth-panel">
         <Link href="/" className="auth-back"><ArrowLeft size={15}/> Retour au site</Link>
