@@ -469,7 +469,7 @@ create or replace function public.admin_review_task_attempt(
 )
 returns text
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $$
 declare
@@ -605,3 +605,27 @@ for each row execute function private.log_admin_task_change();
 
 comment on function private.log_admin_task_change() is
   'Internal audit trigger for administrator task creation and status/content changes.';
+
+
+-- The review RPC runs with caller privileges. RLS authorizes every write;
+-- the function itself is not a SECURITY DEFINER privilege-escalation path.
+grant update (status, reviewed_at, reviewed_by, review_note)
+  on public.task_attempts to authenticated;
+drop policy if exists attempts_update_admin on public.task_attempts;
+create policy attempts_update_admin on public.task_attempts
+for update to authenticated
+using ((select private.is_admin()))
+with check ((select private.is_admin()));
+
+grant insert (actor_id, action, entity_type, entity_id, details)
+  on public.admin_logs to authenticated;
+drop policy if exists admin_logs_insert_admin on public.admin_logs;
+create policy admin_logs_insert_admin on public.admin_logs
+for insert to authenticated
+with check (
+  (select private.is_admin())
+  and actor_id = (select auth.uid())
+);
+
+comment on function public.admin_review_task_attempt(uuid, text, text) is
+  'SECURITY INVOKER review RPC. RLS policies authorize admin-only updates and audit inserts; no wallet credit is created.';
