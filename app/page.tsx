@@ -1,67 +1,104 @@
 import Link from "next/link";
 import {
-  ArrowDownRight, ArrowRight, BadgeCheck, Bell, Check, ChevronDown,
-  CircleHelp, Clock3, Compass, CreditCard, Flower2, Globe2, Leaf,
-  Menu, Play, ShieldCheck, Sparkles, Star, Wallet, Zap
+  ArrowRight, AudioLines, BadgeCheck, BookOpenCheck, CheckCircle2,
+  ChevronRight, CircleHelp, Clock3, Compass, FileCheck2, Filter,
+  Headphones, LayoutDashboard, ListChecks, LockKeyhole, Menu,
+  MessageSquareText, Mic2, Search, ShieldCheck, Sparkles, Wallet,
+  Zap, ClipboardCheck, ScanSearch, Languages
 } from "lucide-react";
 
-const steps = [
-  { n: "01", icon: Compass, title: "Explorez", text: "Découvrez les missions et leurs conditions avant de vous engager." },
-  { n: "02", icon: Check, title: "Participez", text: "Réalisez une mission en suivant les critères indiqués." },
-  { n: "03", icon: Wallet, title: "Suivez", text: "Consultez la validation et les récompenses réellement confirmées." },
+const categories = [
+  { icon: AudioLines, name: "Audio & voix", detail: "Écoute, transcription, classement", tone: "violet" },
+  { icon: ScanSearch, name: "Vérification", detail: "Contrôle et validation de données", tone: "cyan" },
+  { icon: MessageSquareText, name: "Sondages", detail: "Avis et questionnaires", tone: "orange" },
+  { icon: BookOpenCheck, name: "Classification", detail: "Trier et annoter des contenus", tone: "green" },
+  { icon: Languages, name: "Langues", detail: "Petites contributions linguistiques", tone: "pink" },
+  { icon: ClipboardCheck, name: "Micro-tâches", detail: "Actions courtes et précises", tone: "blue" },
+];
+
+const workflow = [
+  { icon: Compass, number: "01", title: "Choisissez", text: "Parcourez les missions et vérifiez les conditions avant de commencer." },
+  { icon: ListChecks, number: "02", title: "Réalisez", text: "Suivez les consignes et envoyez votre travail pour vérification." },
+  { icon: Wallet, number: "03", title: "Suivez vos gains", text: "Consultez séparément les récompenses en attente et celles confirmées." },
 ];
 
 export default function Home() {
   return (
-    <main className="premium-page">
-      <div className="topline"><span><span className="live-dot"/> LE NOUVEAU VISAGE DES MICRO-MISSIONS</span><span className="topline-right">Conçu pour la transparence <span>✳</span></span></div>
-      <header className="nav-wrap">
-        <Link className="logo" href="/"><span className="logo-symbol"><Zap size={19} fill="currentColor"/></span>adearn<span className="logo-period">.</span></Link>
-        <nav className="main-nav"><a href="#missions">Découvrir</a><a href="#how">Comment ça marche</a><a href="#promise">Notre promesse</a></nav>
-        <div className="nav-right"><Link className="nav-login" href="/login">Connexion</Link><span className="language"><Globe2 size={15}/> FR <ChevronDown size={13}/></span><Link className="nav-cta" href="/tasks">Explorer <ArrowUpRightIcon/></Link></div>
+    <main className="market-shell">
+      <header className="market-topbar">
+        <Link href="/" className="market-brand"><span className="market-brand-mark"><Zap size={19} fill="currentColor" /></span><span>ad<span>earn</span><i>.</i></span></Link>
+        <nav className="market-nav" aria-label="Navigation principale">
+          <a className="is-current" href="#missions">Missions</a>
+          <a href="#categories">Catégories</a>
+          <a href="#how-it-works">Comment ça marche</a>
+        </nav>
+        <div className="market-top-actions">
+          <Link href="/login" className="market-login">Connexion</Link>
+          <Link href="/register" className="market-signup">Créer un compte <ArrowRight size={15}/></Link>
+        </div>
       </header>
 
-      <section className="hero-premium">
-        <div className="hero-left">
-          <div className="hero-kicker"><span className="kicker-line"/> LE TEMPS A DE LA VALEUR</div>
-          <h1>Faites de<br/>vos petits<br/><em>moments.</em><br/><span>Quelque chose.</span></h1>
-          <p className="hero-description">Des missions claires, des règles visibles et un suivi honnête. AdEarn prépare une nouvelle façon de participer à des tâches en ligne, sans promesses irréalistes.</p>
-          <div className="hero-buttons"><Link href="/tasks" className="btn-dark">Voir les missions <ArrowUpRightIcon/></Link><a className="watch-link" href="#how"><span><Play size={13} fill="currentColor"/></span> Découvrir le concept</a></div>
-          <div className="hero-proof"><div className="avatar-stack"><i>✦</i><i>◉</i><i>✳</i></div><span>La transparence d'abord.<br/><b>Chaque étape compte.</b></span></div>
+      <section className="market-hero">
+        <div className="market-hero-copy">
+          <div className="market-eyebrow"><span className="market-pulse"/> PLATEFORME DE MICRO-TÂCHES</div>
+          <h1>Des petites tâches.<br/><span>Un vrai suivi.</span></h1>
+          <p>Découvrez des missions courtes, comprenez les règles avant de commencer et suivez chaque soumission depuis un seul espace.</p>
+          <div className="market-hero-actions">
+            <Link href="/tasks" className="market-primary">Explorer les missions <ArrowRight size={17}/></Link>
+            <Link href="/register" className="market-secondary">Rejoindre AdEarn</Link>
+          </div>
+          <div className="market-trust-row"><span><ShieldCheck size={15}/> Règles transparentes</span><span><BadgeCheck size={15}/> Partenaires vérifiés</span></div>
         </div>
-        <div className="hero-art">
-          <div className="art-image"><img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=80" alt="Espace de travail lumineux et moderne"/><div className="image-shade"/></div>
-          <div className="art-sticker sticker-top"><span>✳</span><div><b>Une expérience</b><small>pensée pour vous</small></div></div>
-          <div className="art-sticker sticker-bottom"><div className="sticker-icon"><Wallet size={18}/></div><div><small>APERÇU DU PORTEFEUILLE</small><b>— MGA <span>· APERÇU</span></b><small>Aucune récompense réelle pour le moment</small></div></div>
-          <div className="art-caption">01 / UNE PLATEFORME PLUS HUMAINE</div>
-          <div className="art-orbit">✳</div>
+        <div className="market-preview" aria-label="Aperçu de l'espace de travail AdEarn">
+          <div className="preview-window">
+            <div className="preview-head"><div className="preview-brand"><span><Zap size={13} fill="currentColor"/></span> AdEarn <small>ESPACE DE TRAVAIL</small></div><div className="preview-avatar">A</div></div>
+            <div className="preview-welcome"><div><small>VOTRE ESPACE</small><h2>Bonjour 👋</h2><p>Votre prochaine mission commence ici.</p></div><div className="preview-date">APERÇU</div></div>
+            <div className="preview-stats">
+              <div className="preview-stat"><span>Solde disponible</span><strong>— <small>MGA</small></strong><em><Wallet size={12}/> À confirmer</em></div>
+              <div className="preview-stat"><span>Soumissions</span><strong>—</strong><em><FileCheck2 size={12}/> Suivi personnel</em></div>
+            </div>
+            <div className="preview-section-head"><b>Explorer les missions</b><span>CATÉGORIES</span></div>
+            <div className="preview-task"><div className="preview-task-icon violet"><Headphones size={17}/></div><div><b>Audio & voix</b><small>Transcription · Écoute</small></div><ChevronRight size={16}/></div>
+            <div className="preview-task"><div className="preview-task-icon cyan"><ScanSearch size={17}/></div><div><b>Vérification</b><small>Contrôle de données</small></div><ChevronRight size={16}/></div>
+            <div className="preview-task"><div className="preview-task-icon orange"><MessageSquareText size={17}/></div><div><b>Sondages</b><small>Questionnaires</small></div><ChevronRight size={16}/></div>
+            <div className="preview-bottom"><span><span className="preview-dot"/> CATALOGUE EN PRÉPARATION</span><LockKeyhole size={13}/></div>
+          </div>
+          <div className="preview-float"><span><ShieldCheck size={17}/></span><div><b>Pas de fausses promesses</b><small>Les récompenses doivent être financées.</small></div></div>
+          <div className="preview-orb preview-orb-one"/><div className="preview-orb preview-orb-two"/>
         </div>
       </section>
 
-      <div className="ticker"><div>MOINS DE PROMESSES <span>✳</span> PLUS DE CLARTÉ <span>✳</span> VOTRE TEMPS COMPTE <span>✳</span> MOINS DE PROMESSES <span>✳</span> PLUS DE CLARTÉ <span>✳</span> VOTRE TEMPS COMPTE <span>✳</span></div></div>
+      <section className="market-strip">
+        <div><span className="strip-icon"><CheckCircle2 size={16}/></span><b>Consignes claires</b><small>Vous savez ce qu'on attend.</small></div>
+        <div><span className="strip-icon"><Clock3 size={16}/></span><b>Temps estimé</b><small>Pas de mauvaise surprise.</small></div>
+        <div><span className="strip-icon"><Wallet size={16}/></span><b>Suivi des gains</b><small>En attente ou confirmés.</small></div>
+        <div><span className="strip-icon"><ShieldCheck size={16}/></span><b>Validation contrôlée</b><small>Chaque étape est traçable.</small></div>
+      </section>
 
-      <section className="mission-section" id="missions">
-        <div className="section-top"><div><div className="eyebrow">01 — LE TERRAIN DE JEU</div><h2>Un monde de petites<br/><em>possibilités.</em></h2></div><div className="section-side"><p>Des formats variés, des consignes compréhensibles et aucune mauvaise surprise cachée dans les petites lignes.</p><Link href="/tasks" className="under-link">Voir le catalogue <ArrowUpRightIcon/></Link></div></div>
-        <div className="category-grid">
-          <Link href="/tasks" className="category-card category-large"><img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1300&q=80" alt="Équipe qui échange autour d'une table"/><div className="category-overlay"/><div className="category-meta"><span>01 / OPINION</span><span>🧠</span></div><div className="category-content"><small>DONNEZ VOTRE POINT DE VUE</small><h3>Sondages<br/>& études</h3><span className="category-arrow"><ArrowUpRightIcon/></span></div></Link>
-          <Link href="/tasks" className="category-card category-orange"><img src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=900&q=80" alt="Casque audio sur un bureau"/><div className="category-overlay"/><div className="category-meta"><span>02 / ÉCOUTE</span><span>🎧</span></div><div className="category-content"><small>ÉCOUTER ET CONTRIBUER</small><h3>Audio<br/>& voix</h3><span className="category-arrow"><ArrowUpRightIcon/></span></div></Link>
-          <Link href="/tasks" className="category-card category-blue"><img src="https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=900&q=80" alt="Espace de travail créatif"/><div className="category-overlay"/><div className="category-meta"><span>03 / ACTION</span><span>🧩</span></div><div className="category-content"><small>DES ACTIONS BIEN DÉFINIES</small><h3>Micro-<br/>missions</h3><span className="category-arrow"><ArrowUpRightIcon/></span></div></Link>
+      <section className="market-categories" id="categories">
+        <div className="market-section-heading"><div><div className="market-eyebrow">TROUVEZ VOTRE FORMAT</div><h2>Quel type de mission<br/><span>vous intéresse ?</span></h2></div><Link href="/tasks" className="market-text-link">Voir le catalogue <ArrowRight size={16}/></Link></div>
+        <div className="market-category-grid">
+          {categories.map((category) => { const Icon = category.icon; return <Link href="/tasks" className="market-category" key={category.name}><span className={`market-category-icon ${category.tone}`}><Icon size={21}/></span><span className="market-category-copy"><b>{category.name}</b><small>{category.detail}</small></span><span className="market-category-arrow"><ArrowRight size={16}/></span></Link>; })}
         </div>
-        <div className="catalog-note"><Sparkles size={16}/> Les catégories sont des aperçus : aucune mission rémunérée n'est encore ouverte.</div>
       </section>
 
-      <section className="manifesto" id="promise">
-        <div className="manifesto-inner"><div className="manifesto-stamp">✳<small>THE ADEARN<br/>STANDARD</small></div><div className="eyebrow light">02 — NOTRE ENGAGEMENT</div><h2>La confiance ne<br/>se réclame pas.<br/><em>Elle se construit.</em></h2><div className="manifesto-bottom"><p>Une récompense doit avoir une vraie source de financement, une règle de validation et des conditions de retrait connues. C'est la base. Pas une option.</p><div className="manifesto-seal"><ShieldCheck size={22}/><span>CLARTÉ<br/>AVANT TOUT</span></div></div></div>
-        <div className="manifesto-photo"><img src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1100&q=80" alt="Bureau calme baigné de lumière"/><div className="photo-tag">BUILT ON TRUST <span>✳</span></div></div>
+      <section className="market-missions" id="missions">
+        <div className="market-section-heading"><div><div className="market-eyebrow">LE MARCHÉ DES MISSIONS</div><h2>Des opportunités, <span>pas du hasard.</span></h2></div><div className="market-filter-label"><Filter size={15}/> Catalogue vérifié</div></div>
+        <div className="market-empty-state">
+          <div className="empty-state-symbol"><LayoutDashboard size={27}/><span><Sparkles size={14}/></span></div>
+          <div className="empty-state-copy"><div className="market-eyebrow">OUVERTURE PROGRESSIVE</div><h3>Les premières missions sont en préparation.</h3><p>Nous n'affichons pas de tâches fictives. Une mission apparaîtra ici uniquement lorsque son partenaire, ses critères de validation et son budget de récompense seront confirmés.</p><div className="empty-state-tags"><span><BadgeCheck size={13}/> Partenaire contrôlé</span><span><FileCheck2 size={13}/> Consignes publiées</span><span><Wallet size={13}/> Budget confirmé</span></div></div>
+          <Link href="/tasks" className="market-outline">Consulter le catalogue <ArrowRight size={15}/></Link>
+        </div>
       </section>
 
-      <section className="how-section" id="how"><div className="eyebrow">03 — EN TROIS TEMPS</div><div className="section-top how-heading"><h2>Simple comme<br/><em>ça devrait l'être.</em></h2><p>Pas de parcours compliqué. Vous gardez le contrôle à chaque étape.</p></div><div className="steps">{steps.map((step) => {const Icon = step.icon; return <article className="step" key={step.n}><div className="step-head"><span>{step.n}</span><Icon size={22}/></div><h3>{step.title}</h3><p>{step.text}</p></article>;})}</div></section>
+      <section className="market-how" id="how-it-works">
+        <div className="market-how-heading"><div className="market-eyebrow">COMMENT ÇA MARCHE</div><h2>Simple à utiliser.<br/><span>Clair à chaque étape.</span></h2><p>AdEarn sépare la réalisation d'une tâche, sa vérification et la confirmation d'une récompense.</p></div>
+        <div className="market-steps">{workflow.map((item) => {const Icon = item.icon; return <article className="market-step" key={item.number}><div className="market-step-top"><span>{item.number}</span><Icon size={20}/></div><h3>{item.title}</h3><p>{item.text}</p></article>;})}</div>
+      </section>
 
-      <section className="closing-cta"><div className="closing-spark">✳</div><div className="eyebrow">LE PROCHAIN CHAPITRE COMMENCE ICI</div><h2>Prêt à découvrir<br/>AdEarn ?</h2><p>Le catalogue est en préparation. Revenez découvrir les premières missions quand elles seront vérifiées.</p><Link href="/tasks" className="btn-dark">Explorer AdEarn <ArrowUpRightIcon/></Link></section>
+      <section className="market-bottom-cta"><div className="bottom-cta-icon"><Zap size={21} fill="currentColor"/></div><div><div className="market-eyebrow">BIENVENUE SUR ADEARN</div><h2>Votre espace de missions<br/>vous attend.</h2><p>Créez votre compte pour retrouver vos activités et suivre vos soumissions.</p></div><Link href="/register" className="market-primary">Créer mon compte <ArrowRight size={17}/></Link></section>
 
-      <footer className="footer-premium"><Link className="logo" href="/"><span className="logo-symbol"><Zap size={17} fill="currentColor"/></span>adearn<span className="logo-period">.</span></Link><span>© 2026 ADEARN — EN CONSTRUCTION</span><div><a href="#how">Fonctionnement</a><a href="#promise">Engagement</a><Link href="/login">Connexion</Link><Link href="/register">Créer un compte</Link><Link href="/help">Centre d’aide</Link></div></footer>
+      <footer className="market-footer"><Link href="/" className="market-brand"><span className="market-brand-mark"><Zap size={17} fill="currentColor"/></span><span>ad<span>earn</span><i>.</i></span></Link><small>© 2026 ADEARN · UNE PLATEFORME EN CONSTRUCTION</small><div><Link href="/help">Centre d'aide</Link><Link href="/login">Connexion</Link><Link href="/register">Inscription</Link></div></footer>
     </main>
   );
 }
-
-function ArrowUpRightIcon() { return <ArrowDownRight className="arrow-diagonal" size={17}/>; }
