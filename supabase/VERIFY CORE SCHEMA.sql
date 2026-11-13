@@ -133,3 +133,37 @@ where namespace.nspname = 'public'
 select pg_catalog.pg_get_functiondef(
   'public.admin_review_task_attempt(uuid,text,text)'::regprocedure
 ) as admin_review_function_definition;
+
+
+-- 14) Admin mission studio: only admins can create drafts and manage task status.
+select
+  pg_catalog.has_table_privilege('authenticated', 'public.tasks', 'INSERT') as authenticated_has_task_insert,
+  pg_catalog.has_table_privilege('authenticated', 'public.tasks', 'UPDATE') as authenticated_has_task_update;
+
+select tablename, policyname, cmd, roles
+from pg_catalog.pg_policies
+where schemaname = 'public'
+  and tablename = 'tasks'
+  and policyname in ('tasks_insert_admin_draft', 'tasks_update_admin_managed')
+order by policyname;
+
+-- 15) Audit trigger must exist and its helper must remain in the private schema.
+select
+  trigger_name,
+  event_manipulation,
+  action_timing,
+  action_statement
+from information_schema.triggers
+where event_object_schema = 'public'
+  and event_object_table = 'tasks'
+  and trigger_name = 'tasks_admin_audit';
+
+select
+  namespace.nspname as schema_name,
+  procedure.proname as function_name,
+  procedure.prosecdef as security_definer,
+  procedure.proconfig as function_settings
+from pg_catalog.pg_proc as procedure
+join pg_catalog.pg_namespace as namespace on namespace.oid = procedure.pronamespace
+where namespace.nspname = 'private'
+  and procedure.proname = 'log_admin_task_change';
