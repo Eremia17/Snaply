@@ -11,6 +11,7 @@ AdEarn is a responsive web platform prototype for transparent, partner-funded mi
 - Authenticated text-based task submissions with duplicate protection and a member submission-history page.
 - Wallet and dashboard read from an append-only ledger projection; no balances are fabricated.
 - Database-role-gated admin dashboard with audited approve/reject controls for pending submissions.
+- Read-only administrator audit timeline at `/admin/logs`, showing task edits and moderation decisions.
 - Atomic PostgreSQL review function locks each attempt, verifies the admin role and writes an audit-log entry. Review decisions do not create wallet credits.
 - Core PostgreSQL schema and read-only verification queries are in `supabase/`.
 
