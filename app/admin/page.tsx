@@ -43,7 +43,7 @@ export default async function AdminPage() {
   const memberIds = [...new Set(attempts.map(attempt => attempt.user_id))];
   const profileResult = memberIds.length
     ? await supabase.from("profiles").select("id, display_name").in("id", memberIds)
-    : { data: [] as { id: string; display_name: string }[] };
+    : { data: [] as { id: string; display_name: string }[], error: null };
   const names = new Map((profileResult.data ?? []).map(member => [member.id, member.display_name]));
   const hasError = Boolean(attemptsResult.error || membersResult.error || tasksResult.error || profileResult.error);
 
