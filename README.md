@@ -34,7 +34,7 @@ Do not credit users from browser events. Production rewards must be verified ser
 
 ## Supabase setup
 
-**Use a dedicated Supabase project for AdEarn. Do not reuse the Ticket Mada or Erëmia project.**
+**Use the existing Supabase project that has been repurposed for AdEarn.** Its current project reference is `ebkyueqhiqqkfejmziwl` in `eu-west-1`; the dashboard display name may still say `Ticket Mada`.
 
 1. Use the already-connected AdEarn project (ref `ebkyueqhiqqkfejmziwl`, region `eu-west-1`). Do not create another project.
 2. In the project dashboard, open **Connect** and copy the Project URL and **Publishable key**.
