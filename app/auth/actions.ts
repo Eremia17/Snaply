@@ -127,9 +127,13 @@ export async function updateDisplayName(formData: FormData) {
 
   if (claimsError || !claimsData?.claims?.sub) redirect("/login");
 
-  const { error } = await supabase.auth.updateUser({
-    data: { display_name: displayName },
-  });
+  const userId = claimsData.claims.sub;
+  if (typeof userId !== "string") redirect("/login");
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ display_name: displayName })
+    .eq("id", userId);
 
   if (error) redirect("/profile?error=profile-update");
   redirect("/profile?message=updated");
