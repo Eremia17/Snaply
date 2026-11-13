@@ -1,9 +1,13 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowUpRight, BadgeCheck, Bell, LockKeyhole, Mail, MapPin, Settings2, ShieldCheck, UserRound } from "lucide-react";
 import PortalShell from "@/components/portal-shell";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export default async function ProfilePage() {
+  if (!isSupabaseConfigured()) redirect("/login?error=setup");
+
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
