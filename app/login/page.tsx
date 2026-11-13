@@ -11,6 +11,7 @@ const errors: Record<string, string> = {
   invalid: "Vérifiez votre adresse e-mail et votre mot de passe.",
   credentials: "Adresse e-mail ou mot de passe incorrect.",
   confirmation: "Le lien de confirmation est invalide ou a expiré. Demandez un nouvel e-mail.",
+  auth: "Connectez-vous pour continuer.",
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
