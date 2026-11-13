@@ -26,7 +26,8 @@ order by tablename;
 - Tasks are read-only to visitors and members. Only trusted server-side administration can publish or edit tasks.
 - Provider-backed tasks are visible only when the provider is active and explicitly approved for incentivized tasks.
 - Members can submit one attempt per task and read only their own submissions.
-- Attempt review and status changes are server-side only.
+- Attempt review and status changes are performed by the `public.admin_review_task_attempt` database function. It checks `auth.uid()` against `profiles.role`, locks the attempt row, updates the review fields and writes an audit log in one transaction.
+- The review function can only be executed by authenticated sessions, rejects non-admin callers, and does not create wallet transactions. Approval means the submission is accepted, not that a reward has been funded or paid.
 - The financial ledger is append-only. Corrections are new reversal entries, never updates or deletes.
 - Wallet balances are computed from ledger entries; no demo funds are seeded.
 - Withdrawal records are read-only to members. Balance checks, requests, approvals and payout updates require a trusted server workflow.
@@ -38,3 +39,22 @@ order by tablename;
 This schema creates the data model and database access controls. It does **not** activate real paid missions, verify partner events, approve submissions, or send withdrawals. Those require trusted server endpoints, an authorized partner integration, idempotent event processing, operational review and a funded reward budget.
 
 The first release intentionally has no fake provider rows, fake tasks, sample transactions, or seeded wallet balances.
+
+## Admin account setup
+
+After creating and verifying your own account, grant the administrator role manually from the dedicated project's SQL Editor using the verified account email:
+
+```sql
+update public.profiles
+set role = 'admin'
+where id = (
+  select id from auth.users
+  where email = 'YOUR-VERIFIED-EMAIL'
+);
+```
+
+Never expose this role update in the application. Then sign out and sign back in before opening `/admin`.
+
+## Admin review workflow
+
+The admin page offers **Approve** and **Reject** actions for submitted attempts. Each decision is validated and committed atomically by the database function, with an audit-log entry. Repeated decisions are rejected. Approval does not issue a reward credit. Reward credits remain disabled until a real partner, verifiable completion signal and funded budget exist.
