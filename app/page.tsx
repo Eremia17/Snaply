@@ -18,7 +18,7 @@ export default function Home() {
       <header className="nav-wrap">
         <Link className="logo" href="/"><span className="logo-symbol"><Zap size={19} fill="currentColor"/></span>adearn<span className="logo-period">.</span></Link>
         <nav className="main-nav"><a href="#missions">Découvrir</a><a href="#how">Comment ça marche</a><a href="#promise">Notre promesse</a></nav>
-        <div className="nav-right"><span className="language"><Globe2 size={15}/> FR <ChevronDown size={13}/></span><Link className="nav-cta" href="/tasks">Explorer <ArrowUpRightIcon/></Link></div>
+        <div className="nav-right"><Link className="nav-login" href="/login">Connexion</Link><span className="language"><Globe2 size={15}/> FR <ChevronDown size={13}/></span><Link className="nav-cta" href="/tasks">Explorer <ArrowUpRightIcon/></Link></div>
       </header>
 
       <section className="hero-premium">
@@ -59,7 +59,7 @@ export default function Home() {
 
       <section className="closing-cta"><div className="closing-spark">✳</div><div className="eyebrow">LE PROCHAIN CHAPITRE COMMENCE ICI</div><h2>Prêt à découvrir<br/>AdEarn ?</h2><p>Le catalogue est en préparation. Revenez découvrir les premières missions quand elles seront vérifiées.</p><Link href="/tasks" className="btn-dark">Explorer AdEarn <ArrowUpRightIcon/></Link></section>
 
-      <footer className="footer-premium"><Link className="logo" href="/"><span className="logo-symbol"><Zap size={17} fill="currentColor"/></span>adearn<span className="logo-period">.</span></Link><span>© 2026 ADEARN — EN CONSTRUCTION</span><div><a href="#how">Fonctionnement</a><a href="#promise">Engagement</a><a href="mailto:hello@adearn.example">Contact</a></div></footer>
+      <footer className="footer-premium"><Link className="logo" href="/"><span className="logo-symbol"><Zap size={17} fill="currentColor"/></span>adearn<span className="logo-period">.</span></Link><span>© 2026 ADEARN — EN CONSTRUCTION</span><div><a href="#how">Fonctionnement</a><a href="#promise">Engagement</a><Link href="/login">Connexion</Link><Link href="/register">Créer un compte</Link><a href="mailto:hello@adearn.example">Contact</a></div></footer>
     </main>
   );
 }
