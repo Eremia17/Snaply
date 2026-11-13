@@ -1,4 +1,4 @@
--- Run this after applying AD EARN CORE SCHEMA.sql in the dedicated AdEarn project.
+-- Run this against the repurposed AdEarn Supabase project (ref: ebkyueqhiqqkfejmziwl).
 -- These queries are read-only and do not modify data.
 
 -- 1) Every AdEarn public table must have RLS enabled.
