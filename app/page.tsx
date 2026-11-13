@@ -32,7 +32,7 @@ export default function Home() {
         <div className="hero-art">
           <div className="art-image"><img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=80" alt="Espace de travail lumineux et moderne"/><div className="image-shade"/></div>
           <div className="art-sticker sticker-top"><span>✳</span><div><b>Une expérience</b><small>pensée pour vous</small></div></div>
-          <div className="art-sticker sticker-bottom"><div className="sticker-icon"><Wallet size={18}/></div><div><small>APERÇU DU PORTEFEUILLE</small><b>0,00 $ <span>· DÉMO</span></b><small>Aucun gain réel pour le moment</small></div></div>
+          <div className="art-sticker sticker-bottom"><div className="sticker-icon"><Wallet size={18}/></div><div><small>APERÇU DU PORTEFEUILLE</small><b>— MGA <span>· APERÇU</span></b><small>Aucune récompense réelle pour le moment</small></div></div>
           <div className="art-caption">01 / UNE PLATEFORME PLUS HUMAINE</div>
           <div className="art-orbit">✳</div>
         </div>
