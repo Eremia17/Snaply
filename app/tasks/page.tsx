@@ -1,19 +1,13 @@
 import Link from "next/link";
-import { ArrowLeft, ClipboardList, Clock3, ShieldCheck } from "lucide-react";
+import { ArrowDownRight, ArrowLeft, BadgeCheck, Clock3, Compass, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function TasksPage() {
   return (
-    <main className="tasks-page">
-      <header className="site-header"><Link className="brand" href="/"><span className="brand-mark">A</span><span>Ad<span>Earn</span></span></Link><Link className="button button-quiet" href="/"><ArrowLeft size={16}/> Retour à l'accueil</Link></header>
-      <section className="tasks-empty shell">
-        <div className="empty-icon"><ClipboardList size={34}/></div>
-        <div className="eyebrow">CENTRE DE MISSIONS</div>
-        <h1>Le catalogue se prépare.</h1>
-        <p className="empty-copy">Aucune mission rémunérée n'est disponible pour le moment. Nous publierons une offre uniquement lorsque son partenaire, ses critères de validation, son financement et sa récompense seront confirmés.</p>
-        <div className="empty-checks"><div><ShieldCheck size={18}/><span>Partenaire vérifié</span></div><div><Clock3 size={18}/><span>Conditions et délais affichés</span></div><div><ClipboardList size={18}/><span>Validation documentée</span></div></div>
-        <Link className="button button-primary" href="/">Retour au tableau de bord <ArrowLeft size={16}/></Link>
-      </section>
-      <footer className="site-footer shell"><span>© 2026 AdEarn</span><span>Transparence avant tout.</span></footer>
+    <main className="catalog-page">
+      <header className="nav-wrap"><Link className="logo" href="/"><span className="logo-symbol">✳</span>adearn<span className="logo-period">.</span></Link><Link href="/" className="back-link"><ArrowLeft size={16}/> Retour à l'accueil</Link></header>
+      <section className="catalog-hero"><div className="eyebrow">ADEARN / LE CATALOGUE</div><h1>Les bonnes missions<br/><em>prennent du temps.</em></h1><p>Nous préférons ouvrir avec des offres vérifiées plutôt que remplir cette page de missions fictives.</p><div className="catalog-status"><span className="status-orb"/> CATALOGUE EN PRÉPARATION</div></section>
+      <section className="empty-catalog"><div className="empty-art"><div className="empty-orbit orbit-a">✳</div><div className="empty-orbit orbit-b">✦</div><div className="empty-card"><Compass size={35}/><span>YOUR NEXT<br/>OPPORTUNITY</span><b>COMING SOON</b></div></div><div className="empty-copy"><div className="eyebrow">UNE PETITE PAUSE AVANT LE DÉPART</div><h2>On prépare quelque chose de <em>sérieux.</em></h2><p>Aucune mission rémunérée n'est disponible actuellement. Chaque future offre devra afficher son partenaire, ses critères de validation, sa récompense, son délai et ses conditions de retrait.</p><div className="empty-rules"><span><BadgeCheck size={17}/> Partenaire vérifié</span><span><Clock3 size={17}/> Délais affichés</span><span><ShieldCheck size={17}/> Récompenses confirmées</span></div><Link href="/" className="btn-dark">Retourner à l'accueil <ArrowDownRight size={17}/></Link></div></section>
+      <footer className="footer-premium"><Link className="logo" href="/"><span className="logo-symbol">✳</span>adearn<span className="logo-period">.</span></Link><span>© 2026 ADEARN — TRANSPARENCE AVANT TOUT</span><Link href="/">Accueil ↗</Link></footer>
     </main>
   );
 }
