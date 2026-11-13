@@ -167,3 +167,24 @@ from pg_catalog.pg_proc as procedure
 join pg_catalog.pg_namespace as namespace on namespace.oid = procedure.pronamespace
 where namespace.nspname = 'private'
   and procedure.proname = 'log_admin_task_change';
+
+
+-- 16) The review RPC must be SECURITY INVOKER, with writes restricted by RLS.
+select
+  procedure.proname,
+  procedure.prosecdef as is_security_definer,
+  procedure.proconfig
+from pg_catalog.pg_proc as procedure
+join pg_catalog.pg_namespace as namespace on namespace.oid = procedure.pronamespace
+where namespace.nspname = 'public'
+  and procedure.proname = 'admin_review_task_attempt';
+
+select
+  pg_catalog.has_column_privilege('authenticated', 'public.task_attempts', 'status', 'UPDATE') as admin_review_status_column_granted,
+  pg_catalog.has_table_privilege('authenticated', 'public.admin_logs', 'INSERT') as admin_log_insert_granted;
+
+select tablename, policyname, cmd, roles
+from pg_catalog.pg_policies
+where schemaname = 'public'
+  and policyname in ('attempts_update_admin', 'admin_logs_insert_admin')
+order by tablename, policyname;
