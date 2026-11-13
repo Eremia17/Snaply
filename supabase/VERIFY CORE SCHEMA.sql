@@ -62,3 +62,15 @@ join pg_catalog.pg_namespace as namespace on namespace.oid = view_class.relnames
 where namespace.nspname = 'public'
   and view_class.relname = 'wallet_balances'
   and view_class.relkind = 'v';
+
+-- 6) Client roles must not be able to insert financial ledger entries.
+select
+  pg_catalog.has_table_privilege('anon', 'public.transactions', 'INSERT') as anon_can_insert_ledger,
+  pg_catalog.has_table_privilege('authenticated', 'public.transactions', 'INSERT') as member_can_insert_ledger;
+
+-- 7) Members may submit only the three intended task-attempt columns.
+select
+  pg_catalog.has_column_privilege('authenticated', 'public.task_attempts', 'task_id', 'INSERT') as can_set_task_id,
+  pg_catalog.has_column_privilege('authenticated', 'public.task_attempts', 'user_id', 'INSERT') as can_set_user_id,
+  pg_catalog.has_column_privilege('authenticated', 'public.task_attempts', 'submission_data', 'INSERT') as can_set_submission,
+  pg_catalog.has_column_privilege('authenticated', 'public.task_attempts', 'status', 'INSERT') as can_set_review_status;
