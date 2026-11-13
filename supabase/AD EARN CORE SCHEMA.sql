@@ -413,6 +413,7 @@ as $$
 $$;
 
 revoke all on function private.is_admin() from public, anon;
+grant usage on schema private to authenticated;
 grant execute on function private.is_admin() to authenticated;
 
 drop policy if exists profiles_select_admin on public.profiles;
