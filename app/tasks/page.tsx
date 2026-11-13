@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDownRight, ArrowLeft, ArrowUpRight, BadgeCheck, Clock3, Compass, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowDownRight, ArrowLeft, ArrowUpRight, BadgeCheck, Clock3, Compass, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
