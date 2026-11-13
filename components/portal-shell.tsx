@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import { ArrowUpRight, Bell, CircleHelp, LayoutDashboard, LogOut, Wallet, UserRound, Zap } from "lucide-react";
+import { ArrowUpRight, Bell, CircleHelp, ClipboardList, LayoutDashboard, LogOut, Wallet, UserRound, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { signOut } from "@/app/auth/actions";
@@ -9,6 +9,7 @@ import { signOut } from "@/app/auth/actions";
 const links = [
   { href: "/dashboard", label: "Vue d'ensemble", icon: LayoutDashboard },
   { href: "/tasks", label: "Découvrir les missions", icon: Zap },
+  { href: "/submissions", label: "Mes participations", icon: ClipboardList },
   { href: "/wallet", label: "Mon portefeuille", icon: Wallet },
   { href: "/profile", label: "Mon profil", icon: UserRound },
 ];
@@ -35,7 +36,7 @@ export default async function PortalShell({ children, active }: { children: Reac
       </div>
     </aside>
     <div className="portal-main">
-      <header className="portal-topbar"><div><span className="portal-breadcrumb">ADEARN</span><span className="crumb-slash">/</span><b>{active==="/dashboard"?"TABLEAU DE BORD":active==="/wallet"?"PORTEFEUILLE":active==="/profile"?"PROFIL":"MISSIONS"}</b></div><div className="portal-top-actions"><span className="demo-chip">MISSIONS EN DÉMO</span><span className="portal-user-email">{email}</span><button className="icon-button" aria-label="Notifications"><Bell size={17}/></button><div className="user-avatar" aria-label="Compte connecté">{initial}</div></div></header>
+      <header className="portal-topbar"><div><span className="portal-breadcrumb">ADEARN</span><span className="crumb-slash">/</span><b>{active==="/dashboard"?"TABLEAU DE BORD":active==="/wallet"?"PORTEFEUILLE":active==="/profile"?"PROFIL":active==="/submissions"?"PARTICIPATIONS":"MISSIONS"}</b></div><div className="portal-top-actions"><span className="demo-chip">MISSIONS EN DÉMO</span><span className="portal-user-email">{email}</span><button className="icon-button" aria-label="Notifications"><Bell size={17}/></button><div className="user-avatar" aria-label="Compte connecté">{initial}</div></div></header>
       <main className="portal-content">{children}</main>
       <footer className="portal-footer"><span>© 2026 ADEARN</span><span>Compte sécurisé · Missions et portefeuille en démonstration</span><Link href="/">Site public ↗</Link></footer>
     </div>
