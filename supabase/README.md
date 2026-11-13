@@ -22,7 +22,7 @@ order by tablename;
 
 - `profiles.role` is server-managed. Editable Auth metadata is never used for authorization.
 - Visitors and members can only read published tasks. Administrators can create and edit drafts and pause/archive existing tasks through server actions protected again by database RLS. Publishing is deliberately disabled until a real approved partner and funded reward budget are verified.
-- Provider-backed tasks are visible only when the provider is active and explicitly approved for incentivized tasks.
+- Provider-backed tasks are visible only when the provider is active and explicitly approved for incentivized tasks. New providers start pending; activating one requires a verification URL and explicit authorization, with every change written to `admin_logs`.
 - Members can submit one attempt per task and read only their own submissions.
 - Attempt review and status changes are performed by the `public.admin_review_task_attempt` database function. It checks `auth.uid()` against `profiles.role`, locks the attempt row, updates the review fields and writes an audit log in one transaction.
 - The review function can only be executed by authenticated sessions, rejects non-admin callers, and does not create wallet transactions. Approval means the submission is accepted, not that a reward has been funded or paid.
