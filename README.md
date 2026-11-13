@@ -95,3 +95,8 @@ Render's free web services sleep after 15 minutes without incoming traffic and c
 4. Integrate partners only after confirming that incentivized tasks are explicitly allowed.
 5. Design withdrawals only after confirming a real, funded payout route and its fees/limits.
 6. Add automated RLS tests and complete a security/privacy review before launch.
+
+
+## Admin mission studio
+
+The administrator area includes a mission studio at `/admin/tasks`. It supports creating/editing drafts and pausing or archiving tasks. Publishing is intentionally disabled until a real partner, verified completion method, and funded reward budget are in place. Task changes are recorded in the database audit log.
