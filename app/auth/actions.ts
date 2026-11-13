@@ -186,3 +186,47 @@ export async function signOut() {
 
   redirect("/login?message=signed-out");
 }
+
+
+export async function reviewTaskAttempt(formData: FormData) {
+  const attemptId = readField(formData, "attemptId");
+  const decision = readField(formData, "decision");
+  const note = readField(formData, "note");
+
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(attemptId)) {
+    redirect("/admin?error=invalid");
+  }
+  if (decision !== "approved" && decision !== "rejected") {
+    redirect("/admin?error=invalid");
+  }
+  if (note.length > 2000) redirect("/admin?error=note");
+
+  if (!isSupabaseConfigured()) redirect("/login?error=setup");
+
+  const supabase = await createClient();
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
+
+  if (claimsError || typeof userId !== "string") redirect("/login");
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileError || profile?.role !== "admin") redirect("/dashboard?error=forbidden");
+
+  const { error } = await supabase.rpc("admin_review_task_attempt", {
+    p_attempt_id: attemptId,
+    p_decision: decision,
+    p_note: note || null,
+  });
+
+  if (error) {
+    const code = error.code === "55000" ? "already-reviewed" : "review";
+    redirect(`/admin?error=${code}`);
+  }
+
+  redirect(`/admin?reviewed=${decision}`);
+}
