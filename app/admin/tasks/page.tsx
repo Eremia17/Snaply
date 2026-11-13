@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 type Task = {
-  id: string; slug: string; title: string; description: string; category: "survey" | "audio" | "microtask" | "video";
+  id: string; slug: string; provider_id: string | null; title: string; description: string; category: "survey" | "audio" | "microtask" | "video";
   reward_amount: number | string; currency_code: string; estimated_minutes: number | null;
   instructions: string[] | null; status: "draft" | "published" | "paused" | "archived"; created_at: string;
 };
@@ -36,7 +36,7 @@ export default async function AdminTasksPage({ searchParams }: Props) {
   if (profile?.role !== "admin") redirect("/dashboard?error=forbidden");
 
   const [tasksResult, providersResult] = await Promise.all([supabase.from("tasks")
-    .select("id, slug, title, description, category, reward_amount, currency_code, estimated_minutes, instructions, status, created_at")
+    .select("id, slug, provider_id, title, description, category, reward_amount, currency_code, estimated_minutes, instructions, status, created_at")
     .order("created_at", { ascending: false }).limit(100), supabase.from("ad_providers").select("id, name").eq("status", "active").eq("incentivized_tasks_allowed", true).order("name")]);
   const { data, error } = tasksResult;
   const tasks = (data ?? []) as Task[];
@@ -82,7 +82,7 @@ export default async function AdminTasksPage({ searchParams }: Props) {
               <form action={saveAdminTask} className="admin-task-form" style={{ marginTop: 14 }}>
                 <input type="hidden" name="taskId" value={task.id}/>
                 <label>Titre<input name="title" defaultValue={task.title} minLength={5} maxLength={140} required/></label>
-                <label>Partenaire autorisé<select name="providerId" defaultValue=""><option value="">Sans partenaire lié</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</select></label>
+                <label>Partenaire autorisé<select name="providerId" defaultValue={task.provider_id ?? ""}><option value="">Sans partenaire lié</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</select></label>
                 <label>Catégorie<select name="category" defaultValue={task.category}><option value="survey">Sondage</option><option value="audio">Audio</option><option value="microtask">Micro-tâche</option><option value="video">Vidéo</option></select></label>
                 <label>Description<textarea className="task-form-description" name="description" defaultValue={task.description} minLength={10} maxLength={6000} required/></label>
                 <div className="admin-task-form-grid">
