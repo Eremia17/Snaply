@@ -29,7 +29,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <p>Retrouvez votre espace, vos missions et votre suivi en toute clarté.</p>
         </div>
         <div className="auth-visual-bottom">✳ <span>LA TRANSPARENCE AVANT TOUT</span></div>
-        <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=75" alt="Espace de travail lumineux"/>
       </div>
       <div className="auth-panel">
         <Link href="/" className="auth-back"><ArrowLeft size={15}/> Retour au site</Link>
