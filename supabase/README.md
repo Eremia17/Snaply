@@ -29,7 +29,7 @@ order by tablename;
 - The financial ledger is append-only. Corrections are new reversal entries, never updates or deletes.
 - Wallet balances are computed from ledger entries; no demo funds are seeded.
 - Withdrawal records are read-only to members. Balance checks, requests, approvals and payout updates require a trusted server workflow.
-- `admin_logs` is readable only by database-authorized administrators. Submission reviews and task create/update operations are recorded by database workflows.
+- `admin_logs` is readable only by database-authorized administrators. Submission reviews and task create/update operations are recorded. The admin audit page at `/admin/logs` exposes the latest 100 entries read-only. by database workflows.
 - Never put a Supabase secret/service-role key in a browser bundle, `NEXT_PUBLIC_*` variable, or Git repository.
 
 ## Important implementation boundary
