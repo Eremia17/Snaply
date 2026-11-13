@@ -102,3 +102,34 @@ select
   pg_catalog.has_column_privilege(
     'authenticated', 'public.profiles', 'role', 'UPDATE'
   ) as authenticated_can_change_role;
+
+
+-- 11) Admin review RPC: only authenticated sessions may invoke it.
+select
+  pg_catalog.has_function_privilege(
+    'authenticated',
+    'public.admin_review_task_attempt(uuid,text,text)',
+    'EXECUTE'
+  ) as authenticated_can_review,
+  pg_catalog.has_function_privilege(
+    'anon',
+    'public.admin_review_task_attempt(uuid,text,text)',
+    'EXECUTE'
+  ) as anonymous_can_review;
+
+-- 12) The review function must pin its search_path.
+select
+  procedure.proname,
+  procedure.proconfig
+from pg_catalog.pg_proc as procedure
+join pg_catalog.pg_namespace as namespace
+  on namespace.oid = procedure.pronamespace
+where namespace.nspname = 'public'
+  and procedure.proname = 'admin_review_task_attempt';
+
+-- 13) Review RPC must never write to the financial ledger.
+-- Inspect the function definition and confirm it updates task_attempts
+-- and inserts admin_logs only. It must not insert into transactions.
+select pg_catalog.pg_get_functiondef(
+  'public.admin_review_task_attempt(uuid,text,text)'::regprocedure
+) as admin_review_function_definition;
