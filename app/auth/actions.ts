@@ -339,11 +339,9 @@ export async function updateAdminProvider(formData: FormData) {
   const providerId = readField(formData, "providerId");
   const status = readField(formData, "status");
   const verificationUrl = readField(formData, "verificationUrl");
-  const adminNotes = readField(formData, "adminNotes");
   const authorize = readField(formData, "authorizeIncentivized") === "yes";
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(providerId) ||
       !["pending", "active", "paused", "disabled"].includes(status) ||
-      adminNotes.length > 2000 ||
       (verificationUrl && !/^https:\/\/[a-z0-9.-]+(?:\:[0-9]+)?(?:\/[^\s]*)?$/i.test(verificationUrl)) ||
       (status === "active" && (!authorize || !verificationUrl))) {
     redirect("/admin/providers?error=invalid");
@@ -351,7 +349,6 @@ export async function updateAdminProvider(formData: FormData) {
   const { data, error } = await supabase.from("ad_providers").update({
     status,
     verification_url: verificationUrl || null,
-    admin_notes: adminNotes || null,
     incentivized_tasks_allowed: status === "active" && authorize,
   }).eq("id", providerId).select("id").maybeSingle();
   if (error || !data) redirect("/admin/providers?error=save");
