@@ -635,8 +635,7 @@ comment on function public.admin_review_task_attempt(uuid, text, text) is
 -- incentivized tasks until an admin records a verification source.
 alter table public.ad_providers
   add column if not exists verification_url text
-    check (verification_url is null or verification_url ~ '^https://'),
-;
+    check (verification_url is null or verification_url ~ '^https://');
 
 grant insert, update on public.ad_providers to authenticated;
 
