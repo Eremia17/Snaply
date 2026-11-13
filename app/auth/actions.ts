@@ -139,6 +139,45 @@ export async function updateDisplayName(formData: FormData) {
   redirect("/profile?message=updated");
 }
 
+
+export async function submitTask(formData: FormData) {
+  const taskId = readField(formData, "taskId");
+  const response = readField(formData, "response");
+
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId)) {
+    redirect("/tasks");
+  }
+
+  if (response.length < 3 || response.length > 5000) {
+    redirect(`/tasks/${taskId}?error=response`);
+  }
+
+  if (!isSupabaseConfigured()) redirect("/login?error=setup");
+
+  const supabase = await createClient();
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
+
+  if (claimsError || typeof userId !== "string") {
+    redirect("/login?error=auth");
+  }
+
+  const { error } = await supabase.from("task_attempts").insert({
+    task_id: taskId,
+    user_id: userId,
+    submission_data: { response },
+  });
+
+  if (error?.code === "23505") {
+    redirect(`/tasks/${taskId}?error=duplicate`);
+  }
+  if (error) {
+    redirect(`/tasks/${taskId}?error=closed`);
+  }
+
+  redirect(`/tasks/${taskId}?submitted=1`);
+}
+
 export async function signOut() {
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
