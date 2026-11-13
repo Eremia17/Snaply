@@ -113,6 +113,28 @@ export async function updatePassword(formData: FormData) {
   redirect("/login?message=password-updated");
 }
 
+export async function updateDisplayName(formData: FormData) {
+  const displayName = readField(formData, "displayName");
+
+  if (displayName.length < 2 || displayName.length > 60) {
+    redirect("/profile?error=display-name");
+  }
+
+  if (!isSupabaseConfigured()) redirect("/login?error=setup");
+
+  const supabase = await createClient();
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+
+  if (claimsError || !claimsData?.claims?.sub) redirect("/login");
+
+  const { error } = await supabase.auth.updateUser({
+    data: { display_name: displayName },
+  });
+
+  if (error) redirect("/profile?error=profile-update");
+  redirect("/profile?message=updated");
+}
+
 export async function signOut() {
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
