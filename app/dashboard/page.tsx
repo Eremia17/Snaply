@@ -34,10 +34,10 @@ export default async function DashboardPage() {
 
   const [profileResult, balancesResult, approvedResult, pendingResult, recentResult] = await Promise.all([
     supabase.from("profiles").select("display_name").eq("id", userId).maybeSingle(),
-    supabase.from("wallet_balances").select("currency_code, balance"),
-    supabase.from("task_attempts").select("id", { count: "exact", head: true }).eq("status", "approved"),
-    supabase.from("task_attempts").select("id", { count: "exact", head: true }).in("status", ["submitted", "under_review"]),
-    supabase.from("task_attempts").select("id, status, submitted_at").order("submitted_at", { ascending: false }).limit(4),
+    supabase.from("wallet_balances").select("currency_code, balance").eq("user_id", userId),
+    supabase.from("task_attempts").select("id", { count: "exact", head: true }).eq("status", "approved").eq("user_id", userId),
+    supabase.from("task_attempts").select("id", { count: "exact", head: true }).in("status", ["submitted", "under_review"]).eq("user_id", userId),
+    supabase.from("task_attempts").select("id, status, submitted_at").eq("user_id", userId).order("submitted_at", { ascending: false }).limit(4),
   ]);
 
   const displayName = profileResult.data?.display_name || "explorateur";
