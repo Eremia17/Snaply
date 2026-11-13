@@ -10,6 +10,7 @@ AdEarn is a responsive web platform prototype for transparent, partner-funded mi
 - Supabase-backed mission catalogue with search/category filters and mission detail pages.
 - Authenticated text-based task submissions with duplicate protection and a member submission-history page.
 - Wallet and dashboard read from an append-only ledger projection; no balances are fabricated.
+- Database-role-gated, read-only admin dashboard for reviewing pending submissions and viewing account/task totals.
 - Core PostgreSQL schema and read-only verification queries are in `supabase/`.
 
 ## Not live yet
@@ -48,7 +49,8 @@ Do not credit users from browser events. Production rewards must be verified ser
    - **Reset password**: `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`
 6. Open the dedicated project's SQL Editor and review/run `supabase/AD EARN CORE SCHEMA.sql`.
 7. Run `supabase/VERIFY CORE SCHEMA.sql` and review the RLS policies and grants.
-8. Add the Supabase URL and publishable key to the deployment environment.
+8. To grant your own account administrator access, run this manually in the dedicated project's SQL Editor after replacing the email with your verified account email: `update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'YOUR-VERIFIED-EMAIL');`. Never add a public role-editing form or let users update this column.
+9. Add the Supabase URL and publishable key to the deployment environment.
 
 The callback validates the token with Supabase, stores the session in secure cookies, and sends recovery requests to the password-update screen.
 
@@ -87,7 +89,7 @@ Render's free web services sleep after 15 minutes without incoming traffic and c
 ## Next engineering steps
 
 1. Install and verify the schema on a dedicated AdEarn Supabase project.
-2. Add a secure server-side review workflow for task submissions and idempotent reward credits.
+2. Add a secure server-side review workflow for task submissions and idempotent reward credits. The current admin screen is intentionally read-only.
 3. Add file uploads only after private Storage buckets and access policies are tested.
 4. Integrate partners only after confirming that incentivized tasks are explicitly allowed.
 5. Design withdrawals only after confirming a real, funded payout route and its fees/limits.
