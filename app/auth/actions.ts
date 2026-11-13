@@ -274,6 +274,12 @@ export async function saveAdminTask(formData: FormData) {
   const { supabase, userId } = await requireAdminSession();
   const taskId = readField(formData, "taskId");
   const task = parseAdminTask(formData);
+  if (task.provider_id) {
+    const { data: provider, error: providerError } = await supabase.from("ad_providers")
+      .select("id").eq("id", task.provider_id).eq("status", "active")
+      .eq("incentivized_tasks_allowed", true).maybeSingle();
+    if (providerError || !provider) redirect("/admin/tasks?error=invalid");
+  }
   const slugBase = task.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 90) || "mission";
   if (taskId) {
