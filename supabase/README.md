@@ -1,16 +1,14 @@
 # AdEarn database setup
 
-This folder contains the proposed core schema for a **separate AdEarn Supabase project**.
+This folder contains the AdEarn core schema installed in Supabase project `ebkyueqhiqqkfejmziwl` (region `eu-west-1`). The project was repurposed from Ticket Mada; its dashboard display name may still show the old name.
 
 ## Apply it safely
 
-1. Create a dedicated Supabase project for AdEarn. Do not use the Supabase project for Ticket Mada or Erëmia.
-2. Open that AdEarn project's SQL Editor.
-3. Review and run `AD EARN CORE SCHEMA.sql`.
-4. Confirm these tables exist: `profiles`, `wallets`, `ad_providers`, `tasks`, `task_attempts`, `transactions`, `withdrawals`, and `admin_logs`.
-5. Run the read-only checks in `VERIFY CORE SCHEMA.sql` and review RLS, grants, triggers and the wallet view.
-6. Register a test account through AdEarn after its environment variables are configured. Confirm that the Auth trigger creates one profile and one empty wallet.
-7. Verify RLS is enabled on every table with this query:
+1. The schema has already been applied directly to the repurposed project. Do not create a second project.
+2. Open the AdEarn project's SQL Editor and run `VERIFY CORE SCHEMA.sql`.
+3. Confirm these tables exist: `profiles`, `wallets`, `ad_providers`, `tasks`, `task_attempts`, `transactions`, `withdrawals`, and `admin_logs`.
+4. Register your account after Render environment variables and Auth redirect URLs are configured. Confirm that the Auth trigger creates one profile and one empty wallet.
+5. Verify RLS is enabled on every table with this query:
 
 ```sql
 select schemaname, tablename, rowsecurity
