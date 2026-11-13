@@ -19,6 +19,8 @@ const actionLabels: Record<string, string> = {
   task_updated: "Mission modifiée",
   task_attempt_approved: "Participation approuvée",
   task_attempt_rejected: "Participation refusée",
+  provider_created_pending: "Partenaire ajouté en attente",
+  provider_updated: "Dossier partenaire modifié",
 };
 
 function describeDetails(details: Record<string, unknown>) {
