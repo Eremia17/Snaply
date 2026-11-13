@@ -254,7 +254,7 @@ function parseAdminTask(formData: FormData) {
   const estimatedRaw = readField(formData, "estimatedMinutes");
   const estimatedMinutes = estimatedRaw ? Number(estimatedRaw) : null;
   const instructions = readRawField(formData, "instructions")
-    .split("\\n").map(line => line.trim()).filter(Boolean);
+    .split(/\r?\n/).map(line => line.trim()).filter(Boolean);
   const validCategory = ["survey", "audio", "microtask", "video"].includes(category);
   if (title.length < 5 || title.length > 140 ||
       description.length < 10 || description.length > 6000 ||
@@ -272,7 +272,7 @@ export async function saveAdminTask(formData: FormData) {
   const { supabase, userId } = await requireAdminSession();
   const taskId = readField(formData, "taskId");
   const task = parseAdminTask(formData);
-  const slugBase = task.title.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
+  const slugBase = task.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 90) || "mission";
   if (taskId) {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId)) {
