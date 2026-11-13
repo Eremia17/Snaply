@@ -43,19 +43,22 @@ export default async function DashboardPage() {
   const displayName = profileResult.data?.display_name || "explorateur";
   const balances = (balancesResult.data ?? []) as BalanceRow[];
   const recent = (recentResult.data ?? []) as AttemptRow[];
-  const balanceLabel = balances.length === 0
-    ? "0"
-    : balances.length === 1
-      ? money(balances[0].balance, balances[0].currency_code)
-      : "Plusieurs devises";
+  const dataError = Boolean(profileResult.error || balancesResult.error || approvedResult.error || pendingResult.error || recentResult.error);
+  const balanceLabel = dataError
+    ? "Indisponible"
+    : balances.length === 0
+      ? "0"
+      : balances.length === 1
+        ? money(balances[0].balance, balances[0].currency_code)
+        : "Plusieurs devises";
 
   return <PortalShell active="/dashboard">
     <section className="welcome-row"><div><div className="eyebrow">VOTRE ESPACE ADEARN</div><h1>Bonjour, <em>{displayName}.</em> ✳</h1><p>Voici votre activité réelle : les compteurs ne bougent qu'après enregistrement en base.</p></div><Link href="/tasks" className="portal-primary">Explorer les missions <ArrowUpRight size={16}/></Link></section>
-    <div className="demo-alert"><Sparkles size={17}/><span><b>Transparence activée.</b> Les missions rémunérées et les retraits restent désactivés tant que les partenaires et les paiements ne sont pas opérationnels.</span></div>
+    <div className="demo-alert"><Sparkles size={17}/><span><b>{dataError ? "Base de données non prête." : "Transparence activée."}</b> {dataError ? "Les statistiques seront disponibles après installation du schéma AdEarn et connexion de la base." : "Les missions rémunérées et les retraits restent désactivés tant que les partenaires et les paiements ne sont pas opérationnels."}</span></div>
     <section className="stat-grid">
       <article className="stat-card stat-highlight"><div className="stat-head"><span>RÉCOMPENSES CONFIRMÉES</span><Wallet size={17}/></div><strong>{balanceLabel}</strong><Link href="/wallet" className="stat-foot">Voir le portefeuille ↗</Link><div className="stat-watermark">✳</div></article>
-      <article className="stat-card"><div className="stat-head"><span>MISSIONS VALIDÉES</span><BadgeCheck size={17}/></div><strong>{approvedResult.count ?? 0}</strong><span className="stat-foot">Participations approuvées</span></article>
-      <article className="stat-card"><div className="stat-head"><span>EN ATTENTE</span><Clock3 size={17}/></div><strong>{pendingResult.count ?? 0}</strong><span className="stat-foot">À vérifier côté AdEarn</span></article>
+      <article className="stat-card"><div className="stat-head"><span>MISSIONS VALIDÉES</span><BadgeCheck size={17}/></div><strong>{dataError ? "—" : approvedResult.count ?? 0}</strong><span className="stat-foot">Participations approuvées</span></article>
+      <article className="stat-card"><div className="stat-head"><span>EN ATTENTE</span><Clock3 size={17}/></div><strong>{dataError ? "—" : pendingResult.count ?? 0}</strong><span className="stat-foot">À vérifier côté AdEarn</span></article>
     </section>
     <div className="dashboard-columns">
       <section className="panel-card"><div className="panel-heading"><div><div className="eyebrow">À DÉCOUVRIR</div><h2>Vos catégories</h2></div><Link href="/tasks">Tout voir <ArrowUpRight size={14}/></Link></div>
