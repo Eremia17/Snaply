@@ -44,6 +44,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <div className="auth-input"><Mail size={17}/><input id="email" name="email" type="email" placeholder="vous@exemple.com" autoComplete="email" required/></div>
             <label htmlFor="password">Mot de passe</label>
             <div className="auth-input"><LockKeyhole size={17}/><input id="password" name="password" type="password" placeholder="Votre mot de passe" autoComplete="current-password" required/></div>
+            <Link href="/forgot-password" className="auth-forgot">Mot de passe oublié ?</Link>
             <button type="submit" className="auth-submit">Se connecter <ArrowUpRight size={16}/></button>
           </form>
           <div className="auth-switch">Vous n'avez pas encore de compte ? <Link href="/register">Créer un compte</Link></div>
