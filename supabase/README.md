@@ -23,7 +23,7 @@ order by tablename;
 ## Security model
 
 - `profiles.role` is server-managed. Editable Auth metadata is never used for authorization.
-- Tasks are read-only to visitors and members. Only trusted server-side administration can publish or edit tasks.
+- Visitors and members can only read published tasks. Administrators can create and edit drafts and pause/archive existing tasks through server actions protected again by database RLS. Publishing is deliberately disabled until a real approved partner and funded reward budget are verified.
 - Provider-backed tasks are visible only when the provider is active and explicitly approved for incentivized tasks.
 - Members can submit one attempt per task and read only their own submissions.
 - Attempt review and status changes are performed by the `public.admin_review_task_attempt` database function. It checks `auth.uid()` against `profiles.role`, locks the attempt row, updates the review fields and writes an audit log in one transaction.
@@ -31,7 +31,7 @@ order by tablename;
 - The financial ledger is append-only. Corrections are new reversal entries, never updates or deletes.
 - Wallet balances are computed from ledger entries; no demo funds are seeded.
 - Withdrawal records are read-only to members. Balance checks, requests, approvals and payout updates require a trusted server workflow.
-- `admin_logs` is private to trusted server operations.
+- `admin_logs` is readable only by database-authorized administrators. Submission reviews and task create/update operations are recorded by database workflows.
 - Never put a Supabase secret/service-role key in a browser bundle, `NEXT_PUBLIC_*` variable, or Git repository.
 
 ## Important implementation boundary
@@ -58,3 +58,11 @@ Never expose this role update in the application. Then sign out and sign back in
 ## Admin review workflow
 
 The admin page offers **Approve** and **Reject** actions for submitted attempts. Each decision is validated and committed atomically by the database function, with an audit-log entry. Repeated decisions are rejected. Approval does not issue a reward credit. Reward credits remain disabled until a real partner, verifiable completion signal and funded budget exist.
+
+## Admin mission studio
+
+The route `/admin/tasks` allows an administrator to create and edit draft missions, pause a mission, or archive it. Draft creation is restricted by an RLS policy that checks the database-managed administrator role. A private audit trigger records task creation and changes in `admin_logs`.
+
+There is intentionally no Publish button. The reward amount and currency on a draft are planning metadata only; they are not a payable balance or a promise of payment. Publishing must remain disabled until an actual incentivized-task partner is approved, its terms are verified, and a reward budget and completion-verification workflow exist.
+
+After updating the schema, run the additional checks 14 and 15 in `VERIFY CORE SCHEMA.sql`.
