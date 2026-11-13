@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowDownRight, ArrowLeft, ArrowUpRight, BadgeCheck, Clock3, Compass, ShieldCheck } from "lucide-react";
+import { ArrowDownRight, ArrowLeft, BadgeCheck, Clock3, Compass, ShieldCheck } from "lucide-react";
+import TaskCatalogue from "@/components/task-catalogue";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 
@@ -14,22 +15,6 @@ type Task = {
   estimated_minutes: number | null;
   starts_at: string | null;
 };
-
-const categoryLabels: Record<Task["category"], string> = {
-  survey: "Sondage & étude",
-  audio: "Audio & voix",
-  microtask: "Micro-mission",
-  video: "Vidéo sponsorisée",
-};
-
-function rewardLabel(amount: number | string, currency: string) {
-  const value = Number(amount);
-  try {
-    return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(value);
-  } catch {
-    return `${value.toLocaleString("fr-FR")} ${currency}`;
-  }
-}
 
 export default async function TasksPage() {
   let tasks: Task[] = [];
@@ -65,17 +50,7 @@ export default async function TasksPage() {
       {tasks.length > 0 ? (
         <section className="live-task-section">
           <div className="live-task-heading"><div><div className="eyebrow">OFFRES PUBLIÉES</div><h2>À vous de jouer<span>.</span></h2></div><span>{tasks.length} offre{tasks.length > 1 ? "s" : ""}</span></div>
-          <div className="live-task-grid">
-            {tasks.map(task => (
-              <article className="live-task-card" key={task.id}>
-                <div className="live-task-card-top"><span className={`task-category category-${task.category}`}>{categoryLabels[task.category]}</span><span className="task-live-dot">{task.starts_at && new Date(task.starts_at).getTime() > Date.now() ? "À VENIR" : "DISPONIBLE"}</span></div>
-                <h3>{task.title}</h3>
-                <p>{task.description}</p>
-                <div className="live-task-meta"><span><Clock3 size={14}/>{task.estimated_minutes ? `${task.estimated_minutes} min` : "Durée variable"}</span><strong>{rewardLabel(task.reward_amount, task.currency_code)}</strong></div>
-                <Link href={`/tasks/${task.id}`} className="live-task-link">Voir les détails <ArrowUpRight size={15}/></Link>
-              </article>
-            ))}
-          </div>
+          <TaskCatalogue tasks={tasks}/>
         </section>
       ) : (
         <section className="empty-catalog">
