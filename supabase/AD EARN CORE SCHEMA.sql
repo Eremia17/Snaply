@@ -68,9 +68,6 @@ create trigger profiles_set_updated_at
 before update on public.profiles
 for each row execute function private.set_updated_at();
 
-drop trigger if exists providers_set_updated_at on public.ad_providers;
--- Created after ad_providers below; trigger is installed later in this script.
-
 drop trigger if exists on_auth_user_created_adearn on auth.users;
 create trigger on_auth_user_created_adearn
 after insert on auth.users
