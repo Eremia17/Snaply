@@ -308,3 +308,44 @@ export async function changeAdminTaskStatus(formData: FormData) {
   if (error || !data) redirect("/admin/tasks?error=status");
   redirect("/admin/tasks?saved=status");
 }
+
+
+export async function createAdminProvider(formData: FormData) {
+  const { supabase } = await requireAdminSession();
+  const name = readField(formData, "name");
+  const websiteRaw = readField(formData, "websiteUrl");
+  const websiteUrl = websiteRaw || null;
+  if (name.length < 2 || name.length > 120 ||
+      (websiteUrl !== null && !/^https:\/\/[a-z0-9.-]+(?:\:[0-9]+)?(?:\/[^\s]*)?$/i.test(websiteUrl))) {
+    redirect("/admin/providers?error=invalid");
+  }
+  const { error } = await supabase.from("ad_providers").insert({
+    name, website_url: websiteUrl, status: "pending", incentivized_tasks_allowed: false,
+  });
+  if (error) redirect("/admin/providers?error=save");
+  redirect("/admin/providers?saved=created");
+}
+
+export async function updateAdminProvider(formData: FormData) {
+  const { supabase } = await requireAdminSession();
+  const providerId = readField(formData, "providerId");
+  const status = readField(formData, "status");
+  const verificationUrl = readField(formData, "verificationUrl");
+  const adminNotes = readField(formData, "adminNotes");
+  const authorize = readField(formData, "authorizeIncentivized") === "yes";
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(providerId) ||
+      !["pending", "active", "paused", "disabled"].includes(status) ||
+      adminNotes.length > 2000 ||
+      (verificationUrl && !/^https:\/\/[a-z0-9.-]+(?:\:[0-9]+)?(?:\/[^\s]*)?$/i.test(verificationUrl)) ||
+      (status === "active" && (!authorize || !verificationUrl))) {
+    redirect("/admin/providers?error=invalid");
+  }
+  const { data, error } = await supabase.from("ad_providers").update({
+    status,
+    verification_url: verificationUrl || null,
+    admin_notes: adminNotes || null,
+    incentivized_tasks_allowed: status === "active" && authorize,
+  }).eq("id", providerId).select("id").maybeSingle();
+  if (error || !data) redirect("/admin/providers?error=save");
+  redirect("/admin/providers?saved=updated");
+}
