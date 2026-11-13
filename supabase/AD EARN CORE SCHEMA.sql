@@ -492,7 +492,7 @@ begin
     raise exception 'Administrator access required.' using errcode = '42501';
   end if;
 
-  if p_decision not in ('approved', 'rejected') then
+  if p_decision is null or p_decision not in ('approved', 'rejected') then
     raise exception 'Invalid review decision.' using errcode = '22023';
   end if;
 
