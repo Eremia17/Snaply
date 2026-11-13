@@ -636,8 +636,7 @@ comment on function public.admin_review_task_attempt(uuid, text, text) is
 alter table public.ad_providers
   add column if not exists verification_url text
     check (verification_url is null or verification_url ~ '^https://'),
-  add column if not exists admin_notes text
-    check (admin_notes is null or char_length(admin_notes) <= 2000);
+;
 
 grant insert, update on public.ad_providers to authenticated;
 
