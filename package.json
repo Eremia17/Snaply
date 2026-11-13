@@ -1,12 +1,23 @@
 {
-  "name": "ticket-mada",
-  "private": true,
+  "name": "adearn",
   "version": "0.1.0",
-  "workspaces": ["apps/mobile"],
+  "private": true,
   "scripts": {
-    "start": "npm --workspace apps/mobile run start",
-    "android": "npm --workspace apps/mobile run android",
-    "web": "npm --workspace apps/mobile run web",
-    "typecheck": "npm --workspace apps/mobile run typecheck"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "lucide-react": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest"
   }
 }

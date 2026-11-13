@@ -1,37 +1,49 @@
-# Ticket Mada 🇲🇬
+# AdEarn
 
-Plateforme de découverte et de billetterie événementielle pensée d'abord pour Madagascar.
+AdEarn is a responsive web platform prototype for transparent, partner-funded microtasks.
 
-## Objectif
+## Current status
 
-- Application Android/iOS avec Expo + React Native + TypeScript.
-- Interface en français et en malgache.
-- Événements, organisateurs, commandes et billets numériques.
-- QR code unique par billet ; validation côté serveur avant l'entrée.
-- Paiements locaux à intégrer uniquement après vérification contractuelle des prestataires et de leurs API.
+This first commit is a frontend foundation and visual prototype only:
+- No real user accounts yet
+- No real money or wallet balance
+- No ad network integration
+- No payout processing
+- Demo task cards are illustrative and are not paid offers
 
-## Structure
+Never credit a user based only on a browser event or a client-side value. Production rewards must be verified server-side against a partner's documented callback or API, with idempotency, audit logs, and a funded reward budget.
 
-- `apps/mobile` : application Expo (SDK 57, compatible avec le flux Expo Go prévu pour le développement sur téléphone).
-- `apps/web` : espace réservé au futur site public/organisateur.
-- `supabase/migrations` : schéma SQL versionné.
+## Stack
 
-## Démarrage Android avec Expo Go
+- Next.js App Router
+- React + TypeScript
+- CSS (no heavy UI framework)
+- Supabase will be added after the interface and data model are reviewed
 
-1. Installer Node.js sur un ordinateur ou dans un environnement compatible.
-2. À la racine : `npm install`.
-3. Lancer : `npm run start`.
-4. Scanner le QR affiché avec Expo Go. Le téléphone et l'ordinateur doivent pouvoir communiquer sur le même réseau ; le mode tunnel peut consommer davantage de données.
+## Local development
 
-Pour démarrer directement depuis le dossier mobile : `cd apps/mobile && npx expo start`.
+Requires Node.js 20.9 or newer.
 
-## Configuration Supabase
+```bash
+npm install
+npm run dev
+```
 
-1. Créer un projet Supabase.
-2. Copier `.env.example` vers `apps/mobile/.env` et renseigner l'URL ainsi que la clé publique anon/publishable.
-3. Appliquer les migrations SQL de `supabase/migrations` depuis l'éditeur SQL Supabase.
-4. Ne jamais placer une clé `service_role`, un secret de paiement ou une clé privée dans l'application mobile ou dans Git.
+Open http://localhost:3000.
 
-## État du projet
+## Deployment on Render
 
-La première base contient une interface mobile de démonstration et le premier schéma de données. L'authentification, les paiements, l'émission des billets, les QR dynamiques, le scanner et le site web seront construits et testés par étapes. Aucun paiement réel n'est activé à ce stade.
+Create a **Web Service** connected to this repository:
+- Build command: `npm install && npm run build`
+- Start command: `npm run start`
+- Environment: Node
+
+Render's free web services sleep after 15 minutes without incoming traffic and can take about a minute to wake up. Render says free instances are for testing and hobby use, not production. Do not store persistent user or financial data on the service filesystem.
+
+## Planned next steps
+
+1. Supabase schema, authentication and row-level security
+2. Server-verified task submissions and reward ledger
+3. Partner integration only after confirming that incentivized tasks are explicitly allowed
+4. Transparent withdrawal rules and payout operations
+5. Security, privacy and operational review before public launch
