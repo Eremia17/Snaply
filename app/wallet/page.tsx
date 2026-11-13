@@ -50,8 +50,8 @@ export default async function WalletPage() {
   if (claimsError || typeof userId !== "string") redirect("/login");
 
   const [balanceResult, ledgerResult] = await Promise.all([
-    supabase.from("wallet_balances").select("currency_code, balance, lifetime_task_rewards, lifetime_withdrawals"),
-    supabase.from("transactions").select("id, entry_type, direction, amount, currency_code, description, created_at").order("created_at", { ascending: false }).limit(10),
+    supabase.from("wallet_balances").select("currency_code, balance, lifetime_task_rewards, lifetime_withdrawals").eq("user_id", userId),
+    supabase.from("transactions").select("id, entry_type, direction, amount, currency_code, description, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(10),
   ]);
 
   const balances = (balanceResult.data ?? []) as BalanceRow[];
