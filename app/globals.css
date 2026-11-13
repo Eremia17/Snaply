@@ -69,3 +69,23 @@
 .admin-audit-empty{padding:48px 20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.8}
 .admin-audit-empty svg{display:block;margin:0 auto 12px;color:#8da83e}
 @media(max-width:620px){.admin-audit-row{grid-template-columns:36px minmax(0,1fr)}.admin-audit-date{grid-column:2;text-align:left}.admin-audit-icon{width:34px;height:34px}}
+
+
+/* Partner registry */
+.admin-provider-layout{display:grid;grid-template-columns:minmax(260px,.78fr) minmax(0,1.22fr);gap:22px;align-items:start;margin-top:24px}
+.admin-provider-form{display:grid;gap:14px}
+.admin-provider-form label,.admin-provider-item label{display:grid;gap:7px;font-size:11px;font-weight:700;color:var(--ink)}
+.admin-provider-form input,.admin-provider-item input,.admin-provider-item select,.admin-provider-item textarea{width:100%;border:1px solid var(--line);background:#fffefa;border-radius:8px;padding:12px;font:inherit;font-size:12px;color:var(--ink)}
+.admin-provider-form button,.admin-provider-item button{border:0;cursor:pointer}
+.admin-provider-list{display:grid;gap:14px}
+.admin-provider-item{padding:19px;border:1px solid var(--line);border-radius:12px;background:#fffefa}
+.admin-provider-item h3{margin:0;font:700 17px 'Space Grotesk',sans-serif}
+.admin-provider-item-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.admin-provider-item small{font-size:10px;color:var(--muted)}
+.admin-provider-edit{display:grid;gap:12px;margin-top:15px;padding-top:15px;border-top:1px solid var(--line)}
+.admin-provider-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.admin-provider-checkbox{display:flex!important;grid-template-columns:auto 1fr!important;align-items:center;gap:9px!important}
+.admin-provider-checkbox input{width:16px;height:16px}
+.admin-provider-warning{display:flex;gap:10px;padding:13px 15px;background:#f1f0e8;border:1px solid var(--line);border-radius:10px;color:#666e5c;font-size:11px;line-height:1.65}
+@media(max-width:850px){.admin-provider-layout{grid-template-columns:1fr}}
+@media(max-width:560px){.admin-provider-edit-grid{grid-template-columns:1fr}}
