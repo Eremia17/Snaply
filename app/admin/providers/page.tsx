@@ -7,7 +7,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 type Provider = {
   id: string; name: string; website_url: string | null; verification_url: string | null;
-  admin_notes: string | null; status: "pending" | "active" | "paused" | "disabled";
+  status: "pending" | "active" | "paused" | "disabled";
   incentivized_tasks_allowed: boolean; created_at: string;
 };
 type Props = { searchParams: Promise<{ error?: string; saved?: string }> };
@@ -31,7 +31,7 @@ export default async function AdminProvidersPage({ searchParams }: Props) {
   if (profile?.role !== "admin") redirect("/dashboard?error=forbidden");
 
   const { data, error } = await supabase.from("ad_providers")
-    .select("id, name, website_url, verification_url, admin_notes, status, incentivized_tasks_allowed, created_at")
+    .select("id, name, website_url, verification_url, status, incentivized_tasks_allowed, created_at")
     .order("created_at", { ascending: false }).limit(100);
   const providers = (data ?? []) as Provider[];
 
@@ -65,7 +65,6 @@ export default async function AdminProvidersPage({ searchParams }: Props) {
                 <label>Statut<select name="status" defaultValue={provider.status}><option value="pending">À vérifier</option><option value="active">Actif</option><option value="paused">En pause</option><option value="disabled">Désactivé</option></select></label>
                 <label>URL de vérification HTTPS<input name="verificationUrl" type="url" defaultValue={provider.verification_url ?? ""} placeholder="https://source-de-preuve.example"/></label>
               </div>
-              <label>Note interne<textarea name="adminNotes" rows={2} maxLength={2000} defaultValue={provider.admin_notes ?? ""} placeholder="Référence du contrat, date de contrôle, conditions…"/></label>
               <label className="admin-provider-checkbox"><input type="checkbox" name="authorizeIncentivized" value="yes" defaultChecked={provider.incentivized_tasks_allowed}/> Autoriser les missions avec récompense</label>
               <button className="auth-submit" type="submit">Enregistrer les contrôles</button>
             </form>
