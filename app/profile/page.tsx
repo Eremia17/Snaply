@@ -14,10 +14,20 @@ export default async function ProfilePage({ searchParams }: Props) {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
+  if (!user) redirect("/login");
+
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("display_name, country_code")
+    .eq("id", user.id)
+    .maybeSingle();
+
   const displayName =
-    typeof user?.user_metadata?.display_name === "string"
-      ? user.user_metadata.display_name
-      : "Membre AdEarn";
+    typeof profileData?.display_name === "string"
+      ? profileData.display_name
+      : typeof user.user_metadata?.display_name === "string"
+        ? user.user_metadata.display_name
+        : "Membre AdEarn";
   const params = await searchParams;
 
   return <PortalShell active="/profile">
@@ -32,7 +42,7 @@ export default async function ProfilePage({ searchParams }: Props) {
         <p>Votre profil d'affichage. Les informations sensibles ne sont pas exposées ici.</p>
         <div className="profile-detail"><UserRound size={17}/><span><small>NOM D'AFFICHAGE</small><b>{displayName}</b></span></div>
         <div className="profile-detail"><Mail size={17}/><span><small>ADRESSE E-MAIL</small><b>{user?.email ?? "Non disponible"}</b></span></div>
-        <div className="profile-detail"><MapPin size={17}/><span><small>PAYS / RÉGION</small><b>À configurer</b></span></div>
+        <div className="profile-detail"><MapPin size={17}/><span><small>PAYS / RÉGION</small><b>{profileData?.country_code ?? "À configurer"}</b></span></div>
       </section>
       <section className="profile-settings">
         <div className="panel-card">
