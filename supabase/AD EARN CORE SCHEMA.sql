@@ -43,8 +43,14 @@ declare
   safe_display_name text;
 begin
   safe_display_name := coalesce(
-    nullif(pg_catalog.btrim(new.raw_user_meta_data ->> 'display_name'), ''),
-    nullif(pg_catalog.split_part(coalesce(new.email, ''), '@', 1), ''),
+    case
+      when pg_catalog.char_length(pg_catalog.btrim(new.raw_user_meta_data ->> 'display_name')) >= 2
+      then pg_catalog.left(pg_catalog.btrim(new.raw_user_meta_data ->> 'display_name'), 60)
+    end,
+    case
+      when pg_catalog.char_length(pg_catalog.split_part(coalesce(new.email, ''), '@', 1)) >= 2
+      then pg_catalog.left(pg_catalog.split_part(coalesce(new.email, ''), '@', 1), 60)
+    end,
     'AdEarn member'
   );
 
@@ -78,8 +84,14 @@ insert into public.profiles (id, display_name)
 select
   users.id,
   coalesce(
-    nullif(pg_catalog.btrim(users.raw_user_meta_data ->> 'display_name'), ''),
-    nullif(pg_catalog.split_part(coalesce(users.email, ''), '@', 1), ''),
+    case
+      when pg_catalog.char_length(pg_catalog.btrim(users.raw_user_meta_data ->> 'display_name')) >= 2
+      then pg_catalog.left(pg_catalog.btrim(users.raw_user_meta_data ->> 'display_name'), 60)
+    end,
+    case
+      when pg_catalog.char_length(pg_catalog.split_part(coalesce(users.email, ''), '@', 1)) >= 2
+      then pg_catalog.left(pg_catalog.split_part(coalesce(users.email, ''), '@', 1), 60)
+    end,
     'AdEarn member'
   )
 from auth.users as users
