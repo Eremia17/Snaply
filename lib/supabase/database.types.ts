@@ -16,7 +16,6 @@ export type Database = {
     Tables: {
       ad_providers: {
         Row: {
-          admin_notes: string | null
           created_at: string
           id: string
           incentivized_tasks_allowed: boolean
@@ -27,7 +26,6 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
-          admin_notes?: string | null
           created_at?: string
           id?: string
           incentivized_tasks_allowed?: boolean
@@ -38,7 +36,6 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
-          admin_notes?: string | null
           created_at?: string
           id?: string
           incentivized_tasks_allowed?: boolean
