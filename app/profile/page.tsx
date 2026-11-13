@@ -4,8 +4,11 @@ import { ArrowUpRight, BadgeCheck, Bell, LockKeyhole, Mail, MapPin, Settings2, S
 import PortalShell from "@/components/portal-shell";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { updateDisplayName } from "@/app/auth/actions";
 
-export default async function ProfilePage() {
+type Props = { searchParams: Promise<{ error?: string; message?: string }> };
+
+export default async function ProfilePage({ searchParams }: Props) {
   if (!isSupabaseConfigured()) redirect("/login?error=setup");
 
   const supabase = await createClient();
@@ -15,9 +18,12 @@ export default async function ProfilePage() {
     typeof user?.user_metadata?.display_name === "string"
       ? user.user_metadata.display_name
       : "Membre AdEarn";
+  const params = await searchParams;
 
   return <PortalShell active="/profile">
-    <section className="welcome-row"><div><div className="eyebrow">VOS INFORMATIONS</div><h1>Votre <em>profil.</em></h1><p>Consultez les informations associées à votre compte.</p></div></section>
+    <section className="welcome-row"><div><div className="eyebrow">VOS INFORMATIONS</div><h1>Votre <em>profil.</em></h1><p>Consultez et mettez à jour votre nom d'affichage.</p></div></section>
+    {params.error && <div className="auth-feedback auth-error" role="alert">{params.error === "display-name" ? "Le nom doit contenir entre 2 et 60 caractères." : "La mise à jour du profil a échoué. Réessayez."}</div>}
+    {params.message === "updated" && <div className="auth-feedback auth-success" role="status">Votre nom d'affichage a été mis à jour.</div>}
     <div className="profile-layout">
       <section className="panel-card profile-card">
         <div className="profile-cover"><span>✳</span></div>
@@ -29,6 +35,14 @@ export default async function ProfilePage() {
         <div className="profile-detail"><MapPin size={17}/><span><small>PAYS / RÉGION</small><b>À configurer</b></span></div>
       </section>
       <section className="profile-settings">
+        <div className="panel-card">
+          <div className="panel-heading"><div><div className="eyebrow">VOTRE IDENTITÉ</div><h2>Modifier le profil</h2></div><Settings2 size={19}/></div>
+          <form className="profile-edit-form" action={updateDisplayName}>
+            <label htmlFor="displayName">Nom d'affichage</label>
+            <input id="displayName" name="displayName" type="text" defaultValue={displayName} minLength={2} maxLength={60} required/>
+            <button type="submit" className="auth-submit">Enregistrer les changements <ArrowUpRight size={16}/></button>
+          </form>
+        </div>
         <div className="panel-card">
           <div className="panel-heading"><div><div className="eyebrow">PRÉFÉRENCES</div><h2>Paramètres</h2></div><Settings2 size={19}/></div>
           <div className="setting-row"><span><Bell size={18}/><b>Notifications</b></span><small>Configuration à venir</small></div>
