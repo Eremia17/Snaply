@@ -542,3 +542,66 @@ grant execute on function public.admin_review_task_attempt(uuid, text, text) to 
 
 comment on function public.admin_review_task_attempt(uuid, text, text) is
   'Atomically approves or rejects one task submission for a database-authorized admin. Does not create a wallet credit.';
+
+
+-- Admin mission studio: administrators can create and edit drafts and pause/archive tasks.
+-- Publication is intentionally withheld until a real partner and funded reward budget are verified.
+grant insert, update on public.tasks to authenticated;
+
+drop policy if exists tasks_insert_admin_draft on public.tasks;
+create policy tasks_insert_admin_draft on public.tasks
+for insert to authenticated
+with check (
+  (select private.is_admin())
+  and created_by = (select auth.uid())
+  and status = 'draft'
+  and published_at is null
+);
+
+drop policy if exists tasks_update_admin_managed on public.tasks;
+create policy tasks_update_admin_managed on public.tasks
+for update to authenticated
+using (
+  (select private.is_admin())
+  and status in ('draft', 'published', 'paused')
+)
+with check (
+  (select private.is_admin())
+  and status in ('draft', 'paused', 'archived')
+);
+
+create or replace function private.log_admin_task_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  actor uuid;
+begin
+  actor := (select auth.uid());
+  if tg_op = 'INSERT' then
+    insert into public.admin_logs(actor_id, action, entity_type, entity_id, details)
+    values (actor, 'task_created_as_draft', 'task', new.id,
+      pg_catalog.jsonb_build_object('slug', new.slug, 'title', new.title, 'status', new.status));
+    return new;
+  end if;
+
+  insert into public.admin_logs(actor_id, action, entity_type, entity_id, details)
+  values (actor, 'task_updated', 'task', new.id,
+    pg_catalog.jsonb_build_object(
+      'before', pg_catalog.jsonb_build_object('title', old.title, 'status', old.status),
+      'after', pg_catalog.jsonb_build_object('title', new.title, 'status', new.status)
+    ));
+  return new;
+end;
+$$;
+
+revoke all on function private.log_admin_task_change() from public, anon, authenticated;
+drop trigger if exists tasks_admin_audit on public.tasks;
+create trigger tasks_admin_audit
+after insert or update on public.tasks
+for each row execute function private.log_admin_task_change();
+
+comment on function private.log_admin_task_change() is
+  'Internal audit trigger for administrator task creation and status/content changes.';
