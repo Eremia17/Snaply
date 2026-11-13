@@ -1,0 +1,4 @@
+import Link from "next/link";
+import { ArrowLeft, ArrowUpRight, CircleHelp, ShieldCheck } from "lucide-react";
+import PortalShell from "../../components/portal-shell";
+export default function HelpPage(){return <PortalShell active="/help"><section className="welcome-row"><div><div className="eyebrow">CENTRE D'ASSISTANCE</div><h1>Comment pouvons-nous <em>aider ?</em></h1><p>Les réponses seront enrichies à mesure que les services AdEarn seront activés.</p></div></section><section className="panel-card help-card"><CircleHelp size={32}/><h2>Le centre d'aide arrive bientôt.</h2><p>Nous préparons une documentation claire sur les missions, la validation, les récompenses, les retraits et la confidentialité.</p><div className="help-promise"><ShieldCheck size={18}/> Les conditions importantes seront affichées avant toute participation.</div><Link href="/dashboard" className="portal-primary">Retour au tableau de bord <ArrowUpRight size={15}/></Link></section></PortalShell>}
