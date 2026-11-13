@@ -12,7 +12,9 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest"
+    "lucide-react": "latest",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.119.0"
   },
   "devDependencies": {
     "@types/node": "latest",
