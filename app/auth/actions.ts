@@ -253,6 +253,7 @@ function parseAdminTask(formData: FormData) {
   const rewardAmount = Number(readField(formData, "rewardAmount"));
   const estimatedRaw = readField(formData, "estimatedMinutes");
   const estimatedMinutes = estimatedRaw ? Number(estimatedRaw) : null;
+  const providerId = readField(formData, "providerId");
   const instructions = readRawField(formData, "instructions")
     .split(/\r?\n/).map(line => line.trim()).filter(Boolean);
   const validCategory = ["survey", "audio", "microtask", "video"].includes(category);
@@ -261,11 +262,12 @@ function parseAdminTask(formData: FormData) {
       !validCategory || !Number.isFinite(rewardAmount) || rewardAmount <= 0 || rewardAmount > 999999999999 ||
       !/^[A-Z]{3}$/.test(currencyCode) ||
       (estimatedMinutes !== null && (!Number.isInteger(estimatedMinutes) || estimatedMinutes < 1 || estimatedMinutes > 1440)) ||
+      (providerId !== "" && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(providerId)) ||
       instructions.length > 20 || instructions.some(line => line.length > 500)) {
     redirect("/admin/tasks?error=invalid");
   }
   return { title, description, category, currency_code: currencyCode, reward_amount: rewardAmount,
-    estimated_minutes: estimatedMinutes, instructions };
+    estimated_minutes: estimatedMinutes, instructions, provider_id: providerId || null };
 }
 
 export async function saveAdminTask(formData: FormData) {
@@ -281,7 +283,7 @@ export async function saveAdminTask(formData: FormData) {
     const { data, error } = await supabase.from("tasks").update({
       title: task.title, description: task.description, category: task.category,
       currency_code: task.currency_code, reward_amount: task.reward_amount,
-      estimated_minutes: task.estimated_minutes, instructions: task.instructions,
+      estimated_minutes: task.estimated_minutes, instructions: task.instructions, provider_id: task.provider_id,
     }).eq("id", taskId).eq("status", "draft").select("id").maybeSingle();
     if (error || !data) redirect("/admin/tasks?error=save");
     redirect("/admin/tasks?saved=updated");
