@@ -10,6 +10,7 @@ type Task = {
   reward_amount: number | string; currency_code: string; estimated_minutes: number | null;
   instructions: string[] | null; status: "draft" | "published" | "paused" | "archived"; created_at: string;
 };
+type ProviderOption = { id: string; name: string };
 type Props = { searchParams: Promise<{ error?: string; saved?: string }> };
 
 const statusLabels: Record<Task["status"], string> = {
@@ -34,10 +35,12 @@ export default async function AdminTasksPage({ searchParams }: Props) {
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
   if (profile?.role !== "admin") redirect("/dashboard?error=forbidden");
 
-  const { data, error } = await supabase.from("tasks")
+  const [tasksResult, providersResult] = await Promise.all([supabase.from("tasks")
     .select("id, slug, title, description, category, reward_amount, currency_code, estimated_minutes, instructions, status, created_at")
-    .order("created_at", { ascending: false }).limit(100);
+    .order("created_at", { ascending: false }).limit(100), supabase.from("ad_providers").select("id, name").eq("status", "active").eq("incentivized_tasks_allowed", true).order("name")]);
+  const { data, error } = tasksResult;
   const tasks = (data ?? []) as Task[];
+  const providers = (providersResult.data ?? []) as ProviderOption[];
 
   return <PortalShell active="/admin/tasks">
     <section className="welcome-row">
@@ -56,6 +59,7 @@ export default async function AdminTasksPage({ searchParams }: Props) {
         <p className="admin-panel-copy">Prépare une fiche de mission. Elle ne sera pas visible dans le catalogue public.</p>
         <form action={saveAdminTask} className="admin-task-form">
           <label>Titre de la mission<input name="title" minLength={5} maxLength={140} required placeholder="Ex. Questionnaire de satisfaction"/></label>
+          <label>Partenaire autorisé<select name="providerId" defaultValue=""><option value="">Sans partenaire lié</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</select></label>
           <label>Catégorie<select name="category" defaultValue="survey"><option value="survey">Sondage</option><option value="audio">Audio</option><option value="microtask">Micro-tâche</option><option value="video">Vidéo</option></select></label>
           <label>Description<textarea className="task-form-description" name="description" minLength={10} maxLength={6000} required placeholder="Décris précisément l'objectif et le contexte de la mission."/></label>
           <div className="admin-task-form-grid">
@@ -78,6 +82,7 @@ export default async function AdminTasksPage({ searchParams }: Props) {
               <form action={saveAdminTask} className="admin-task-form" style={{ marginTop: 14 }}>
                 <input type="hidden" name="taskId" value={task.id}/>
                 <label>Titre<input name="title" defaultValue={task.title} minLength={5} maxLength={140} required/></label>
+                <label>Partenaire autorisé<select name="providerId" defaultValue=""><option value="">Sans partenaire lié</option>{providers.map(provider => <option key={provider.id} value={provider.id}>{provider.name}</option>)}</select></label>
                 <label>Catégorie<select name="category" defaultValue={task.category}><option value="survey">Sondage</option><option value="audio">Audio</option><option value="microtask">Micro-tâche</option><option value="video">Vidéo</option></select></label>
                 <label>Description<textarea className="task-form-description" name="description" defaultValue={task.description} minLength={10} maxLength={6000} required/></label>
                 <div className="admin-task-form-grid">
