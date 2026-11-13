@@ -27,9 +27,8 @@ export async function GET(request: Request) {
     type,
   });
 
-  if (error) {
-    redirect("/login?error=confirmation");
-  }
+  if (error) redirect("/login?error=confirmation");
 
+  if (type === "recovery") redirect("/reset-password");
   redirect("/dashboard");
 }
