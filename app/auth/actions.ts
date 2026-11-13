@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -229,4 +230,81 @@ export async function reviewTaskAttempt(formData: FormData) {
   }
 
   redirect(`/admin?reviewed=${decision}`);
+}
+
+
+async function requireAdminSession() {
+  if (!isSupabaseConfigured()) redirect("/login?error=setup");
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub;
+  if (error || typeof userId !== "string") redirect("/login");
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles").select("role").eq("id", userId).maybeSingle();
+  if (profileError || profile?.role !== "admin") redirect("/dashboard?error=forbidden");
+  return { supabase, userId };
+}
+
+function parseAdminTask(formData: FormData) {
+  const title = readField(formData, "title");
+  const description = readField(formData, "description");
+  const category = readField(formData, "category");
+  const currencyCode = readField(formData, "currencyCode").toUpperCase();
+  const rewardAmount = Number(readField(formData, "rewardAmount"));
+  const estimatedRaw = readField(formData, "estimatedMinutes");
+  const estimatedMinutes = estimatedRaw ? Number(estimatedRaw) : null;
+  const instructions = readRawField(formData, "instructions")
+    .split("\\n").map(line => line.trim()).filter(Boolean);
+  const validCategory = ["survey", "audio", "microtask", "video"].includes(category);
+  if (title.length < 5 || title.length > 140 ||
+      description.length < 10 || description.length > 6000 ||
+      !validCategory || !Number.isFinite(rewardAmount) || rewardAmount <= 0 || rewardAmount > 999999999999 ||
+      !/^[A-Z]{3}$/.test(currencyCode) ||
+      (estimatedMinutes !== null && (!Number.isInteger(estimatedMinutes) || estimatedMinutes < 1 || estimatedMinutes > 1440)) ||
+      instructions.length > 20 || instructions.some(line => line.length > 500)) {
+    redirect("/admin/tasks?error=invalid");
+  }
+  return { title, description, category, currency_code: currencyCode, reward_amount: rewardAmount,
+    estimated_minutes: estimatedMinutes, instructions };
+}
+
+export async function saveAdminTask(formData: FormData) {
+  const { supabase, userId } = await requireAdminSession();
+  const taskId = readField(formData, "taskId");
+  const task = parseAdminTask(formData);
+  const slugBase = task.title.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 90) || "mission";
+  if (taskId) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId)) {
+      redirect("/admin/tasks?error=invalid");
+    }
+    const { data, error } = await supabase.from("tasks").update({
+      title: task.title, description: task.description, category: task.category,
+      currency_code: task.currency_code, reward_amount: task.reward_amount,
+      estimated_minutes: task.estimated_minutes, instructions: task.instructions,
+    }).eq("id", taskId).eq("status", "draft").select("id").maybeSingle();
+    if (error || !data) redirect("/admin/tasks?error=save");
+    redirect("/admin/tasks?saved=updated");
+  }
+  const { error } = await supabase.from("tasks").insert({
+    ...task, slug: `${slugBase}-${randomUUID().slice(0, 8)}`,
+    created_by: userId, status: "draft", published_at: null,
+  });
+  if (error) redirect("/admin/tasks?error=save");
+  redirect("/admin/tasks?saved=created");
+}
+
+export async function changeAdminTaskStatus(formData: FormData) {
+  const { supabase } = await requireAdminSession();
+  const taskId = readField(formData, "taskId");
+  const status = readField(formData, "status");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId) ||
+      !["paused", "archived"].includes(status)) {
+    redirect("/admin/tasks?error=invalid");
+  }
+  const { data, error } = await supabase.from("tasks").update({ status })
+    .eq("id", taskId).in("status", ["draft", "published", "paused"])
+    .select("id").maybeSingle();
+  if (error || !data) redirect("/admin/tasks?error=status");
+  redirect("/admin/tasks?saved=status");
 }
