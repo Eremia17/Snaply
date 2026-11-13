@@ -16,8 +16,8 @@ AdEarn is a responsive web platform prototype for transparent, partner-funded mi
 
 ## Not live yet
 
-- A dedicated AdEarn Supabase project has not been configured or connected.
-- The SQL schema has been committed but has **not** been applied to a database.
+- The existing Supabase project was repurposed from Ticket Mada to AdEarn (project ref `ebkyueqhiqqkfejmziwl`, region `eu-west-1`). Its dashboard display name may still show `Ticket Mada`.
+- The AdEarn schema is installed directly in that project: eight public tables, RLS enabled on all eight, private `adearn-assets` Storage bucket, and the wallet projection. No Auth accounts, mission records, or uploaded files existed at conversion time.
 - No real partner has been approved and no paid mission is seeded.
 - Partner event verification and reward-credit automation are not implemented. Admins can approve/reject submissions, but approval does not pay a reward.
 - Withdrawal requests and payouts are not activated. No real money is held or paid.
@@ -36,7 +36,7 @@ Do not credit users from browser events. Production rewards must be verified ser
 
 **Use a dedicated Supabase project for AdEarn. Do not reuse the Ticket Mada or Erëmia project.**
 
-1. Create a separate Supabase project for AdEarn.
+1. Use the already-connected AdEarn project (ref `ebkyueqhiqqkfejmziwl`, region `eu-west-1`). Do not create another project.
 2. In the project dashboard, open **Connect** and copy the Project URL and **Publishable key**.
 3. Copy `.env.example` to `.env.local` and set:
    - `NEXT_PUBLIC_SUPABASE_URL`
@@ -48,8 +48,7 @@ Do not credit users from browser events. Production rewards must be verified ser
 5. Keep email confirmation enabled. In **Authentication → Emails → Templates**, use token-hash links:
    - **Confirm signup**: `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`
    - **Reset password**: `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`
-6. Open the dedicated project's SQL Editor and review/run `supabase/AD EARN CORE SCHEMA.sql`.
-7. Run `supabase/VERIFY CORE SCHEMA.sql` and review the RLS policies and grants.
+6. The schema has already been applied. Run `supabase/VERIFY CORE SCHEMA.sql` in the AdEarn project's SQL Editor to re-check RLS policies, grants, triggers and functions.
 8. To grant your own account administrator access, run this manually in the dedicated project's SQL Editor after replacing the email with your verified account email: `update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'YOUR-VERIFIED-EMAIL');`. Never add a public role-editing form or let users update this column.
 9. Add the Supabase URL and publishable key to the deployment environment.
 
@@ -89,7 +88,7 @@ Render's free web services sleep after 15 minutes without incoming traffic and c
 
 ## Next engineering steps
 
-1. Install and verify the schema on a dedicated AdEarn Supabase project.
+1. Configure Auth redirect URLs and Render environment variables, then register the first account and assign its admin role.
 2. Connect an approved partner and funded reward budget before implementing idempotent reward credits. The admin review workflow currently records approve/reject decisions but intentionally does not pay rewards.
 3. Add file uploads only after private Storage buckets and access policies are tested.
 4. Integrate partners only after confirming that incentivized tasks are explicitly allowed.
