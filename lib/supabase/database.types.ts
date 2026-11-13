@@ -1,1 +1,488 @@
-{"types":"export type Json =\n  | string\n  | number\n  | boolean\n  | null\n  | { [key: string]: Json | undefined }\n  | Json[]\n\nexport type Database = {\n  // Allows to automatically instantiate createClient with right options\n  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)\n  __InternalSupabase: {\n    PostgrestVersion: \"14.18\"\n  }\n  public: {\n    Tables: {\n      ad_providers: {\n        Row: {\n          admin_notes: string | null\n          created_at: string\n          id: string\n          incentivized_tasks_allowed: boolean\n          name: string\n          status: string\n          updated_at: string\n          verification_url: string | null\n          website_url: string | null\n        }\n        Insert: {\n          admin_notes?: string | null\n          created_at?: string\n          id?: string\n          incentivized_tasks_allowed?: boolean\n          name: string\n          status?: string\n          updated_at?: string\n          verification_url?: string | null\n          website_url?: string | null\n        }\n        Update: {\n          admin_notes?: string | null\n          created_at?: string\n          id?: string\n          incentivized_tasks_allowed?: boolean\n          name?: string\n          status?: string\n          updated_at?: string\n          verification_url?: string | null\n          website_url?: string | null\n        }\n        Relationships: []\n      }\n      admin_logs: {\n        Row: {\n          action: string\n          actor_id: string | null\n          created_at: string\n          details: Json\n          entity_id: string | null\n          entity_type: string\n          id: string\n        }\n        Insert: {\n          action: string\n          actor_id?: string | null\n          created_at?: string\n          details?: Json\n          entity_id?: string | null\n          entity_type: string\n          id?: string\n        }\n        Update: {\n          action?: string\n          actor_id?: string | null\n          created_at?: string\n          details?: Json\n          entity_id?: string | null\n          entity_type?: string\n          id?: string\n        }\n        Relationships: []\n      }\n      profiles: {\n        Row: {\n          country_code: string | null\n          created_at: string\n          display_name: string\n          id: string\n          role: string\n          updated_at: string\n        }\n        Insert: {\n          country_code?: string | null\n          created_at?: string\n          display_name?: string\n          id: string\n          role?: string\n          updated_at?: string\n        }\n        Update: {\n          country_code?: string | null\n          created_at?: string\n          display_name?: string\n          id?: string\n          role?: string\n          updated_at?: string\n        }\n        Relationships: []\n      }\n      task_attempts: {\n        Row: {\n          created_at: string\n          id: string\n          review_note: string | null\n          reviewed_at: string | null\n          reviewed_by: string | null\n          status: string\n          submission_data: Json\n          submitted_at: string\n          task_id: string\n          user_id: string\n        }\n        Insert: {\n          created_at?: string\n          id?: string\n          review_note?: string | null\n          reviewed_at?: string | null\n          reviewed_by?: string | null\n          status?: string\n          submission_data?: Json\n          submitted_at?: string\n          task_id: string\n          user_id: string\n        }\n        Update: {\n          created_at?: string\n          id?: string\n          review_note?: string | null\n          reviewed_at?: string | null\n          reviewed_by?: string | null\n          status?: string\n          submission_data?: Json\n          submitted_at?: string\n          task_id?: string\n          user_id?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"task_attempts_task_id_fkey\"\n            columns: [\"task_id\"]\n            isOneToOne: false\n            referencedRelation: \"tasks\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      tasks: {\n        Row: {\n          category: string\n          created_at: string\n          created_by: string | null\n          currency_code: string\n          description: string\n          ends_at: string | null\n          estimated_minutes: number | null\n          id: string\n          instructions: Json\n          provider_id: string | null\n          published_at: string | null\n          requirements: Json\n          reward_amount: number\n          slug: string\n          starts_at: string | null\n          status: string\n          title: string\n          updated_at: string\n        }\n        Insert: {\n          category: string\n          created_at?: string\n          created_by?: string | null\n          currency_code: string\n          description: string\n          ends_at?: string | null\n          estimated_minutes?: number | null\n          id?: string\n          instructions?: Json\n          provider_id?: string | null\n          published_at?: string | null\n          requirements?: Json\n          reward_amount: number\n          slug: string\n          starts_at?: string | null\n          status?: string\n          title: string\n          updated_at?: string\n        }\n        Update: {\n          category?: string\n          created_at?: string\n          created_by?: string | null\n          currency_code?: string\n          description?: string\n          ends_at?: string | null\n          estimated_minutes?: number | null\n          id?: string\n          instructions?: Json\n          provider_id?: string | null\n          published_at?: string | null\n          requirements?: Json\n          reward_amount?: number\n          slug?: string\n          starts_at?: string | null\n          status?: string\n          title?: string\n          updated_at?: string\n        }\n        Relationships: [\n          {\n            foreignKeyName: \"tasks_provider_id_fkey\"\n            columns: [\"provider_id\"]\n            isOneToOne: false\n            referencedRelation: \"ad_providers\"\n            referencedColumns: [\"id\"]\n          },\n        ]\n      }\n      transactions: {\n        Row: {\n          amount: number\n          created_at: string\n          created_by: string | null\n          currency_code: string\n          description: string | null\n          direction: string\n          entry_type: string\n          id: string\n          idempotency_key: string\n          metadata: Json\n          source_id: string | null\n          source_type: string\n          user_id: string\n        }\n        Insert: {\n          amount: number\n          created_at?: string\n          created_by?: string | null\n          currency_code: string\n          description?: string | null\n          direction: string\n          entry_type: string\n          id?: string\n          idempotency_key: string\n          metadata?: Json\n          source_id?: string | null\n          source_type: string\n          user_id: string\n        }\n        Update: {\n          amount?: number\n          created_at?: string\n          created_by?: string | null\n          currency_code?: string\n          description?: string | null\n          direction?: string\n          entry_type?: string\n          id?: string\n          idempotency_key?: string\n          metadata?: Json\n          source_id?: string | null\n          source_type?: string\n          user_id?: string\n        }\n        Relationships: []\n      }\n      wallets: {\n        Row: {\n          created_at: string\n          user_id: string\n        }\n        Insert: {\n          created_at?: string\n          user_id: string\n        }\n        Update: {\n          created_at?: string\n          user_id?: string\n        }\n        Relationships: []\n      }\n      withdrawals: {\n        Row: {\n          amount: number\n          created_at: string\n          currency_code: string\n          id: string\n          paid_at: string | null\n          payout_details: Json\n          payout_method: string\n          rejection_reason: string | null\n          requested_at: string\n          reviewed_at: string | null\n          reviewed_by: string | null\n          status: string\n          user_id: string\n        }\n        Insert: {\n          amount: number\n          created_at?: string\n          currency_code: string\n          id?: string\n          paid_at?: string | null\n          payout_details?: Json\n          payout_method: string\n          rejection_reason?: string | null\n          requested_at?: string\n          reviewed_at?: string | null\n          reviewed_by?: string | null\n          status?: string\n          user_id: string\n        }\n        Update: {\n          amount?: number\n          created_at?: string\n          currency_code?: string\n          id?: string\n          paid_at?: string | null\n          payout_details?: Json\n          payout_method?: string\n          rejection_reason?: string | null\n          requested_at?: string\n          reviewed_at?: string | null\n          reviewed_by?: string | null\n          status?: string\n          user_id?: string\n        }\n        Relationships: []\n      }\n    }\n    Views: {\n      wallet_balances: {\n        Row: {\n          balance: number | null\n          currency_code: string | null\n          lifetime_task_rewards: number | null\n          lifetime_withdrawals: number | null\n          user_id: string | null\n        }\n        Relationships: []\n      }\n    }\n    Functions: {\n      admin_review_task_attempt: {\n        Args: { p_attempt_id: string; p_decision: string; p_note?: string }\n        Returns: string\n      }\n    }\n    Enums: {\n      [_ in never]: never\n    }\n    CompositeTypes: {\n      [_ in never]: never\n    }\n  }\n}\n\ntype DatabaseWithoutInternals = Omit<Database, \"__InternalSupabase\">\n\ntype DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, \"public\">]\n\nexport type Tables<\n  DefaultSchemaTableNameOrOptions extends\n    | keyof (DefaultSchema[\"Tables\"] & DefaultSchema[\"Views\"])\n    | { schema: keyof DatabaseWithoutInternals },\n  TableName extends (DefaultSchemaTableNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"] &\n        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Views\"])\n    : never) = never,\n> = DefaultSchemaTableNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"] &\n      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Views\"])[TableName] extends {\n      Row: infer R\n    }\n    ? R\n    : never\n  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema[\"Tables\"] &\n        DefaultSchema[\"Views\"])\n    ? (DefaultSchema[\"Tables\"] &\n        DefaultSchema[\"Views\"])[DefaultSchemaTableNameOrOptions] extends {\n        Row: infer R\n      }\n      ? R\n      : never\n    : never\n\nexport type TablesInsert<\n  DefaultSchemaTableNameOrOptions extends\n    | keyof DefaultSchema[\"Tables\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  TableName extends (DefaultSchemaTableNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"]\n    : never) = never,\n> = DefaultSchemaTableNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"][TableName] extends {\n      Insert: infer I\n    }\n    ? I\n    : never\n  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema[\"Tables\"]\n    ? DefaultSchema[\"Tables\"][DefaultSchemaTableNameOrOptions] extends {\n        Insert: infer I\n      }\n      ? I\n      : never\n    : never\n\nexport type TablesUpdate<\n  DefaultSchemaTableNameOrOptions extends\n    | keyof DefaultSchema[\"Tables\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  TableName extends (DefaultSchemaTableNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"]\n    : never) = never,\n> = DefaultSchemaTableNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions[\"schema\"]][\"Tables\"][TableName] extends {\n      Update: infer U\n    }\n    ? U\n    : never\n  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema[\"Tables\"]\n    ? DefaultSchema[\"Tables\"][DefaultSchemaTableNameOrOptions] extends {\n        Update: infer U\n      }\n      ? U\n      : never\n    : never\n\nexport type Enums<\n  DefaultSchemaEnumNameOrOptions extends\n    | keyof DefaultSchema[\"Enums\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  EnumName extends (DefaultSchemaEnumNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions[\"schema\"]][\"Enums\"]\n    : never) = never,\n> = DefaultSchemaEnumNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions[\"schema\"]][\"Enums\"][EnumName]\n  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema[\"Enums\"]\n    ? DefaultSchema[\"Enums\"][DefaultSchemaEnumNameOrOptions]\n    : never\n\nexport type CompositeTypes<\n  PublicCompositeTypeNameOrOptions extends\n    | keyof DefaultSchema[\"CompositeTypes\"]\n    | { schema: keyof DatabaseWithoutInternals },\n  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {\n    schema: keyof DatabaseWithoutInternals\n  }\n    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions[\"schema\"]][\"CompositeTypes\"]\n    : never) = never,\n> = PublicCompositeTypeNameOrOptions extends {\n  schema: keyof DatabaseWithoutInternals\n}\n  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions[\"schema\"]][\"CompositeTypes\"][CompositeTypeName]\n  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema[\"CompositeTypes\"]\n    ? DefaultSchema[\"CompositeTypes\"][PublicCompositeTypeNameOrOptions]\n    : never\n\nexport const Constants = {\n  public: {\n    Enums: {},\n  },\n} as const\n"}
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.18"
+  }
+  public: {
+    Tables: {
+      ad_providers: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          id: string
+          incentivized_tasks_allowed: boolean
+          name: string
+          status: string
+          updated_at: string
+          verification_url: string | null
+          website_url: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          incentivized_tasks_allowed?: boolean
+          name: string
+          status?: string
+          updated_at?: string
+          verification_url?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          id?: string
+          incentivized_tasks_allowed?: boolean
+          name?: string
+          status?: string
+          updated_at?: string
+          verification_url?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      admin_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          entity_id: string | null
+          entity_type: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          display_name: string
+          id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          display_name?: string
+          id: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      task_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submission_data: Json
+          submitted_at: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submission_data?: Json
+          submitted_at?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submission_data?: Json
+          submitted_at?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_attempts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          currency_code: string
+          description: string
+          ends_at: string | null
+          estimated_minutes: number | null
+          id: string
+          instructions: Json
+          provider_id: string | null
+          published_at: string | null
+          requirements: Json
+          reward_amount: number
+          slug: string
+          starts_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          currency_code: string
+          description: string
+          ends_at?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          instructions?: Json
+          provider_id?: string | null
+          published_at?: string | null
+          requirements?: Json
+          reward_amount: number
+          slug: string
+          starts_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          currency_code?: string
+          description?: string
+          ends_at?: string | null
+          estimated_minutes?: number | null
+          id?: string
+          instructions?: Json
+          provider_id?: string | null
+          published_at?: string | null
+          requirements?: Json
+          reward_amount?: number
+          slug?: string
+          starts_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "ad_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency_code: string
+          description: string | null
+          direction: string
+          entry_type: string
+          id: string
+          idempotency_key: string
+          metadata: Json
+          source_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          currency_code: string
+          description?: string | null
+          direction: string
+          entry_type: string
+          id?: string
+          idempotency_key: string
+          metadata?: Json
+          source_id?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency_code?: string
+          description?: string | null
+          direction?: string
+          entry_type?: string
+          id?: string
+          idempotency_key?: string
+          metadata?: Json
+          source_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          amount: number
+          created_at: string
+          currency_code: string
+          id: string
+          paid_at: string | null
+          payout_details: Json
+          payout_method: string
+          rejection_reason: string | null
+          requested_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency_code: string
+          id?: string
+          paid_at?: string | null
+          payout_details?: Json
+          payout_method: string
+          rejection_reason?: string | null
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency_code?: string
+          id?: string
+          paid_at?: string | null
+          payout_details?: Json
+          payout_method?: string
+          rejection_reason?: string | null
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      wallet_balances: {
+        Row: {
+          balance: number | null
+          currency_code: string | null
+          lifetime_task_rewards: number | null
+          lifetime_withdrawals: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+    }
+    Functions: {
+      admin_review_task_attempt: {
+        Args: { p_attempt_id: string; p_decision: string; p_note?: string }
+        Returns: string
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
