@@ -91,7 +91,8 @@ from pg_catalog.pg_policies
 where schemaname = 'public'
   and policyname in (
     'profiles_select_own_or_admin', 'wallets_select_own_or_admin',
-    'providers_select_authenticated', 'tasks_select_authenticated',
+    'providers_select_public', 'providers_select_authenticated',
+    'tasks_select_public', 'tasks_select_authenticated',
     'task_attempts_select_own_or_admin', 'transactions_select_own_or_admin',
     'withdrawals_select_own_or_admin', 'admin_logs_select_admin'
   )
@@ -188,3 +189,38 @@ from pg_catalog.pg_policies
 where schemaname = 'public'
   and policyname in ('attempts_update_admin', 'admin_logs_insert_admin')
 order by tablename, policyname;
+
+
+-- 17) Confirm public catalogue policies are restricted to published tasks
+-- and active providers, while members see only their own private records.
+select tablename, policyname, cmd, roles, qual, with_check
+from pg_catalog.pg_policies
+where schemaname = 'public'
+  and tablename in ('tasks', 'ad_providers', 'task_attempts', 'transactions', 'withdrawals')
+order by tablename, policyname;
+
+-- 18) The signup trigger must provision a profile and an empty wallet.
+select
+  trigger_name,
+  event_manipulation,
+  action_timing,
+  action_statement
+from information_schema.triggers
+where event_object_schema = 'auth'
+  and event_object_table = 'users'
+  and trigger_name = 'on_auth_user_created_adearn';
+
+-- 19) Confirm the private asset bucket is not public.
+select id, name, public, file_size_limit, allowed_mime_types
+from storage.buckets
+where id = 'adearn-assets';
+
+-- 20) Check that no legacy Ticket Mada business tables remain.
+select table_name
+from information_schema.tables
+where table_schema = 'public'
+  and table_type = 'BASE TABLE'
+  and table_name in (
+    'events', 'orders', 'order_items', 'tickets', 'ticket_types',
+    'payment_records', 'organizer_applications', 'organizer_commission_terms'
+  );
