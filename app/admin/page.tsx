@@ -61,7 +61,7 @@ export default async function AdminPage({ searchParams }: Props) {
   const hasError = Boolean(attemptsResult.error || membersResult.error || tasksResult.error || profileResult.error);
 
   return <PortalShell active="/admin">
-    <section className="welcome-row"><div><div className="eyebrow">ESPACE DE GESTION PRIVÉ</div><h1>Centre de <em>contrôle.</em></h1><p>Examinez les preuves et consignez chaque décision de modération.</p></div><span className="admin-secure-label"><ShieldCheck size={15}/> ACCÈS ADMINISTRATEUR</span></section>
+    <section className="welcome-row"><div><div className="eyebrow">ESPACE DE GESTION PRIVÉ</div><h1>Centre de <em>contrôle.</em></h1><p>Examinez les preuves et consignez chaque décision de modération.</p></div><div className="admin-heading-actions"><Link href="/admin/tasks" className="admin-section-link">Gérer les missions <ArrowUpRight size={14}/></Link><span className="admin-secure-label"><ShieldCheck size={15}/> ACCÈS ADMINISTRATEUR</span></div></section>
     <div className="admin-readonly-note"><ShieldCheck size={18}/><span><b>Modération sécurisée — sans paiement automatique.</b> Approuver confirme uniquement la validité de la participation. Aucun crédit n'est ajouté au portefeuille tant qu'un partenaire et un budget de récompenses vérifiés ne sont pas configurés.</span></div>
     {query.reviewed === "approved" && <div className="auth-feedback auth-success" role="status">Participation approuvée. La décision a été enregistrée dans le journal d'audit. Aucun argent n'a été crédité.</div>}
     {query.reviewed === "rejected" && <div className="auth-feedback auth-success" role="status">Participation refusée. La décision a été enregistrée dans le journal d'audit.</div>}
