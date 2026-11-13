@@ -12,6 +12,7 @@ type Task = {
   reward_amount: number | string;
   currency_code: string;
   estimated_minutes: number | null;
+  starts_at: string | null;
 };
 
 const categoryLabels: Record<Task["category"], string> = {
@@ -32,14 +33,16 @@ function rewardLabel(amount: number | string, currency: string) {
 
 export default async function TasksPage() {
   let tasks: Task[] = [];
-  let configured = isSupabaseConfigured();
+  const configured = isSupabaseConfigured();
+  let catalogError = false;
 
   if (configured) {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("tasks")
-      .select("id, slug, title, description, category, reward_amount, currency_code, estimated_minutes")
+      .select("id, slug, title, description, category, reward_amount, currency_code, estimated_minutes, starts_at")
       .order("published_at", { ascending: false });
+    catalogError = Boolean(error);
     if (!error && data) tasks = data as Task[];
   }
 
@@ -57,7 +60,7 @@ export default async function TasksPage() {
         <div className="eyebrow">ADEARN / LE CATALOGUE</div>
         <h1>Les bonnes missions<br/><em>prennent du temps.</em></h1>
         <p>Des missions détaillées, des critères visibles et des récompenses annoncées sans ambiguïté.</p>
-        <div className="catalog-status"><span className="status-orb"/>{tasks.length > 0 ? `${tasks.length} MISSION(S) DISPONIBLE(S)` : "CATALOGUE EN PRÉPARATION"}</div>
+        <div className="catalog-status"><span className="status-orb"/>{tasks.length > 0 ? `${tasks.length} MISSION(S) PUBLIÉE(S)` : catalogError ? "CATALOGUE INDISPONIBLE" : "CATALOGUE EN PRÉPARATION"}</div>
       </section>
       {tasks.length > 0 ? (
         <section className="live-task-section">
@@ -65,7 +68,7 @@ export default async function TasksPage() {
           <div className="live-task-grid">
             {tasks.map(task => (
               <article className="live-task-card" key={task.id}>
-                <div className="live-task-card-top"><span className={`task-category category-${task.category}`}>{categoryLabels[task.category]}</span><span className="task-live-dot">DISPONIBLE</span></div>
+                <div className="live-task-card-top"><span className={`task-category category-${task.category}`}>{categoryLabels[task.category]}</span><span className="task-live-dot">{task.starts_at && new Date(task.starts_at).getTime() > Date.now() ? "À VENIR" : "DISPONIBLE"}</span></div>
                 <h3>{task.title}</h3>
                 <p>{task.description}</p>
                 <div className="live-task-meta"><span><Clock3 size={14}/>{task.estimated_minutes ? `${task.estimated_minutes} min` : "Durée variable"}</span><strong>{rewardLabel(task.reward_amount, task.currency_code)}</strong></div>
@@ -80,7 +83,7 @@ export default async function TasksPage() {
           <div className="empty-copy">
             <div className="eyebrow">{configured ? "UNE PETITE PAUSE AVANT LE DÉPART" : "CONFIGURATION EN COURS"}</div>
             <h2>{configured ? <>On prépare quelque chose de <em>sérieux.</em></> : <>Le catalogue arrive <em>bientôt.</em></>}</h2>
-            <p>{configured ? "Aucune mission rémunérée n'est publiée pour le moment. Chaque offre devra afficher son partenaire, ses critères de validation, sa récompense, son délai et ses conditions." : "Le catalogue sera alimenté après la connexion de la base AdEarn. Aucune mission fictive n'est affichée."}</p>
+            <p>{catalogError ? "La base du catalogue ne répond pas encore. Vérifiez que le schéma AdEarn a été installé et que la table tasks est exposée à la Data API." : configured ? "Aucune mission rémunérée n'est publiée pour le moment. Chaque offre devra afficher son partenaire, ses critères de validation, sa récompense, son délai et ses conditions." : "Le catalogue sera alimenté après la connexion de la base AdEarn. Aucune mission fictive n'est affichée."}</p>
             <div className="empty-rules"><span><BadgeCheck size={17}/> Partenaire vérifié</span><span><Clock3 size={17}/> Délais affichés</span><span><ShieldCheck size={17}/> Récompenses confirmées</span></div>
             <Link href="/" className="btn-dark">Retourner à l'accueil <ArrowDownRight size={17}/></Link>
           </div>
