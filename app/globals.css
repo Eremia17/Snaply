@@ -89,3 +89,18 @@
 .admin-provider-warning{display:flex;gap:10px;padding:13px 15px;background:#f1f0e8;border:1px solid var(--line);border-radius:10px;color:#666e5c;font-size:11px;line-height:1.65}
 @media(max-width:850px){.admin-provider-layout{grid-template-columns:1fr}}
 @media(max-width:560px){.admin-provider-edit-grid{grid-template-columns:1fr}}
+
+
+/* Public help centre */
+.help-public-grid{padding:0 8.5% 70px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.help-public-card{padding:26px;min-height:230px}
+.help-public-index{font-size:9px;letter-spacing:.14em;color:#899080;font-weight:800}
+.help-public-icon{display:grid;place-items:center;width:42px;height:42px;margin-top:24px;background:#e9efd9;color:#536b2e;border-radius:12px}
+.help-public-card h2{font:600 21px 'Space Grotesk',sans-serif;letter-spacing:-.5px;margin:16px 0 9px}
+.help-public-card p{font-size:12px;line-height:1.8;color:var(--muted);margin:0}
+.help-public-bottom{margin:0 8.5% 90px;padding:25px;background:#e9eddf;display:flex;align-items:center;gap:17px}
+.help-public-bottom>svg{color:#6f8d34;flex-shrink:0}
+.help-public-bottom>div{flex:1}
+.help-public-bottom b{font-size:13px}
+.help-public-bottom p{font-size:11px;color:var(--muted);margin:5px 0 0}
+@media(max-width:650px){.help-public-grid{grid-template-columns:1fr;padding-left:6%;padding-right:6%}.help-public-bottom{margin-left:6%;margin-right:6%;flex-wrap:wrap}.help-public-bottom .btn-dark{width:100%;justify-content:space-between}}
