@@ -4,9 +4,10 @@ AdEarn is a responsive web platform prototype for transparent, partner-funded mi
 
 ## Current status
 
-- Real email/password account registration and login are implemented with Supabase Auth.
+- Email/password registration, login, password recovery and display-name editing are implemented in code with Supabase Auth.
 - Email confirmation and password recovery use the PKCE token-hash callback at `/auth/confirm`.
 - Member pages verify the signed-in user server-side and refresh sessions through secure cookies.
+- The app is not connected to an AdEarn Supabase project yet; the flows become active after a dedicated project's environment variables and email templates are configured.
 - Missions, reward balances, task verification and withdrawals are still demonstrations. No real money is held or paid.
 - Do not credit users from browser events. Production rewards must be verified server-side against a partner's documented callback or API, with idempotency, audit logs and a funded reward budget.
 
@@ -62,7 +63,7 @@ Render's free web services sleep after 15 minutes without incoming traffic and c
 
 ## Planned next steps
 
-1. Persistent profile editing and account deletion workflow
+1. Database-backed profile fields, avatar storage and account deletion workflow
 2. Server-verified task submissions and reward ledger
 3. Partner integration only after confirming that incentivized tasks are explicitly allowed
 4. Transparent withdrawal rules and payout operations
