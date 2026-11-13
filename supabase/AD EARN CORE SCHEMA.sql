@@ -458,3 +458,87 @@ using ((select private.is_admin()));
 
 comment on function private.is_admin() is
   'Checks the database-managed profile role for the current authenticated user. Role changes must be performed by a trusted project owner.';
+
+
+-- Atomic admin review workflow. This changes only the submission review state;
+-- it never inserts a wallet transaction or creates a payable reward.
+create or replace function public.admin_review_task_attempt(
+  p_attempt_id uuid,
+  p_decision text,
+  p_note text default null
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  current_actor uuid;
+  current_status text;
+  clean_note text;
+begin
+  current_actor := (select auth.uid());
+
+  if current_actor is null then
+    raise exception 'Authentication required.' using errcode = '28000';
+  end if;
+
+  if not exists (
+    select 1
+    from public.profiles as profile
+    where profile.id = current_actor
+      and profile.role = 'admin'
+  ) then
+    raise exception 'Administrator access required.' using errcode = '42501';
+  end if;
+
+  if p_decision not in ('approved', 'rejected') then
+    raise exception 'Invalid review decision.' using errcode = '22023';
+  end if;
+
+  clean_note := nullif(pg_catalog.btrim(coalesce(p_note, '')), '');
+  if clean_note is not null and pg_catalog.char_length(clean_note) > 2000 then
+    raise exception 'Review note is too long.' using errcode = '22023';
+  end if;
+
+  select attempt.status
+    into current_status
+  from public.task_attempts as attempt
+  where attempt.id = p_attempt_id
+  for update;
+
+  if not found then
+    raise exception 'Submission not found.' using errcode = 'P0002';
+  end if;
+
+  if current_status not in ('submitted', 'under_review') then
+    raise exception 'This submission has already been reviewed.' using errcode = '55000';
+  end if;
+
+  update public.task_attempts
+  set status = p_decision,
+      reviewed_at = pg_catalog.now(),
+      reviewed_by = current_actor,
+      review_note = clean_note
+  where id = p_attempt_id;
+
+  insert into public.admin_logs (
+    actor_id, action, entity_type, entity_id, details
+  )
+  values (
+    current_actor,
+    case when p_decision = 'approved' then 'task_attempt_approved' else 'task_attempt_rejected' end,
+    'task_attempt',
+    p_attempt_id,
+    pg_catalog.jsonb_build_object('decision', p_decision, 'note', clean_note)
+  );
+
+  return p_decision;
+end;
+$$;
+
+revoke all on function public.admin_review_task_attempt(uuid, text, text) from public, anon;
+grant execute on function public.admin_review_task_attempt(uuid, text, text) to authenticated;
+
+comment on function public.admin_review_task_attempt(uuid, text, text) is
+  'Atomically approves or rejects one task submission for a database-authorized admin. Does not create a wallet credit.';
