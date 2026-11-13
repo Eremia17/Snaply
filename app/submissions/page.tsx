@@ -43,8 +43,7 @@ export default async function SubmissionsPage() {
 
   return <PortalShell active="/submissions">
     <section className="welcome-row"><div><div className="eyebrow">SUIVI DE VOS MISSIONS</div><h1>Mes <em>participations.</em></h1><p>Retrouvez vos envois et leur état de vérification.</p></div><Link href="/tasks" className="portal-primary">Voir les missions <ArrowUpRight size={16}/></Link></section>
-    {error && <div className="auth-feedback auth-error" role="alert">Impossible de charger l'historique pour le moment. Vérifiez que le schéma AdEarn a été installé.</div>}
-    {!error && attempts.length === 0 ? (
+    {error ? <div className="auth-feedback auth-error" role="alert">Impossible de charger l'historique pour le moment. Vérifiez que le schéma AdEarn a été installé.</div> : attempts.length === 0 ? (
       <section className="panel-card submissions-empty"><span><ClipboardList size={30}/></span><h2>Aucune participation pour le moment</h2><p>Quand vous enverrez votre première réponse à une mission, son suivi apparaîtra ici.</p><Link href="/tasks" className="portal-primary">Explorer le catalogue <ArrowUpRight size={15}/></Link></section>
     ) : (
       <section className="submissions-list">
