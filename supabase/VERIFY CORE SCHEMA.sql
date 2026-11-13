@@ -74,3 +74,31 @@ select
   pg_catalog.has_column_privilege('authenticated', 'public.task_attempts', 'user_id', 'INSERT') as can_set_user_id,
   pg_catalog.has_column_privilege('authenticated', 'public.task_attempts', 'submission_data', 'INSERT') as can_set_submission,
   pg_catalog.has_column_privilege('authenticated', 'public.task_attempts', 'status', 'INSERT') as can_set_review_status;
+
+
+-- 8) Admin access must be database-managed, never client-editable.
+select
+  pg_catalog.has_function_privilege('authenticated', 'private.is_admin()', 'EXECUTE') as authenticated_can_check_admin,
+  pg_catalog.has_function_privilege('anon', 'private.is_admin()', 'EXECUTE') as anonymous_can_check_admin,
+  pg_catalog.has_schema_privilege('authenticated', 'private', 'USAGE') as authenticated_can_resolve_private_schema;
+
+-- 9) Confirm every admin read policy is present.
+select
+  tablename,
+  policyname,
+  cmd
+from pg_catalog.pg_policies
+where schemaname = 'public'
+  and policyname in (
+    'profiles_select_admin', 'wallets_select_admin',
+    'providers_select_admin', 'tasks_select_admin',
+    'attempts_select_admin', 'transactions_select_admin',
+    'withdrawals_select_admin', 'admin_logs_select_admin'
+  )
+order by tablename;
+
+-- 10) The client must not have permission to change the protected role column.
+select
+  pg_catalog.has_column_privilege(
+    'authenticated', 'public.profiles', 'role', 'UPDATE'
+  ) as authenticated_can_change_role;
