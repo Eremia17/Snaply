@@ -73,6 +73,22 @@ create trigger on_auth_user_created_adearn
 after insert on auth.users
 for each row execute function private.handle_new_user();
 
+-- Backfill accounts that already existed before this schema was installed.
+insert into public.profiles (id, display_name)
+select
+  users.id,
+  coalesce(
+    nullif(pg_catalog.btrim(users.raw_user_meta_data ->> 'display_name'), ''),
+    nullif(pg_catalog.split_part(coalesce(users.email, ''), '@', 1), ''),
+    'AdEarn member'
+  )
+from auth.users as users
+on conflict (id) do nothing;
+
+insert into public.wallets (user_id)
+select users.id from auth.users as users
+on conflict (user_id) do nothing;
+
 -- Approved partners only. No API secrets or credentials belong in this table.
 create table if not exists public.ad_providers (
   id uuid primary key default pg_catalog.gen_random_uuid(),
@@ -257,7 +273,8 @@ grant usage on schema public to anon, authenticated;
 grant select on public.ad_providers, public.tasks to anon, authenticated;
 grant select on public.profiles to authenticated;
 grant update (display_name, country_code) on public.profiles to authenticated;
-grant select, insert on public.task_attempts to authenticated;
+grant select on public.task_attempts to authenticated;
+grant insert (task_id, user_id, submission_data) on public.task_attempts to authenticated;
 grant select on public.wallets, public.transactions, public.withdrawals to authenticated;
 
 drop policy if exists profiles_select_own on public.profiles;
